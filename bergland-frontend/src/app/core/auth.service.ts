@@ -44,16 +44,22 @@ export class AuthService {
   }
 
   // Refresh access token
-  refreshToken(): Observable<any> {
-    const token = localStorage.getItem('refreshToken');
-    return this.http.post(`${this.apiUrl}/refresh`, { token }).pipe(
-      tap((res: any) => {
-        if (res.accessToken) {
-          localStorage.setItem('accessToken', res.accessToken);
-        }
-      })
-    );
-  }
+ // Refresh access token
+refreshToken(): Observable<any> {
+  const token = localStorage.getItem('refreshToken');
+  return this.http.post(`${this.apiUrl}/refresh`, { token }).pipe(
+    tap((res: any) => {
+      if (res.accessToken) {
+        localStorage.setItem('accessToken', res.accessToken);
+      }
+      if (res.refreshToken) {
+        // 🔥 WICHTIG: neuen Refresh-Token auch speichern
+        localStorage.setItem('refreshToken', res.refreshToken);
+      }
+    })
+  );
+}
+
 
   // Logout user
   logout(): Observable<any> {

@@ -6,10 +6,10 @@ const { registerSchema, loginSchema } = require("../validators/authValidator");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "2h"; // länger fürs Testen
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "2h";
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
 
-// Temporärer Refresh-Token-Speicher
+// ✅ Refresh-Token-Speicher (einfach für Entwicklung)
 let refreshTokens = [];
 
 // 🔹 Token-Generatoren
@@ -73,11 +73,13 @@ exports.login = async (req, res, next) => {
         await login.update({ last_login_at: new Date() });
 
         const payload = { id: person.id, role: login.role };
+
+        // ✅ Tokens generieren
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(payload);
 
-        // ✅ Alten Refresh-Token entfernen (nur einen pro User)
-        refreshTokens = refreshTokens.filter((t) => t !== refreshToken);
+        // ❌ Diese Zeile war der Bug – sie löscht den neuen Token wieder
+        // refreshTokens = refreshTokens.filter((t) => t !== refreshToken);
 
         res.json({
             accessToken,
@@ -104,13 +106,15 @@ exports.refreshToken = (req, res) => {
     jwt.verify(token, JWT_REFRESH_SECRET, (err, user) => {
         if (err) return res.status(403).json({ error: "Invalid refresh token" });
 
-        // 🔁 Neue Tokens ausstellen
+        // Neue Tokens ausstellen
         const newAccessToken = generateAccessToken({ id: user.id, role: user.role });
         const newRefreshToken = generateRefreshToken({ id: user.id, role: user.role });
 
-        // Alten Refresh-Token ersetzen
+        // Alten Refresh-Token entfernen (ersetzt durch neuen)
         refreshTokens = refreshTokens.filter((t) => t !== token);
-        refreshTokens.push(newRefreshToken);
+
+        // ⛔ Diese Zeile war doppelt (generateRefreshToken pusht schon automatisch)
+        // refreshTokens.push(newRefreshToken);
 
         res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
     });

@@ -48,9 +48,6 @@ backend/
 │ ├── routeController.js
 │ └── runtimeController.js
 │
-│── migrations/seeders 
-│ ├── ----.js
-│ └── ----.js
 │
 │── middlewares/ # Middleware (z. B. Error Handling, Auth)
 │ ├── authMiddleware.js

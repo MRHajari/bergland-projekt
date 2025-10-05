@@ -79,7 +79,7 @@ async function ensureAdminUser() {
 // ============================================================
 sequelize
     // ⚙️ Tipp: für Entwicklung einmalig auf { force: true } stellen, um alte Tabellen zu löschen
-    .sync({ force: true })
+    .sync({ alter: true })
     .then(async () => {
         console.log("📦 Database connected");
 
