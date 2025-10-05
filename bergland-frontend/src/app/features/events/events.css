@@ -1,0 +1,27 @@
+h2 {
+    margin-bottom: 1rem;
+  }
+  
+  .event-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  
+  .event-card {
+    background: #f8f8f8;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .event-card h3 {
+    margin-top: 0;
+    color: #004080;
+  }
+  
+  .error {
+    color: red;
+    margin: 1rem 0;
+  }
+  

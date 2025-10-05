@@ -1,0 +1,43 @@
+h2 {
+    margin-bottom: 1rem;
+  }
+  
+  form {
+    display: flex;
+    flex-direction: column;
+    max-width: 350px;
+  }
+  
+  label {
+    margin-top: 0.5rem;
+  }
+  
+  select,
+  input {
+    margin-bottom: 0.5rem;
+    padding: 0.4rem;
+  }
+  
+  button {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+  
+  button:disabled {
+    background: #aaa;
+  }
+  
+  .success {
+    color: green;
+    margin-top: 1rem;
+  }
+  
+  .error {
+    color: red;
+    margin-top: 1rem;
+  }
+  

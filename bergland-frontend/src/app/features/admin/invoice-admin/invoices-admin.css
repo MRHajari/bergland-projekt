@@ -1,0 +1,83 @@
+.admin-container {
+    padding: 2rem;
+    background-color: var(--background-color);
+    color: var(--text-color);
+  }
+  
+  h1 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+  }
+  
+  h2 {
+    margin-top: 2rem;
+    color: var(--accent-color);
+  }
+  
+  .filter-section {
+    margin-bottom: 1rem;
+  }
+  
+  .filter-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  
+  .list-section {
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-top: 1rem;
+  }
+  
+  .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+  
+  .invoice-table th, .invoice-table td {
+    border: 1px solid #ddd;
+    padding: 0.6rem;
+    text-align: left;
+  }
+  
+  .invoice-table th {
+    background: var(--primary-color);
+    color:var(--text-on-primary);
+  }
+  
+  .status {
+    font-weight: bold;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+  }
+  .status.paid {
+    color: #155724;
+    background: #d4edda;
+  }
+  .status.unpaid {
+    color: #721c24;
+    background: #f8d7da;
+  }
+  
+  button {
+    margin-right: 0.4rem;
+  }
+  
+  button.primary {
+    background-color: var(--primary-color);
+    color:var(--text-on-primary);
+  }
+  
+  button.secondary {
+    background-color: #6c757d;
+    color:var(--text-on-primary);
+  }
+  

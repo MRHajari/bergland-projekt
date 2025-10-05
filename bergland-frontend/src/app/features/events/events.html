@@ -1,0 +1,13 @@
+<h2>Upcoming Events</h2>
+
+<div *ngIf="loading">Loading events...</div>
+<div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+
+<div *ngIf="!loading && !errorMessage" class="event-list">
+    <div class="event-card" *ngFor="let event of events">
+        <h3>{{ event.name }}</h3>
+        <p>{{ event.description }}</p>
+        <p><strong>Date:</strong> {{ event.date | date }}</p>
+        <p><strong>Location:</strong> {{ event.location }}</p>
+    </div>
+</div>

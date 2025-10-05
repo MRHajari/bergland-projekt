@@ -1,0 +1,34 @@
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="logo">
+            <img src="assets/logo.svg" alt="Pfälzer Bergland Logo" />
+        </div>
+
+        <h2>Login</h2>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <label>Email</label>
+            <input type="email" formControlName="email" placeholder="Deine Email" />
+            @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+            <div class="error">Bitte gültige Email eingeben</div>
+            }
+
+            <label>Passwort</label>
+            <input type="password" formControlName="password" placeholder="Dein Passwort" />
+            @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+            <div class="error">Passwort erforderlich</div>
+            }
+
+            <button type="submit" class="primary" [disabled]="loading">Login</button>
+        </form>
+
+        @if (errorMessage) {
+        <div class="error">{{ errorMessage }}</div>
+        }
+
+        <p class="switch">
+            Noch kein Konto?
+            <a routerLink="/register">Registrieren</a>
+        </p>
+    </div>
+</div>

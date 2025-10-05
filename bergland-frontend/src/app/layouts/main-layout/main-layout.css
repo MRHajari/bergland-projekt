@@ -1,0 +1,38 @@
+.layout-body {
+  display: flex;
+  height: calc(100vh - 80px);
+  overflow: visible; /* ✅ Tooltips dürfen raus */
+}
+
+.main-content {
+  flex: 1;
+  background-color: var(--background-color);
+  padding: 2rem;
+  overflow-y: auto; /* ✅ nur hier scrollen */
+}
+
+/* Fixierte Navbar */
+app-navbar {
+  width: 200px;
+  flex-shrink: 0;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  height: 100%;
+
+  transition: width 0.3s ease-in-out;
+}
+
+/* Wenn Navbar eingeklappt ist */
+app-navbar:has(.side-navbar.collapsed) {
+  width: 70px;
+}
+
+/* Scrollbarer Hauptinhalt */
+.main-content {
+  flex: 1;
+  background-color: var(--background-color);
+  padding: 2rem;
+  overflow-y: auto; /* Nur hier scrollen */
+  height: 100%;
+}

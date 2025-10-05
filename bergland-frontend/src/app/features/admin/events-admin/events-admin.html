@@ -1,0 +1,105 @@
+<div class="admin-container">
+    <h1>🎫 Events verwalten</h1>
+
+    @if (loading) {
+    <p class="loading">⏳ Events werden geladen...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else {
+
+    <!-- 🟢 Neues Event -->
+    <section class="form-section">
+        <h2>➕ Neues Event hinzufügen</h2>
+
+        <form (ngSubmit)="addEvent()" class="event-form">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input id="name" type="text" [(ngModel)]="newEvent.name" name="name" placeholder="Eventname" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Beschreibung:</label>
+                <textarea id="description" [(ngModel)]="newEvent.description" name="description" rows="2"
+                    placeholder="Kurze Beschreibung..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="start_date">Startdatum:</label>
+                    <input id="start_date" type="date" [(ngModel)]="newEvent.start_date" name="start_date">
+                </div>
+
+                <div class="form-group">
+                    <label for="end_date">Enddatum:</label>
+                    <input id="end_date" type="date" [(ngModel)]="newEvent.end_date" name="end_date">
+                </div>
+            </div>
+
+            <button type="submit" class="primary">Hinzufügen</button>
+        </form>
+    </section>
+
+    <!-- 📋 Eventliste -->
+    <section class="list-section">
+        <h2>📅 Bestehende Events</h2>
+
+        <!-- 🔍 Filterfeld -->
+        <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Events suchen (Name oder Beschreibung)..."
+            class="search-input" />
+
+        @if (filteredEvents.length === 0) {
+        <p>Keine passenden Events gefunden.</p>
+        } @else {
+        <table class="event-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Startdatum</th>
+                    <th>Enddatum</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (e of filteredEvents; track e.id) {
+                <tr>
+                    <td>
+                        @if (editingEvent?.id === e.id) {
+                        <input [(ngModel)]="editingEvent.name">
+                        } @else {
+                        {{ e.name }}
+                        }
+                    </td>
+
+                    <td>
+                        @if (editingEvent?.id === e.id) {
+                        <input type="date" [(ngModel)]="editingEvent.start_date">
+                        } @else {
+                        {{ e.start_date }}
+                        }
+                    </td>
+
+                    <td>
+                        @if (editingEvent?.id === e.id) {
+                        <input type="date" [(ngModel)]="editingEvent.end_date">
+                        } @else {
+                        {{ e.end_date }}
+                        }
+                    </td>
+
+                    <td>
+                        @if (editingEvent?.id === e.id) {
+                        <button class="primary" (click)="saveEvent()">Speichern</button>
+                        <button (click)="cancelEdit()">Abbrechen</button>
+                        } @else {
+                        <button class="secondary" (click)="editEvent(e)">Bearbeiten</button>
+                        <button class="danger" (click)="deleteEvent(e.id, e.name)">Löschen</button>
+                        }
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+        }
+    </section>
+    }
+</div>

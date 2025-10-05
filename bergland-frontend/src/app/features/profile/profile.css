@@ -1,0 +1,29 @@
+h2 {
+    margin-bottom: 1rem;
+  }
+  
+  .user-info {
+    background: #f4f4f4;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .booking-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .booking-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .error {
+    color: red;
+  }
+  

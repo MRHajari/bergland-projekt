@@ -1,0 +1,101 @@
+<div class="admin-container">
+    <h1>🏠 Unterkünfte verwalten</h1>
+
+    @if (loading) {
+    <p class="loading">⏳ Unterkünfte werden geladen...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else {
+
+    <!-- 🟢 Neue Unterkunft -->
+    <section class="form-section">
+        <h2>➕ Neue Unterkunft hinzufügen</h2>
+
+        <form (ngSubmit)="addAccommodation()">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input id="name" [(ngModel)]="newAccommodation.name" name="name" placeholder="z. B. Bergblick Hotel"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Ort:</label>
+                <input id="location" [(ngModel)]="newAccommodation.location" name="location"
+                    placeholder="z. B. Innsbruck">
+            </div>
+
+            <div class="form-group">
+                <label for="capacity">Kapazität:</label>
+                <input id="capacity" type="number" [(ngModel)]="newAccommodation.capacity" name="capacity"
+                    placeholder="z. B. 50">
+            </div>
+
+            <button type="submit" class="primary">Hinzufügen</button>
+        </form>
+    </section>
+
+    <!-- 📋 Unterkunftsliste -->
+    <section class="list-section">
+        <h2>📋 Bestehende Unterkünfte</h2>
+
+        <!-- 🔍 Filter -->
+        <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Unterkünfte suchen (Name oder Ort)..."
+            class="search-input" />
+
+        @if (filteredAccommodations.length === 0) {
+        <p>Keine passenden Unterkünfte gefunden.</p>
+        } @else {
+        <table class="accommodation-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Ort</th>
+                    <th>Kapazität</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (a of filteredAccommodations; track a.id) {
+                <tr>
+                    <td>
+                        @if (editingAccommodation?.id === a.id) {
+                        <input [(ngModel)]="editingAccommodation.name">
+                        } @else {
+                        {{ a.name }}
+                        }
+                    </td>
+
+                    <td>
+                        @if (editingAccommodation?.id === a.id) {
+                        <input [(ngModel)]="editingAccommodation.city">
+                        } @else {
+                        {{ a.city }}
+                        }
+                    </td>
+
+                    <td>
+                        @if (editingAccommodation?.id === a.id) {
+                        <input type="number" [(ngModel)]="editingAccommodation.total_beds">
+                        } @else {
+                        {{ a.total_beds }}
+                        }
+                    </td>
+
+                    <td>
+                        @if (editingAccommodation?.id === a.id) {
+                        <button class="primary" (click)="saveAccommodation()">Speichern</button>
+                        <button (click)="cancelEdit()">Abbrechen</button>
+                        } @else {
+                        <button class="secondary" (click)="editAccommodation(a)">Bearbeiten</button>
+                        <button class="danger" (click)="deleteAccommodation(a.id, a.name)">Löschen</button>
+                        }
+                    </td>
+                </tr>
+
+                }
+            </tbody>
+        </table>
+        }
+    </section>
+    }
+</div>

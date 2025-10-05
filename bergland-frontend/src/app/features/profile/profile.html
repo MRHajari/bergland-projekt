@@ -1,0 +1,22 @@
+<h2>User Profile</h2>
+
+<div *ngIf="loading">Loading profile...</div>
+<div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+
+<div *ngIf="!loading && !errorMessage && user">
+    <div class="user-info">
+        <p><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+    </div>
+
+    <h3>My Bookings</h3>
+    <div *ngIf="bookings.length === 0">No bookings yet.</div>
+
+    <ul class="booking-list" *ngIf="bookings.length > 0">
+        <li *ngFor="let booking of bookings" class="booking-card">
+            <p><strong>Event:</strong> {{ booking.event?.name || booking.eventId }}</p>
+            <p><strong>Guests:</strong> {{ booking.guestCount }}</p>
+            <p><strong>Date:</strong> {{ booking.createdAt | date:'short' }}</p>
+        </li>
+    </ul>
+</div>

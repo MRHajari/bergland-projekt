@@ -1,0 +1,12 @@
+<div class="admin-dashboard">
+    <h1>Administration</h1>
+    <p>Wähle einen Bereich zur Verwaltung:</p>
+
+    <div class="cards">
+        @for (section of sections; track section.title) {
+        <a [routerLink]="section.route" class="admin-card">
+            {{ section.title }}
+        </a>
+        }
+    </div>
+</div>

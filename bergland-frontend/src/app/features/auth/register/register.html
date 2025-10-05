@@ -1,0 +1,49 @@
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="logo">
+            <img src="assets/logo.svg" alt="Pfälzer Bergland Logo" />
+        </div>
+
+        <h2>Registrieren</h2>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <label>Vorname</label>
+            <input type="text" formControlName="first_name" placeholder="Dein Vorname" />
+            @if (registerForm.get('first_name')?.invalid && registerForm.get('first_name')?.touched) {
+            <div class="error">Vorname erforderlich</div>
+            }
+
+            <label>Nachname</label>
+            <input type="text" formControlName="last_name" placeholder="Dein Nachname" />
+            @if (registerForm.get('last_name')?.invalid && registerForm.get('last_name')?.touched) {
+            <div class="error">Nachname erforderlich</div>
+            }
+
+            <label>Email</label>
+            <input type="email" formControlName="email" placeholder="Deine Email" />
+            @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+            <div class="error">Bitte gültige Email eingeben</div>
+            }
+
+            <label>Passwort</label>
+            <input type="password" formControlName="password" placeholder="Dein Passwort" />
+            @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+            <div class="error">Passwort min. 6 Zeichen</div>
+            }
+
+            <button type="submit" class="secondary" [disabled]="loading">Registrieren</button>
+        </form>
+
+        @if (errorMessage) {
+        <div class="error">{{ errorMessage }}</div>
+        }
+        @if (successMessage) {
+        <div class="success">{{ successMessage }}</div>
+        }
+
+        <p class="switch">
+            Schon ein Konto?
+            <a routerLink="/login">Login</a>
+        </p>
+    </div>
+</div>

@@ -1,0 +1,122 @@
+.admin-container {
+  padding: 2rem;
+  background-color: var(--background-color, #f7f7f7);
+  color: var(--text-color, #222);
+  min-height: 100vh;
+}
+
+h1 {
+  color: var(--primary-color, #1976d2);
+  margin-bottom: 1rem;
+}
+
+h2 {
+  margin-top: 2rem;
+  color: var(--accent-color, #333);
+}
+
+.form-section, .list-section {
+  background: var(--card-color, #fff);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  margin-top: 1rem;
+}
+
+.event-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.event-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+
+.event-table th, .event-table td {
+  border-bottom: 1px solid #ddd;
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  text-align: left;
+}
+
+.event-table th {
+  background-color: var(--primary-color, #1976d2);
+  color: var(--text-on-primary, white);
+}
+
+button {
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-weight: 500;
+  margin-right: 0.4rem;
+}
+
+button.primary {
+  background-color: var(--primary-color, #1976d2);
+  color:var(--text-on-primary);
+}
+
+button.primary:hover {
+  opacity: 0.9;
+}
+
+button.secondary {
+  background-color: #6c757d;
+  color:var(--text-on-primary);
+}
+
+button.secondary:hover {
+  background-color: #5a6268;
+}
+
+button.danger {
+  background-color: #e53e3e;
+  color:var(--text-on-primary);
+}
+
+button.danger:hover {
+  background-color: #c53030;
+}
+
+.loading {
+  color: #555;
+  font-style: italic;
+}
+
+.error {
+  color: #e53e3e;
+  font-weight: bold;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}

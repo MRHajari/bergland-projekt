@@ -1,0 +1,103 @@
+<div class="admin-container">
+    <h1>👥 Benutzerverwaltung</h1>
+
+    <!-- 🔍 Suchfeld -->
+    <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Benutzer suchen (Name oder Email)..."
+        class="search-input" />
+
+    @if (loading) {
+    <p class="loading">⏳ Benutzer werden geladen...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else if (users.length === 0) {
+    <p>Keine Benutzer gefunden.</p>
+    } @else {
+
+    <!-- 🔹 Admin-Benutzer -->
+    <section class="list-section">
+        <h2>🛡️ Admin Benutzer</h2>
+
+        @if (adminUsers.length === 0) {
+        <p>Keine Admin-Benutzer vorhanden.</p>
+        } @else {
+        <table class="user-table admin-table">
+            <thead>
+                <tr>
+                    <th>Vorname</th>
+                    <th>Nachname</th>
+                    <th>Email</th>
+                    <th>Rolle</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (u of adminUsers; track u.id) {
+                <tr>
+                    <td>{{ u.first_name }}</td>
+                    <td>{{ u.last_name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <select [(ngModel)]="u.role">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="primary" (click)="saveUser(u)">Speichern</button>
+                        <button class="danger" (click)="deleteUser(u.id, u.email)">Löschen</button>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+        }
+    </section>
+
+    <!-- 🔹 Normale Benutzer -->
+    <section class="list-section">
+        <h2>👤 Normale Benutzer</h2>
+
+        @if (normalUsers.length === 0) {
+        <p>Keine normalen Benutzer vorhanden.</p>
+        } @else {
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Vorname</th>
+                    <th>Nachname</th>
+                    <th>Email</th>
+                    <th>Rolle</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (u of pagedNormalUsers; track u.id) {
+                <tr>
+                    <td>{{ u.first_name }}</td>
+                    <td>{{ u.last_name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <select [(ngModel)]="u.role">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="primary" (click)="saveUser(u)">Speichern</button>
+                        <button class="danger" (click)="deleteUser(u.id, u.email)">Löschen</button>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- 📄 Pagination -->
+        <div class="pagination">
+            <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
+            <span>Seite {{ page }} / {{ totalPages }}</span>
+            <button (click)="page = page + 1" [disabled]="page === totalPages">▶️ Weiter</button>
+        </div>
+        }
+    </section>
+    }
+</div>

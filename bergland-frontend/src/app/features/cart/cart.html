@@ -1,0 +1,21 @@
+<h2>My Cart</h2>
+
+<p *ngIf="statusMessage" class="status">{{ statusMessage }}</p>
+
+<div *ngIf="items.length === 0">
+    <p>Your cart is empty.</p>
+</div>
+
+<div *ngIf="items.length > 0">
+    <ul class="cart-list">
+        <li *ngFor="let item of items; let i = index" class="cart-item">
+            <span>{{ item.name }} – {{ item.price | currency:'EUR' }}</span>
+            <button (click)="remove(i)">Remove</button>
+        </li>
+    </ul>
+
+    <p class="total">Total: {{ total | currency:'EUR' }}</p>
+
+    <button (click)="checkout()">Checkout</button>
+    <button (click)="clear()">Clear Cart</button>
+</div>

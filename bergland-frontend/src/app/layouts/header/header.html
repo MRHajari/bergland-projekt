@@ -1,0 +1,23 @@
+<header class="page-header">
+    <!-- 🔹 Linke Seite: Logo -->
+    <div class="header-left">
+        <img src="assets/logo.svg" alt="Bergland Logo" class="logo" />
+        <span class="brand">Bergland</span>
+    </div>
+
+    <!-- 🔹 Mitte: Titel & Untertitel -->
+    <div class="header-center">
+        <h2>{{ title }}</h2>
+        @if (subtitle) {
+        <p class="subtitle">{{ subtitle }}</p>
+        }
+    </div>
+
+    <!-- 🔹 Rechte Seite: Benutzerinfo + Logout -->
+    <div class="header-right">
+        <div class="user-info">
+            <span class="username">Max Mustermann</span>
+        </div>
+        <button class="logout-btn" routerLink="/logout">Logout</button>
+    </div>
+</header>
