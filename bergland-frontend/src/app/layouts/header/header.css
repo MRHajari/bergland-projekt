@@ -20,7 +20,7 @@
 
 .logo {
   height: 40px;
-  filter: brightness(0) invert(1); /* Icon weiß einfärben */
+  filter: brightness(0) invert(1);
 }
 
 .brand {
@@ -29,7 +29,7 @@
   letter-spacing: 0.5px;
 }
 
-/* 🔹 Mittlerer Bereich */
+/* 🔹 Mitte */
 .header-center {
   text-align: center;
   flex: 1;
@@ -47,37 +47,55 @@
   margin-top: 0.2rem;
 }
 
-/* 🔹 Rechte Seite: Benutzerinfo + Logout */
+/* 🔹 Rechte Seite */
 .header-right {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
+/* 🔹 Benutzerinfo */
 .user-info {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  cursor: pointer;
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.7);
   object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+}
+
+.user-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
 }
 
 .username {
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.email {
+  font-size: 0.8rem;
+  opacity: 0.9;
 }
 
 /* 🔹 Logout-Button */
 .logout-btn {
-  background: var(--secondary-color);
-  color: var(--text-on-secondary);
+  background: var(--secondary-color, #2e6fa6);
+  color: var(--text-on-secondary, #fff);
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius, 6px);
   padding: 0.4rem 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -85,10 +103,10 @@
 }
 
 .logout-btn:hover {
-  background: #2e6fa6;
+  background: #1e5888;
 }
 
-/* 🔹 Responsive Anpassung */
+/* 🔹 Responsive */
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -109,4 +127,15 @@
   .logout-btn {
     padding: 0.4rem 0.8rem;
   }
+
+  .user-icon {
+    width: 28px;
+    height: 28px;
+    stroke: white;
+    stroke-width: 2;
+  }
+  .user-info:hover .user-icon {
+    stroke: #ddd;
+  }
+  
 }

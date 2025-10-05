@@ -45,9 +45,24 @@ async function ensureAdminUser() {
         const existingPerson = await Person.findOne({ where: { email: adminEmail } });
 
         if (existingPerson) {
-            console.log(`ℹ️ Admin user already exists: ${adminEmail}`);
+            const login = await LoginData.findOne({ where: { person_id: existingPerson.id } });
+            if (login) {
+                const newHashed = await bcrypt.hash(adminPassword, 10);
+                await login.update({ password_hash: newHashed, role: 'admin' }); // Rolle absichern
+                console.log(`🔑 Passwort und Rolle für Admin ${adminEmail} wurden aktualisiert.`);
+            } else {
+                // falls Person existiert, aber LoginData fehlt
+                const newHashed = await bcrypt.hash(adminPassword, 10);
+                await LoginData.create({
+                    person_id: existingPerson.id,
+                    password_hash: newHashed,
+                    role: "admin",
+                });
+                console.log(`🆕 LoginData für bestehenden Admin ${adminEmail} erstellt.`);
+            }
             return;
         }
+
 
         // Hash Passwort
         const hashedPassword = await bcrypt.hash(adminPassword, 10);
@@ -79,7 +94,7 @@ async function ensureAdminUser() {
 // ============================================================
 sequelize
     // ⚙️ Tipp: für Entwicklung einmalig auf { force: true } stellen, um alte Tabellen zu löschen
-    .sync({ alter: true })
+    .sync({ altest: true })
     .then(async () => {
         console.log("📦 Database connected");
 

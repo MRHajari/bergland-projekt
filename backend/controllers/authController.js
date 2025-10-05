@@ -72,7 +72,13 @@ exports.login = async (req, res, next) => {
 
         await login.update({ last_login_at: new Date() });
 
-        const payload = { id: person.id, role: login.role };
+        const payload = {
+            id: person.id,
+            role: login.role,
+            first_name: person.first_name,
+            last_name: person.last_name,
+            email: person.email
+        };
 
         // ✅ Tokens generieren
         const accessToken = generateAccessToken(payload);
