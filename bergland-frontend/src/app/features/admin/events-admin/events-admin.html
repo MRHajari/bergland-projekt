@@ -14,7 +14,7 @@
         <form (ngSubmit)="addEvent()" class="event-form">
             <div class="form-group">
                 <label for="name">Name:</label>
-                <input id="name" type="text" [(ngModel)]="newEvent.name" name="name" placeholder="Eventname" required>
+                <input id="name" type="text" [(ngModel)]="newEvent.name" name="name" placeholder="Eventname" required />
             </div>
 
             <div class="form-group">
@@ -26,12 +26,12 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="start_date">Startdatum:</label>
-                    <input id="start_date" type="date" [(ngModel)]="newEvent.start_date" name="start_date">
+                    <input id="start_date" type="date" [(ngModel)]="newEvent.start_date" name="start_date" />
                 </div>
 
                 <div class="form-group">
                     <label for="end_date">Enddatum:</label>
-                    <input id="end_date" type="date" [(ngModel)]="newEvent.end_date" name="end_date">
+                    <input id="end_date" type="date" [(ngModel)]="newEvent.end_date" name="end_date" />
                 </div>
             </div>
 
@@ -43,14 +43,14 @@
     <section class="list-section">
         <h2>📅 Bestehende Events</h2>
 
-        <!-- 🔍 Filterfeld -->
+        <!-- 🔍 Suchfeld -->
         <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Events suchen (Name oder Beschreibung)..."
             class="search-input" />
 
         @if (filteredEvents.length === 0) {
         <p>Keine passenden Events gefunden.</p>
         } @else {
-        <table class="event-table">
+        <table class="user-table">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -60,11 +60,11 @@
                 </tr>
             </thead>
             <tbody>
-                @for (e of filteredEvents; track e.id) {
+                @for (e of pagedEvents; track e.id) {
                 <tr>
                     <td>
                         @if (editingEvent?.id === e.id) {
-                        <input [(ngModel)]="editingEvent.name">
+                        <input [(ngModel)]="editingEvent.name" />
                         } @else {
                         {{ e.name }}
                         }
@@ -72,7 +72,7 @@
 
                     <td>
                         @if (editingEvent?.id === e.id) {
-                        <input type="date" [(ngModel)]="editingEvent.start_date">
+                        <input type="date" [(ngModel)]="editingEvent.start_date" />
                         } @else {
                         {{ e.start_date }}
                         }
@@ -80,7 +80,7 @@
 
                     <td>
                         @if (editingEvent?.id === e.id) {
-                        <input type="date" [(ngModel)]="editingEvent.end_date">
+                        <input type="date" [(ngModel)]="editingEvent.end_date" />
                         } @else {
                         {{ e.end_date }}
                         }
@@ -99,6 +99,13 @@
                 }
             </tbody>
         </table>
+
+        <!-- 📄 Pagination -->
+        <div class="pagination">
+            <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
+            <span>Seite {{ page }} / {{ totalPages }}</span>
+            <button (click)="page = page + 1" [disabled]="page === totalPages">▶️ Weiter</button>
+        </div>
         }
     </section>
     }

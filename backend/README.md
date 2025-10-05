@@ -23,7 +23,6 @@ Backend-API für die **Bergland-App** (Reservierung, Events, Rechnungen, Zahlung
 ---
 
 ## 📂 Projektstruktur
-
 backend/
 │── config/ # DB-Verbindung (Sequelize)
 │ └── db.js

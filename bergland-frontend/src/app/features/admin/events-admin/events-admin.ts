@@ -16,15 +16,12 @@ export class EventsAdmin implements OnInit {
   errorMessage: string | null = null;
 
   editingEvent: any = null;
-  newEvent = {
-    name: '',
-    description: '',
-    start_date: '',
-    end_date: ''
-  };
+  newEvent = { name: '', description: '', start_date: '', end_date: '' };
 
-  // 🔍 Filter
+  // 🔍 Suche & Pagination
   searchTerm = '';
+  page = 1;
+  pageSize = 10;
 
   constructor(private eventService: EventService) {}
 
@@ -38,7 +35,6 @@ export class EventsAdmin implements OnInit {
 
     this.eventService.getAll().subscribe({
       next: (data) => {
-        // 🔹 Datumformat korrigieren
         this.events = data.map((e: any) => ({
           ...e,
           start_date: this.formatDate(e.start_date),
@@ -54,13 +50,12 @@ export class EventsAdmin implements OnInit {
     });
   }
 
-  // 🔹 Datumsformat fixen
   private formatDate(dateStr: string): string {
     if (!dateStr) return '';
     return dateStr.split('T')[0];
   }
 
-  // 🔍 Filterlogik
+  // 🔍 Filter
   get filteredEvents() {
     if (!this.searchTerm.trim()) return this.events;
     const term = this.searchTerm.toLowerCase();
@@ -69,6 +64,16 @@ export class EventsAdmin implements OnInit {
         e.name.toLowerCase().includes(term) ||
         e.description?.toLowerCase().includes(term)
     );
+  }
+
+  // 📄 Pagination
+  get pagedEvents() {
+    const start = (this.page - 1) * this.pageSize;
+    return this.filteredEvents.slice(start, start + this.pageSize);
+  }
+
+  get totalPages() {
+    return Math.ceil(this.filteredEvents.length / this.pageSize);
   }
 
   addEvent(): void {

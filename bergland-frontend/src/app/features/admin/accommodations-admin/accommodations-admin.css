@@ -1,33 +1,11 @@
 .admin-container {
   padding: 2rem;
-  background-color: var(--background-color, #f7f7f7);
-  color: var(--text-color, #222);
+  background: var(--background-color, #f7f7f7);
   min-height: 100vh;
 }
 
 h1 {
-  color: var(--primary-color, #1976d2);
-  margin-bottom: 1rem;
-}
-
-h2 {
-  margin-top: 2rem;
-  color: var(--accent-color, #333);
-}
-
-.form-section, .list-section {
-  background: var(--card-color, #fff);
-  border-radius: 10px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  margin-top: 1rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 }
 
 .search-input {
@@ -39,42 +17,55 @@ h2 {
   border: 1px solid #ccc;
 }
 
-.accommodation-table {
+.form-section,
+.list-section {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.user-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  margin-top: 1rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
 }
 
-.accommodation-table th, .accommodation-table td {
+.user-table th,
+.user-table td {
   border: 1px solid #ddd;
-  padding-left: 0.6rem;
-  padding-right: 0.6rem;
-  padding-top: 0.2rem;
-  padding-bottom: 0.2rem;
+  padding: 0.4rem 0.6rem;
   text-align: left;
 }
 
-.accommodation-table th {
-  background-color: var(--primary-color, #1976d2); /* gleich wie Events & Users */
-  color:var(--text-on-primary);
+.user-table th {
+  background: var(--primary-color, #1976d2);
+  color: white;
 }
 
 button {
+  margin-right: 0.5rem;
   border: none;
   border-radius: 6px;
   padding: 0.4rem 0.8rem;
   cursor: pointer;
   font-weight: 500;
-  margin-right: 0.4rem;
 }
 
 button.primary {
-  background-color: var(--primary-color, #1976d2);
-  color:var(--text-on-primary);
+  background: var(--primary-color, #1976d2);
+  color: white;
 }
 
 button.primary:hover {
@@ -82,21 +73,33 @@ button.primary:hover {
 }
 
 button.secondary {
-  background-color: #6c757d;
-  color:var(--text-on-primary);
+  background: #6c757d;
+  color: white;
 }
 
 button.secondary:hover {
-  background-color: #5a6268;
+  background: #5a6268;
 }
 
 button.danger {
-  background-color: #e53e3e;
-  color:var(--text-on-primary);
+  background: #d9534f;
+  color: white;
 }
 
 button.danger:hover {
-  background-color: #c53030;
+  background: #b52b27;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.pagination button {
+  padding: 0.3rem 0.8rem;
 }
 
 .loading {
@@ -105,6 +108,6 @@ button.danger:hover {
 }
 
 .error {
-  color: #e53e3e;
+  color: #d9534f;
   font-weight: bold;
 }

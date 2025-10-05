@@ -15,19 +15,19 @@
             <div class="form-group">
                 <label for="name">Name:</label>
                 <input id="name" [(ngModel)]="newAccommodation.name" name="name" placeholder="z. B. Bergblick Hotel"
-                    required>
+                    required />
             </div>
 
             <div class="form-group">
                 <label for="location">Ort:</label>
                 <input id="location" [(ngModel)]="newAccommodation.location" name="location"
-                    placeholder="z. B. Innsbruck">
+                    placeholder="z. B. Innsbruck" />
             </div>
 
             <div class="form-group">
                 <label for="capacity">Kapazität:</label>
                 <input id="capacity" type="number" [(ngModel)]="newAccommodation.capacity" name="capacity"
-                    placeholder="z. B. 50">
+                    placeholder="z. B. 50" />
             </div>
 
             <button type="submit" class="primary">Hinzufügen</button>
@@ -38,14 +38,14 @@
     <section class="list-section">
         <h2>📋 Bestehende Unterkünfte</h2>
 
-        <!-- 🔍 Filter -->
+        <!-- 🔍 Suchfeld -->
         <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Unterkünfte suchen (Name oder Ort)..."
             class="search-input" />
 
         @if (filteredAccommodations.length === 0) {
         <p>Keine passenden Unterkünfte gefunden.</p>
         } @else {
-        <table class="accommodation-table">
+        <table class="user-table">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -55,11 +55,11 @@
                 </tr>
             </thead>
             <tbody>
-                @for (a of filteredAccommodations; track a.id) {
+                @for (a of pagedAccommodations; track a.id) {
                 <tr>
                     <td>
                         @if (editingAccommodation?.id === a.id) {
-                        <input [(ngModel)]="editingAccommodation.name">
+                        <input [(ngModel)]="editingAccommodation.name" />
                         } @else {
                         {{ a.name }}
                         }
@@ -67,7 +67,7 @@
 
                     <td>
                         @if (editingAccommodation?.id === a.id) {
-                        <input [(ngModel)]="editingAccommodation.city">
+                        <input [(ngModel)]="editingAccommodation.city" />
                         } @else {
                         {{ a.city }}
                         }
@@ -75,7 +75,7 @@
 
                     <td>
                         @if (editingAccommodation?.id === a.id) {
-                        <input type="number" [(ngModel)]="editingAccommodation.total_beds">
+                        <input type="number" [(ngModel)]="editingAccommodation.total_beds" />
                         } @else {
                         {{ a.total_beds }}
                         }
@@ -91,10 +91,16 @@
                         }
                     </td>
                 </tr>
-
                 }
             </tbody>
         </table>
+
+        <!-- 📄 Pagination -->
+        <div class="pagination">
+            <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
+            <span>Seite {{ page }} / {{ totalPages }}</span>
+            <button (click)="page = page + 1" [disabled]="page === totalPages">▶️ Weiter</button>
+        </div>
         }
     </section>
     }

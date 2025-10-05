@@ -1,39 +1,12 @@
 .admin-container {
   padding: 2rem;
-  background-color: var(--background-color);
-  color: var(--text-color);
+  background: var(--background-color, #f7f7f7);
+  min-height: 100vh;
 }
 
 h1 {
-  color: var(--primary-color);
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 }
-
-h2 {
-  margin-top: 2rem;
-  color: var(--accent-color);
-}
-
-.form-section, .list-section {
-  background: var(--card-color);
-  border-radius: var(--border-radius);
-  padding: 1.5rem;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  margin-top: 1rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  margin-bottom: 1rem;
-}
-
-/* 🔍 Filter */
-.filter-section {
-  margin-bottom: 1rem;
-}
-
 
 .search-input {
   width: 100%;
@@ -44,46 +17,97 @@ h2 {
   border: 1px solid #ccc;
 }
 
-.product-table {
+.form-section,
+.list-section {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.user-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
   border-radius: 10px;
   overflow: hidden;
-  margin-top: 1rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
 }
 
-.product-table th, .product-table td {
+.user-table th,
+.user-table td {
   border: 1px solid #ddd;
-  padding: 0.6rem;
+  padding: 0.4rem 0.6rem;
   text-align: left;
 }
 
-.product-table th {
-  background: var(--primary-color);
-  color:var(--text-on-primary);
+.user-table th {
+  background: var(--primary-color, #1976d2);
+  color: white;
 }
 
 button {
-  margin-right: 0.4rem;
+  margin-right: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-weight: 500;
 }
 
 button.primary {
-  background-color: var(--primary-color);
-  color:var(--text-on-primary);
+  background: var(--primary-color, #1976d2);
+  color: white;
 }
 
+button.primary:hover {
+  opacity: 0.9;
+}
 
 button.secondary {
-  background-color: #6c757d;
-  color:var(--text-on-primary);
+  background: #6c757d;
+  color: white;
+}
+
+button.secondary:hover {
+  background: #5a6268;
 }
 
 button.danger {
-  background-color: #e53e3e;
-  color:var(--text-on-primary);
+  background: #d9534f;
+  color: white;
 }
 
 button.danger:hover {
-  background-color: #c53030;
+  background: #b52b27;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.pagination button {
+  padding: 0.3rem 0.8rem;
+}
+
+.loading {
+  color: #555;
+  font-style: italic;
+}
+
+.error {
+  color: #d9534f;
+  font-weight: bold;
 }

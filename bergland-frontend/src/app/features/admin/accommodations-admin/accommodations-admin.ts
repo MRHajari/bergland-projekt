@@ -15,9 +15,16 @@ export class AccommodationsAdmin implements OnInit {
   loading = false;
   errorMessage: string | null = null;
 
+  // 🆕 Neue Unterkunft
   newAccommodation = { name: '', location: '', capacity: 0 };
+
+  // ✏️ Bearbeitung
   editingAccommodation: any = null;
+
+  // 🔍 Suche & Pagination
   searchTerm = '';
+  page = 1;
+  pageSize = 10;
 
   constructor(private accommodationService: AccommodationService) {}
 
@@ -42,7 +49,7 @@ export class AccommodationsAdmin implements OnInit {
     });
   }
 
-  // 🔍 Filter
+  // 🔍 Gefilterte Liste
   get filteredAccommodations() {
     if (!this.searchTerm.trim()) return this.accommodations;
     const term = this.searchTerm.toLowerCase();
@@ -52,15 +59,30 @@ export class AccommodationsAdmin implements OnInit {
       (a.country && a.country.toLowerCase().includes(term))
     );
   }
-  
 
+  // 📄 Pagination
+  get pagedAccommodations() {
+    const start = (this.page - 1) * this.pageSize;
+    return this.filteredAccommodations.slice(start, start + this.pageSize);
+  }
+
+  get totalPages() {
+    return Math.ceil(this.filteredAccommodations.length / this.pageSize);
+  }
+
+  // ➕ Neue Unterkunft hinzufügen
   addAccommodation(): void {
+    if (!this.newAccommodation.name.trim()) {
+      alert('❗ Bitte gib einen Namen ein.');
+      return;
+    }
+
     const payload = {
       name: this.newAccommodation.name,
-      city: this.newAccommodation.location,   // oder city
-      total_beds: this.newAccommodation.capacity, // falls du das mappen willst
+      city: this.newAccommodation.location,
+      total_beds: this.newAccommodation.capacity,
     };
-  
+
     this.accommodationService.create(payload).subscribe({
       next: () => {
         alert(`✅ Unterkunft "${this.newAccommodation.name}" hinzugefügt.`);
@@ -73,13 +95,13 @@ export class AccommodationsAdmin implements OnInit {
       }
     });
   }
-  
-  
 
+  // ✏️ Unterkunft bearbeiten
   editAccommodation(item: any): void {
     this.editingAccommodation = { ...item };
   }
 
+  // 💾 Änderungen speichern
   saveAccommodation(): void {
     if (!this.editingAccommodation) return;
 
@@ -98,6 +120,7 @@ export class AccommodationsAdmin implements OnInit {
       });
   }
 
+  // 🗑️ Unterkunft löschen
   deleteAccommodation(id: string, name: string): void {
     if (!confirm(`Willst du die Unterkunft "${name}" wirklich löschen?`)) return;
 

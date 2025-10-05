@@ -1,36 +1,45 @@
 <div class="admin-container">
     <h1>🛍️ Produkte verwalten</h1>
 
-    <!-- Neues Produkt -->
+    @if (loading) {
+    <p class="loading">⏳ Produkte werden geladen...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else {
+
+    <!-- ➕ Neues Produkt -->
     <section class="form-section">
-        <h2>Neues Produkt hinzufügen</h2>
+        <h2>➕ Neues Produkt hinzufügen</h2>
+
         <form (ngSubmit)="addProduct()">
             <div class="form-group">
                 <label for="name">Produktname:</label>
                 <input id="name" type="text" [(ngModel)]="newProduct.name" name="name"
-                    placeholder="z. B. Startnummern-Set" required>
+                    placeholder="z. B. Startnummern-Set" required />
             </div>
 
             <div class="form-group">
                 <label for="price">Preis (€):</label>
                 <input id="price" type="number" [(ngModel)]="newProduct.price" name="price" min="0" step="0.01"
-                    required>
+                    required />
             </div>
 
             <button type="submit" class="primary">Hinzufügen</button>
         </form>
     </section>
 
-    <!-- Produktliste -->
+    <!-- 📋 Produktliste -->
     <section class="list-section">
-        <h2>Bestehende Produkte</h2>
+        <h2>📦 Bestehende Produkte</h2>
 
-        <!-- 🔍 Filter -->
-        <input type="text" [(ngModel)]="searchTerm" placeholder="Nach Produktname oder Preis suchen..."
+        <!-- 🔍 Suchfeld -->
+        <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Nach Produktname oder Preis suchen..."
             class="search-input" />
 
-
-        <table class="product-table">
+        @if (filteredProducts.length === 0) {
+        <p>Keine passenden Produkte gefunden.</p>
+        } @else {
+        <table class="user-table">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -39,11 +48,11 @@
                 </tr>
             </thead>
             <tbody>
-                @for (p of filteredProducts; track p.id) {
+                @for (p of pagedProducts; track p.id) {
                 <tr>
                     <td>
                         @if (editingProduct?.id === p.id) {
-                        <input [(ngModel)]="editingProduct.name">
+                        <input [(ngModel)]="editingProduct.name" />
                         } @else {
                         {{ p.name }}
                         }
@@ -51,7 +60,7 @@
 
                     <td>
                         @if (editingProduct?.id === p.id) {
-                        <input type="number" [(ngModel)]="editingProduct.price" min="0" step="0.01">
+                        <input type="number" [(ngModel)]="editingProduct.price" min="0" step="0.01" />
                         } @else {
                         {{ p.price | number: '1.2-2' }}
                         }
@@ -63,12 +72,21 @@
                         <button (click)="cancelEdit()">Abbrechen</button>
                         } @else {
                         <button class="secondary" (click)="editProduct(p)">Bearbeiten</button>
-                        <button class="danger" (click)="deleteProduct(p.id)">Löschen</button>
+                        <button class="danger" (click)="deleteProduct(p.id, p.name)">Löschen</button>
                         }
                     </td>
                 </tr>
                 }
             </tbody>
         </table>
+
+        <!-- 📄 Pagination -->
+        <div class="pagination">
+            <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
+            <span>Seite {{ page }} / {{ totalPages }}</span>
+            <button (click)="page = page + 1" [disabled]="page === totalPages">▶️ Weiter</button>
+        </div>
+        }
     </section>
+    }
 </div>
