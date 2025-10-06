@@ -1,11 +1,12 @@
 // backend/controllers/belegungController.js
-const { Belegung } = require("../models");
+const { Belegung, Person, sequelize, Event } = require("../models");
 const belegungSchema = require("../validators/belegungValidator");
+
 
 // 🔹 Neue Belegung anlegen (Event-Anmeldung)
 exports.createBelegung = async (req, res, next) => {
     try {
-        console.log("📩 Neue Belegung erhalten:", req.body); // <---- WICHTIG!
+        console.log("📩 Neue Belegung erhalten:", req.body);
 
         const { id_event, id_person } = req.body;
         if (!id_event || !id_person) {
@@ -28,28 +29,32 @@ exports.createBelegung = async (req, res, next) => {
 
 
 // 🔹 Alle Belegungen abrufen
-exports.getAllBelegungen = async (req, res, next) => {
+exports.getAllBelegungen = async (_req, res) => {
     try {
         const belegungen = await Belegung.findAll();
         res.json(belegungen);
     } catch (err) {
-        next(err);
+        console.error(err);
+        res.status(500).json({ message: "Fehler beim Abrufen der Belegungen" });
     }
 };
 
+
 // 🔹 Belegung nach ID abrufen
-exports.getBelegungById = async (req, res, next) => {
+exports.getBelegungById = async (req, res) => {
     try {
         const belegung = await Belegung.findByPk(req.params.id);
         if (!belegung) return res.status(404).json({ error: "Belegung nicht gefunden" });
         res.json(belegung);
     } catch (err) {
-        next(err);
+        console.error(err);
+        res.status(500).json({ message: "Fehler beim Abrufen" });
     }
 };
 
+
 // 🔹 Belegung aktualisieren
-exports.updateBelegung = async (req, res, next) => {
+exports.updateBelegung = async (req, res) => {
     try {
         const { error } = belegungSchema.validate(req.body);
         if (error) return res.status(400).json({ error: error.details[0].message });
@@ -60,12 +65,14 @@ exports.updateBelegung = async (req, res, next) => {
         await belegung.update(req.body);
         res.json(belegung);
     } catch (err) {
-        next(err);
+        console.error(err);
+        res.status(500).json({ message: "Fehler beim Aktualisieren" });
     }
 };
 
+
 // 🔹 Belegung löschen
-exports.deleteBelegung = async (req, res, next) => {
+exports.deleteBelegung = async (req, res) => {
     try {
         const belegung = await Belegung.findByPk(req.params.id);
         if (!belegung) return res.status(404).json({ error: "Belegung nicht gefunden" });
@@ -73,6 +80,66 @@ exports.deleteBelegung = async (req, res, next) => {
         await belegung.destroy();
         res.json({ message: "Belegung gelöscht" });
     } catch (err) {
-        next(err);
+        console.error(err);
+        res.status(500).json({ message: "Fehler beim Löschen" });
+    }
+};
+
+
+// ✅ Liste aller Anmeldungen für ein Event inkl. Personendaten
+exports.getByEventId = async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        console.log("🔍 Lade Belegungen für Event:", eventId);
+
+        const belegungen = await Belegung.findAll({
+            where: { id_event: eventId },
+            include: [
+                {
+                    model: Person,
+                    as: "person",
+                    attributes: ["id", "first_name", "last_name", "email"]
+                },
+                {
+                    model: Event,
+                    as: "event",
+                    attributes: ["id", "name", "start_date", "end_date"]
+                }
+            ],
+        });
+
+        if (!belegungen || belegungen.length === 0) {
+            return res.status(404).json({ message: "Keine Anmeldungen gefunden." });
+        }
+
+        res.json(belegungen);
+    } catch (err) {
+        console.error("❌ Fehler beim Abrufen der Belegungen:", err);
+        res.status(500).json({ error: "Serverfehler beim Laden der Belegungen" });
+    }
+};
+
+
+// ✅ Zählwerte: Anzahl Anmeldungen pro Event (für Admin-Übersicht)
+exports.getCountByEvent = async (_req, res) => {
+    try {
+        const rows = await Belegung.findAll({
+            attributes: [
+                "id_event",
+                [sequelize.fn("COUNT", sequelize.col("id_event")), "count"],
+            ],
+            group: ["id_event"],
+            raw: true,
+        });
+
+        const counts = rows.reduce((acc, r) => {
+            acc[r.id_event] = Number(r.count);
+            return acc;
+        }, {});
+
+        res.json(counts);
+    } catch (err) {
+        console.error("❌ Fehler bei Count-Query:", err);
+        res.status(500).json({ message: "Serverfehler bei Count-Query" });
     }
 };

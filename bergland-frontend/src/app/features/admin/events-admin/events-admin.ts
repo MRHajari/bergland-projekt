@@ -1,7 +1,10 @@
+// frontend/src/app/features/admin/events-admin/events-admin.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { EventService } from '../../../core/services/event.service';
+import { BelegungService } from '../../../core/services/belegung.service';
 
 @Component({
   selector: 'app-events-admin',
@@ -23,7 +26,14 @@ export class EventsAdmin implements OnInit {
   page = 1;
   pageSize = 10;
 
-  constructor(private eventService: EventService) {}
+  // ➕ Counts Map
+  countsMap: Record<string, number> = {};
+
+  constructor(
+    private eventService: EventService,
+    private belegungService: BelegungService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadEvents();
@@ -40,12 +50,24 @@ export class EventsAdmin implements OnInit {
           start_date: this.formatDate(e.start_date),
           end_date: this.formatDate(e.end_date)
         }));
+        // ➕ Counts nachladen (separat)
+        this.loadCounts();
         this.loading = false;
       },
       error: (err) => {
         console.error('Fehler beim Laden der Events:', err);
         this.errorMessage = '❌ Fehler beim Laden der Events.';
         this.loading = false;
+      }
+    });
+  }
+
+  private loadCounts(): void {
+    this.belegungService.getCountsByEvent().subscribe({
+      next: (map) => (this.countsMap = map || {}),
+      error: (err) => {
+        console.warn('Konnte Anmeldungszahlen nicht laden:', err);
+        this.countsMap = {};
       }
     });
   }
@@ -136,5 +158,10 @@ export class EventsAdmin implements OnInit {
 
   cancelEdit(): void {
     this.editingEvent = null;
+  }
+
+  // ➕ Navigation zu Detail-Ansicht der Anmeldungen
+  viewRegistrations(eventId: string): void {
+    this.router.navigate(['/admin/events', eventId, 'teilnehmer']);
   }
 }

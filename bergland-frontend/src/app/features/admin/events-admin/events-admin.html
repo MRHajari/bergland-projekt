@@ -50,12 +50,15 @@
         @if (filteredEvents.length === 0) {
         <p>Keine passenden Events gefunden.</p>
         } @else {
+        <!-- ... oberer Teil unverändert ... -->
+
         <table class="user-table">
             <thead>
                 <tr>
                     <th>Name</th>
                     <th>Startdatum</th>
                     <th>Enddatum</th>
+                    <th>Anmeldungen</th> <!-- ➕ neu -->
                     <th>Aktionen</th>
                 </tr>
             </thead>
@@ -87,18 +90,24 @@
                     </td>
 
                     <td>
+                        {{ countsMap[e.id] || 0 }} <!-- ➕ Anzahl -->
+                    </td>
+
+                    <td>
                         @if (editingEvent?.id === e.id) {
                         <button class="primary" (click)="saveEvent()">Speichern</button>
                         <button (click)="cancelEdit()">Abbrechen</button>
                         } @else {
                         <button class="secondary" (click)="editEvent(e)">Bearbeiten</button>
                         <button class="danger" (click)="deleteEvent(e.id, e.name)">Löschen</button>
+                        <button (click)="viewRegistrations(e.id)">👥 Details</button> <!-- ➕ neu -->
                         }
                     </td>
                 </tr>
                 }
             </tbody>
         </table>
+
 
         <!-- 📄 Pagination -->
         <div class="pagination">

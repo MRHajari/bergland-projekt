@@ -17,4 +17,14 @@ export class BelegungService {
       id_person: userId
     });
   }
+
+  // ➕ Anzahl pro Event (Map { [eventId]: number })
+  getCountsByEvent(): Observable<Record<string, number>> {
+    return this.http.get<Record<string, number>>(`${this.apiUrl}/stats/count-by-event`);
+  }
+
+  // ➕ Teilnehmerliste für ein Event
+  getByEvent(eventId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/event/${eventId}`);
+  }
 }

@@ -1,31 +1,36 @@
 // backend/models/belegung.js
 module.exports = (sequelize, DataTypes) => {
-    const Belegung = sequelize.define(
-        "Belegung",
-        {
-            id_belegung: {
-                type: DataTypes.INTEGER,
-                primaryKey: true,
-                autoIncrement: true,
-            },
-            id_unterkunft: {
-                type: DataTypes.INTEGER,
-                allowNull: true,
-            },
-            id_event: {
-                type: DataTypes.UUID, // ✅ UUID, passend zu Event.id
-                allowNull: false,
-            },
-            id_person: {
-                type: DataTypes.INTEGER, // ✅ Person-ID (vermutlich INT)
-                allowNull: false,
-            },
+    const Belegung = sequelize.define("Belegung", {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
         },
-        {
-            tableName: "belegung",
-            timestamps: false,
-        }
-    );
+        id_event: {
+            type: DataTypes.UUID,
+            allowNull: false,
+        },
+        id_person: {
+            type: DataTypes.UUID,
+            allowNull: false,
+        },
+    }, {
+        tableName: "belegung",
+        timestamps: true,
+    });
+
+    // 🔹 Beziehungen
+    Belegung.associate = (models) => {
+        Belegung.belongsTo(models.Person, {
+            foreignKey: "id_person",
+            as: "person",
+        });
+
+        Belegung.belongsTo(models.Event, {
+            foreignKey: "id_event",
+            as: "event",
+        });
+    };
 
     return Belegung;
 };

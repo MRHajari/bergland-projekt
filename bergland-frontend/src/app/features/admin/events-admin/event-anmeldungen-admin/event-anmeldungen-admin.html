@@ -1,0 +1,42 @@
+<div class="admin-container">
+    <button class="link" (click)="goBack()">← Zurück zur Eventliste</button>
+
+    <h1>👥 Anmeldungen für: {{ event?.name || '—' }}</h1>
+
+    @if (loading) {
+    <p class="loading">⏳ Lädt...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else {
+    <div class="toolbar">
+        <div>
+            <strong>Gesamt:</strong> {{ teilnehmer.length }}
+        </div>
+        <input type="text" [(ngModel)]="search" placeholder="🔍 Teilnehmer suchen (Name, E-Mail)"
+            class="search-input" />
+    </div>
+
+    @if (filteredTeilnehmer.length === 0) {
+    <p>Keine Teilnehmer gefunden.</p>
+    } @else {
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>Vorname</th>
+                <th>Nachname</th>
+                <th>E-Mail</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (t of filteredTeilnehmer; track t.id_person) {
+            <tr>
+                <td>{{ t.person?.first_name || '—' }}</td>
+                <td>{{ t.person?.last_name || '—' }}</td>
+                <td>{{ t.person?.email || '—' }}</td>
+            </tr>
+            }
+        </tbody>
+    </table>
+    }
+    }
+</div>
