@@ -9,8 +9,11 @@ const storage = path.isAbsolute(storageRel)
 
 console.log("[Sequelize CLI] SQLite storage:", storage);
 
+const logging = process.env.DB_LOGGING === 'true' ? console.log : false;
+
 module.exports = {
-    development: { dialect: 'sqlite', storage, logging: console.log },
+    development: { dialect: 'sqlite', storage, logging },
     test: { dialect: 'sqlite', storage: ':memory:', logging: false },
     production: { dialect: 'sqlite', storage, logging: false },
 };
+

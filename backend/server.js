@@ -4,6 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const { sequelize, Person, LoginData } = require("./models");
 const bcrypt = require("bcrypt");
+const belegungRoutes = require('./routes/belegungRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,6 +35,7 @@ app.use("/api/routes", require("./routes/routeRoutes"));
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use('/api/belegung', belegungRoutes);
 
 // ============================================================
 // ✅ Funktion: Standard-Admin automatisch anlegen
@@ -90,11 +92,11 @@ async function ensureAdminUser() {
 }
 
 // ============================================================
-// ✅ Server starten (nach DB-Sync)
+// ✅ Server starten (nach DB-Sync) only vor dewelopmen
 // ============================================================
 sequelize
     // ⚙️ Nutze "alter: true", nicht "altest" (Tippfehler!)
-    .sync({ alter: true })
+    .sync()
     .then(async () => {
         console.log("📦 Database connected");
 
@@ -109,3 +111,9 @@ sequelize
     .catch((err) => {
         console.error("❌ Database connection failed:", err);
     });
+
+
+
+setInterval(async () => {
+    await Token.destroy({ where: { expires_at: { [Op.lt]: new Date() } } });
+}, 24 * 60 * 60 * 1000); // einmal pro Tag

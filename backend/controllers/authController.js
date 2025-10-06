@@ -1,25 +1,29 @@
-// backend/controllers/authController.js
-const { Person, LoginData } = require("../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { registerSchema, loginSchema } = require("../validators/authValidator");
+const { Person, LoginData, Token } = require("../models"); // ✅ nur diese Zeile!
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "2h";
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
 
-// ✅ Refresh-Token-Speicher (einfach für Entwicklung)
-let refreshTokens = [];
-
 // 🔹 Token-Generatoren
 function generateAccessToken(payload) {
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
-function generateRefreshToken(payload) {
+async function generateRefreshToken(payload) {
     const token = jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
-    refreshTokens.push(token);
+    const decoded = jwt.decode(token);
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    await Token.create({
+        person_id: payload.user.id, // ✅ angepasst auf deine neue Payload-Struktur
+        token,
+        expires_at: expiresAt,
+    });
+
     return token;
 }
 
@@ -73,30 +77,23 @@ exports.login = async (req, res, next) => {
         await login.update({ last_login_at: new Date() });
 
         const payload = {
-            id: person.id,
-            role: login.role,
-            first_name: person.first_name,
-            last_name: person.last_name,
-            email: person.email
+            user: {
+                id: person.id,
+                email: person.email,
+                first_name: person.first_name,
+                last_name: person.last_name,
+                role: login.role,
+            },
         };
 
         // ✅ Tokens generieren
         const accessToken = generateAccessToken(payload);
-        const refreshToken = generateRefreshToken(payload);
-
-        // ❌ Diese Zeile war der Bug – sie löscht den neuen Token wieder
-        // refreshTokens = refreshTokens.filter((t) => t !== refreshToken);
+        const refreshToken = await generateRefreshToken(payload);
 
         res.json({
             accessToken,
             refreshToken,
-            user: {
-                id: person.id,
-                email: person.email,
-                role: login.role,
-                first_name: person.first_name,
-                last_name: person.last_name,
-            },
+            user: payload.user,
         });
     } catch (err) {
         next(err);
@@ -104,31 +101,38 @@ exports.login = async (req, res, next) => {
 };
 
 // 🔹 Token-Refresh
-exports.refreshToken = (req, res) => {
+exports.refreshToken = async (req, res) => {
     const { token } = req.body || {};
     if (!token) return res.status(401).json({ error: "No token provided" });
-    if (!refreshTokens.includes(token)) return res.status(403).json({ error: "Invalid refresh token" });
 
-    jwt.verify(token, JWT_REFRESH_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ error: "Invalid refresh token" });
+    const storedToken = await Token.findOne({ where: { token, revoked: false } });
+    if (!storedToken) return res.status(403).json({ error: "Invalid or revoked token" });
 
-        // Neue Tokens ausstellen
-        const newAccessToken = generateAccessToken({ id: user.id, role: user.role });
-        const newRefreshToken = generateRefreshToken({ id: user.id, role: user.role });
+    try {
+        const { user } = jwt.verify(token, JWT_REFRESH_SECRET);
 
-        // Alten Refresh-Token entfernen (ersetzt durch neuen)
-        refreshTokens = refreshTokens.filter((t) => t !== token);
+        const newAccessToken = generateAccessToken({ user });
+        const newRefreshToken = await generateRefreshToken({ user });
 
-        // ⛔ Diese Zeile war doppelt (generateRefreshToken pusht schon automatisch)
-        // refreshTokens.push(newRefreshToken);
+        storedToken.revoked = true;
+        await storedToken.save();
 
         res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
-    });
+    } catch (err) {
+        res.status(403).json({ error: "Invalid refresh token" });
+    }
 };
 
 // 🔹 Logout
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
     const { token } = req.body || {};
-    refreshTokens = refreshTokens.filter((t) => t !== token);
+    if (!token) return res.status(400).json({ error: "No token provided" });
+
+    const storedToken = await Token.findOne({ where: { token } });
+    if (storedToken) {
+        storedToken.revoked = true;
+        await storedToken.save();
+    }
+
     res.json({ message: "Logged out successfully" });
 };

@@ -93,8 +93,22 @@ refreshToken(): Observable<any> {
     if (!token) return null;
   
     try {
-      const payload = jwtDecode<{ role?: string }>(token);
-      return payload.role || null;
+      const payload = jwtDecode<{ user?: { role?: string } }>(token);
+      return payload.user?.role || null;
+    } catch (error) {
+      console.error('Fehler beim Token-Dekodieren:', error);
+      return null;
+    }
+  }
+  
+  
+  getUserId(): number | null {
+    const token = this.getAccessToken();
+    if (!token) return null;
+  
+    try {
+      const payload = jwtDecode<{ user?: { id?: number } }>(token);
+      return payload.user?.id || null;
     } catch {
       return null;
     }
