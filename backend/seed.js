@@ -57,6 +57,7 @@ const {
         // =====================================================
         const users = [
             { first_name: "Admin", last_name: "User", email: "admin@test.com", password: "Admin123!", role: "admin" },
+            { first_name: "Admin1", last_name: "User", email: "admin1@test.com", password: "Admin123!", role: "admin" },
             { first_name: "Anna", last_name: "Berg", email: "anna@example.com", password: "Passwort123", role: "user" },
             { first_name: "Tom", last_name: "Lauf", email: "tom@example.com", password: "Passwort123", role: "user" },
             { first_name: "Lisa", last_name: "See", email: "lisa@example.com", password: "Passwort123", role: "admin" },

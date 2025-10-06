@@ -117,3 +117,9 @@ npm run dev
 ```bash
 git clone <repo-url>
 cd backend
+
+
+##### seed
+db/database.sqlite
+rm db/database.sqlite
+node seed.js

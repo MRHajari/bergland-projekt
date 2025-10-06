@@ -9,6 +9,7 @@ import { Events } from './features/events/events';
 import { Booking } from './features/booking/booking';
 import { Profile } from './features/profile/profile';
 import { Products } from './features/products/products';
+import { EventDetail } from './features/events/event-detail.ts/event-detail';
 
 // 🔹 Admin-Bereich
 import { AdminDashboard } from './features/admin/admin-dashboard/admin-dashboard';
@@ -46,14 +47,15 @@ export const routes: Routes = [
     children: [
       // 👤 Benutzerbereich
       { path: 'events', component: Events },
+      { path: 'event-detail/:id', component: EventDetail },
       { path: 'products', component: Products },
       { path: 'booking', component: Booking, canActivate: [authGuard] },
       { path: 'profile', component: Profile, canActivate: [authGuard] },
-
+  
       // ⚙️ Adminbereich
       {
         path: 'admin',
-        canActivate: [adminGuard], // Zugriff NUR für Admins
+        canActivate: [adminGuard],
         children: [
           { path: '', component: AdminDashboard },
           { path: 'products', component: ProductsAdmin },

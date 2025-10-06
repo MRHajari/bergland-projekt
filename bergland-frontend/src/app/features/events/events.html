@@ -1,13 +1,28 @@
-<h2>Upcoming Events</h2>
+<section class="events-page">
+    <h2 class="page-title">🏔️ Kommende Events</h2>
 
-<div *ngIf="loading">Loading events...</div>
-<div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+    <div *ngIf="loading" class="loading">⏳ Events werden geladen...</div>
+    <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
 
-<div *ngIf="!loading && !errorMessage" class="event-list">
-    <div class="event-card" *ngFor="let event of events">
-        <h3>{{ event.name }}</h3>
-        <p>{{ event.description }}</p>
-        <p><strong>Date:</strong> {{ event.date | date }}</p>
-        <p><strong>Location:</strong> {{ event.location }}</p>
+    <div *ngIf="!loading && !errorMessage" class="event-grid">
+        <article class="event-card" *ngFor="let event of events">
+            <header>
+                <h3>{{ event.name }}</h3>
+                <p class="date">
+                    📅 {{ event.start_date }}
+                    <span *ngIf="event.end_date && event.start_date !== event.end_date">
+                        – {{ event.end_date }}
+                    </span>
+                </p>
+            </header>
+
+            <p class="description">{{ event.description }}</p>
+
+            <footer>
+                <button class="details-btn" [routerLink]="['/event-detail', event.id]">
+                    Details ansehen
+                </button>
+            </footer>
+        </article>
     </div>
-</div>
+</section>

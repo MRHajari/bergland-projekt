@@ -8,7 +8,13 @@ const bcrypt = require("bcrypt");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// ✅ CORS ganz oben!
+app.use(cors({
+    origin: '*', // im Dev erlaubt alle
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(bodyParser.json());
 
 // ✅ Root test
@@ -29,14 +35,9 @@ app.use("/api/invoices", require("./routes/invoiceRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 
-// ❌ Entfernt, weil keine Online-Zahlung verwendet wird
-// app.use("/api/payments", require("./routes/paymentRoutes"));
-// app.use("/api/payment-integration", require("./routes/paymentIntegrationRoutes"));
-
 // ============================================================
 // ✅ Funktion: Standard-Admin automatisch anlegen
 // ============================================================
-
 async function ensureAdminUser() {
     try {
         const adminEmail = "admin@test.com";
@@ -62,7 +63,6 @@ async function ensureAdminUser() {
             }
             return;
         }
-
 
         // Hash Passwort
         const hashedPassword = await bcrypt.hash(adminPassword, 10);
@@ -93,8 +93,8 @@ async function ensureAdminUser() {
 // ✅ Server starten (nach DB-Sync)
 // ============================================================
 sequelize
-    // ⚙️ Tipp: für Entwicklung einmalig auf { force: true } stellen, um alte Tabellen zu löschen
-    .sync({ altest: true })
+    // ⚙️ Nutze "alter: true", nicht "altest" (Tippfehler!)
+    .sync({ alter: true })
     .then(async () => {
         console.log("📦 Database connected");
 
@@ -102,7 +102,7 @@ sequelize
         await ensureAdminUser();
 
         // Server starten
-        app.listen(PORT, () => {
+        app.listen(PORT, "0.0.0.0", () => { // wichtig für mobiles Testen!
             console.log(`🚀 Server running at http://localhost:${PORT}`);
         });
     })

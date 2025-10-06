@@ -1,0 +1,31 @@
+<div class="detail-container">
+
+    @if (loading) {
+    <div class="loading">⏳ Wird geladen...</div>
+    } @else if (errorMessage) {
+    <div class="error">{{ errorMessage }}</div>
+    } @else if (event) {
+
+    <button class="back-btn" (click)="goBack()">← Zurück</button>
+
+    <div class="event-header">
+        <h2>{{ event.name }}</h2>
+        <p class="date">
+            📅 {{ event.start_date | date: 'longDate' }}
+            @if (event.end_date) {
+            <span> – {{ event.end_date | date: 'longDate' }}</span>
+            }
+        </p>
+    </div>
+
+    <p class="description">{{ event.description }}</p>
+
+    <div class="event-info">
+        <p><strong>Ort:</strong> {{ event.location || 'Noch nicht angegeben' }}</p>
+        <p><strong>Status:</strong> Aktiv</p>
+    </div>
+
+    <button class="register-btn">Jetzt anmelden</button>
+    }
+
+</div>
