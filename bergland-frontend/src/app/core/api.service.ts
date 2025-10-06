@@ -32,7 +32,7 @@ export class ApiService {
     return this.http.put<T>(`${this.baseUrl}/${url}`, data);
   }
 
-  delete<T>(endpoint: string, id: number | string): Observable<T> {
+  delete<T>(endpoint: string, id: string): Observable<T> {
     return this.http.delete<T>(`${this.baseUrl}/${endpoint}/${id}`);
   }
 }

@@ -102,12 +102,12 @@ refreshToken(): Observable<any> {
   }
   
   
-  getUserId(): number | null {
+  getUserId(): string | null {
     const token = this.getAccessToken();
     if (!token) return null;
   
     try {
-      const payload = jwtDecode<{ user?: { id?: number } }>(token);
+      const payload = jwtDecode<{ user?: { id?: string } }>(token);
       return payload.user?.id || null;
     } catch {
       return null;

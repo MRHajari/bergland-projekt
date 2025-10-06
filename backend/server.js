@@ -95,7 +95,7 @@ async function ensureAdminUser() {
 // ✅ Server starten (nach DB-Sync) only vor dewelopmen
 // ============================================================
 sequelize
-    // ⚙️ Nutze "alter: true", nicht "altest" (Tippfehler!)
+    // ⚙️ Nutze "alter: true"
     .sync()
     .then(async () => {
         console.log("📦 Database connected");

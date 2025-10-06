@@ -1,4 +1,3 @@
-// backend/validators/belegungValidator.js
 const Joi = require("joi");
 
 module.exports = Joi.object({
@@ -6,9 +5,9 @@ module.exports = Joi.object({
         "string.guid": "Event-ID muss eine gültige UUID sein.",
         "any.required": "Event-ID ist erforderlich.",
     }),
-    id_person: Joi.number().integer().required().messages({
+    id_person: Joi.string().uuid().required().messages({
+        "string.guid": "Person-ID muss eine gültige UUID sein.",
         "any.required": "Person-ID ist erforderlich.",
-        "number.base": "Person-ID muss eine Zahl sein.",
     }),
-    id_unterkunft: Joi.number().integer().optional().allow(null),
+    id_unterkunft: Joi.string().uuid().optional().allow(null),
 });

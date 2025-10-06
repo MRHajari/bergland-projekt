@@ -63,14 +63,15 @@ export class EventsAdmin implements OnInit {
   }
 
   private loadCounts(): void {
-    this.belegungService.getCountsByEvent().subscribe({
-      next: (map) => (this.countsMap = map || {}),
-      error: (err) => {
+    this.belegungService.getCountByEvent().subscribe({
+      next: (map: any) => (this.countsMap = map || {}),
+      error: (err: any) => {
         console.warn('Konnte Anmeldungszahlen nicht laden:', err);
         this.countsMap = {};
       }
     });
   }
+  
 
   private formatDate(dateStr: string): string {
     if (!dateStr) return '';
