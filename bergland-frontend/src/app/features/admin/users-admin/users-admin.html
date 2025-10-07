@@ -26,6 +26,7 @@
                     <th>Vorname</th>
                     <th>Nachname</th>
                     <th>Email</th>
+                    <th>Geburtsdatum</th>
                     <th>Rolle</th>
                     <th>Aktionen</th>
                 </tr>
@@ -36,6 +37,9 @@
                     <td>{{ u.first_name }}</td>
                     <td>{{ u.last_name }}</td>
                     <td>{{ u.email }}</td>
+                    <td>
+                        {{ u.birth_date ? (u.birth_date | date:'dd.MM.yyyy') : '–' }}
+                    </td>
                     <td>
                         <select [(ngModel)]="u.role">
                             <option value="user">User</option>
@@ -66,6 +70,7 @@
                     <th>Vorname</th>
                     <th>Nachname</th>
                     <th>Email</th>
+                    <th>Geburtsdatum</th>
                     <th>Rolle</th>
                     <th>Aktionen</th>
                 </tr>
@@ -76,6 +81,9 @@
                     <td>{{ u.first_name }}</td>
                     <td>{{ u.last_name }}</td>
                     <td>{{ u.email }}</td>
+                    <td>
+                        {{ u.birth_date ? (u.birth_date | date:'dd.MM.yyyy') : '–' }}
+                    </td>
                     <td>
                         <select [(ngModel)]="u.role">
                             <option value="user">User</option>
@@ -93,9 +101,13 @@
 
         <!-- 📄 Pagination -->
         <div class="pagination">
-            <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
+            <button (click)="page = page - 1" [disabled]="page === 1">
+                ◀️ Zurück
+            </button>
             <span>Seite {{ page }} / {{ totalPages }}</span>
-            <button (click)="page = page + 1" [disabled]="page === totalPages">▶️ Weiter</button>
+            <button (click)="page = page + 1" [disabled]="page === totalPages">
+                ▶️ Weiter
+            </button>
         </div>
         }
     </section>

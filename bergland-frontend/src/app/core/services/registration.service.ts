@@ -1,3 +1,4 @@
+// frontend/src/app/core/services/registration.service.ts
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../api.service';
@@ -6,12 +7,12 @@ import { ApiService } from '../api.service';
   providedIn: 'root'
 })
 export class RegistrationService {
-  private endpoint = 'registrations';
+  private endpoint = 'registrations'; // ruft /api/registrations auf (Event-Anmeldung)
 
   constructor(private api: ApiService) {}
 
   getAll(): Observable<any[]> {
-    return this.api.get(this.endpoint);
+    return this.api.get<any[]>(this.endpoint);
   }
 
   getById(id: string): Observable<any> {

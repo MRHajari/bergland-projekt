@@ -16,7 +16,7 @@ export class UsersAdmin implements OnInit {
   loading = false;
   errorMessage: string | null = null;
 
-  // 🔍 Such- und Pagination-Variablen
+  // 🔍 Search and pagination
   searchTerm = '';
   page = 1;
   pageSize = 20;
@@ -30,6 +30,7 @@ export class UsersAdmin implements OnInit {
     this.loadUsers();
   }
 
+  // 🔹 Load all users
   loadUsers(): void {
     this.loading = true;
     this.errorMessage = null;
@@ -47,7 +48,7 @@ export class UsersAdmin implements OnInit {
     });
   }
 
-  // 🔹 Gefilterte Benutzer
+  // 🔹 Filtered users
   get adminUsers() {
     return this.users.filter(u =>
       u.role === 'admin' && this.matchesSearch(u)
@@ -60,7 +61,7 @@ export class UsersAdmin implements OnInit {
     );
   }
 
-  // 🔍 Filterlogik
+  // 🔍 Search logic
   private matchesSearch(u: any): boolean {
     if (!this.searchTerm.trim()) return true;
     const term = this.searchTerm.toLowerCase();
@@ -71,7 +72,7 @@ export class UsersAdmin implements OnInit {
     );
   }
 
-  // 🔹 Pagination für normale Benutzer
+  // 🔹 Pagination for normal users
   get pagedNormalUsers() {
     const start = (this.page - 1) * this.pageSize;
     return this.normalUsers.slice(start, start + this.pageSize);
@@ -81,6 +82,7 @@ export class UsersAdmin implements OnInit {
     return Math.ceil(this.normalUsers.length / this.pageSize);
   }
 
+  // 🔹 Save role changes
   saveUser(user: any): void {
     this.loginDataService.updateRole(user.id, user.role).subscribe({
       next: () => {
@@ -93,6 +95,7 @@ export class UsersAdmin implements OnInit {
     });
   }
 
+  // 🔹 Delete user
   deleteUser(id: string, email: string): void {
     if (!confirm(`Willst du den Benutzer "${email}" wirklich löschen?`)) return;
 

@@ -74,6 +74,7 @@ async function ensureAdminUser() {
             first_name: "System",
             last_name: "Administrator",
             email: adminEmail,
+            birth_date: "2000-01-01", // 🆕 Geburtsdatum hinzugefügt
         });
 
         // LoginData mit Adminrolle anlegen
@@ -95,22 +96,24 @@ async function ensureAdminUser() {
 // ✅ Server starten (nach DB-Sync) only vor dewelopmen
 // ============================================================
 sequelize
-    // ⚙️ Nutze "alter: true"
-    .sync()
-    .then(async () => {
+// ⚙️ Nutze "alter: true"
+async function startServer() {
+    try {
+        await sequelize.sync({ force: true }); // oder .sync()
         console.log("📦 Database connected");
 
-        // Admin prüfen/erstellen
         await ensureAdminUser();
 
-        // Server starten
-        app.listen(PORT, "0.0.0.0", () => { // wichtig für mobiles Testen!
+        app.listen(PORT, "0.0.0.0", () => {
             console.log(`🚀 Server running at http://localhost:${PORT}`);
         });
-    })
-    .catch((err) => {
+    } catch (err) {
         console.error("❌ Database connection failed:", err);
-    });
+    }
+}
+
+startServer();
+
 
 
 

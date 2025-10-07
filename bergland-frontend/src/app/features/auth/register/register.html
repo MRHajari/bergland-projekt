@@ -1,5 +1,5 @@
-<div class="auth-page">
-    <div class="auth-card">
+<div class="register-page">
+    <div class="register-card">
         <div class="logo">
             <img src="assets/logo.svg" alt="Pfälzer Bergland Logo" />
         </div>
@@ -19,6 +19,13 @@
             <div class="error">Nachname erforderlich</div>
             }
 
+            <!-- 🆕 Neues Feld: Geburtsdatum -->
+            <label>Geburtsdatum</label>
+            <input type="date" formControlName="birth_date" />
+            @if (registerForm.get('birth_date')?.invalid && registerForm.get('birth_date')?.touched) {
+            <div class="error">Geburtsdatum erforderlich</div>
+            }
+
             <label>Email</label>
             <input type="email" formControlName="email" placeholder="Deine Email" />
             @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
@@ -31,7 +38,7 @@
             <div class="error">Passwort min. 6 Zeichen</div>
             }
 
-            <button type="submit" class="secondary" [disabled]="loading">Registrieren</button>
+            <button type="submit" class="primary" [disabled]="loading">Registrieren</button>
         </form>
 
         @if (errorMessage) {

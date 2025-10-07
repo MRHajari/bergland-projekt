@@ -28,9 +28,11 @@ export class Register implements OnInit {
       first_name: ['', Validators.required],
       last_name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      birth_date: ['', Validators.required] // 🆕 hinzugefügt
     });
   }
+  
 
   onSubmit() {
     if (this.registerForm.invalid) return;

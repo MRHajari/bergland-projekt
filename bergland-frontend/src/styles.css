@@ -97,20 +97,20 @@
   
   button.primary {
     background-color: var(--primary-color);
-    color: #000;
+    color: var(--text-on-primary);
   }
   
   button.primary:hover {
-    background-color: #e6c200;
+    background-color: #016da2;
   }
   
   button.secondary {
     background-color: var(--secondary-color);
-    color: white;
+    color: var(--secondary-text-on);
   }
   
   button.secondary:hover {
-    background-color: #256629;
+    background-color: #34cad2;
   }
   
   /* ================================

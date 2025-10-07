@@ -1,23 +1,22 @@
+// frontend/src/app/core/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
-
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:3000/api/auth'; // Backend-URL
+  private apiUrl = 'http://localhost:3000/api/auth'; // ✅ Backend-Basis-URL
 
   constructor(private http: HttpClient) {}
 
-  // Register new user
+  // 🔹 Benutzer registrieren
   register(userData: {
     first_name: string;
     last_name: string;
+    birth_date: string;
     email: string;
     password: string;
     role?: string;
@@ -25,43 +24,36 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/register`, userData);
   }
 
-  // Login user
+  // 🔹 Login
   login(credentials: { email: string; password: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
       tap((res: any) => {
-        if (res.accessToken) {
-          localStorage.setItem('accessToken', res.accessToken);
-        }
-        if (res.refreshToken) {
-          localStorage.setItem('refreshToken', res.refreshToken);
-        }
+        if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
+        if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
       }),
       catchError((err) => {
-        console.error('Login failed', err);
+        console.error('Login fehlgeschlagen:', err);
         return throwError(() => err);
       })
     );
   }
 
-  // Refresh access token
- // Refresh access token
-refreshToken(): Observable<any> {
-  const token = localStorage.getItem('refreshToken');
-  return this.http.post(`${this.apiUrl}/refresh`, { token }).pipe(
-    tap((res: any) => {
-      if (res.accessToken) {
-        localStorage.setItem('accessToken', res.accessToken);
-      }
-      if (res.refreshToken) {
-        // 🔥 WICHTIG: neuen Refresh-Token auch speichern
-        localStorage.setItem('refreshToken', res.refreshToken);
-      }
-    })
-  );
-}
+  // 🔹 Refresh-Token
+  refreshToken(): Observable<any> {
+    const token = localStorage.getItem('refreshToken');
+    return this.http.post(`${this.apiUrl}/refresh`, { token }).pipe(
+      tap((res: any) => {
+        if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
+        if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
+      }),
+      catchError((err) => {
+        console.error('Token-Aktualisierung fehlgeschlagen:', err);
+        return throwError(() => err);
+      })
+    );
+  }
 
-
-  // Logout user
+  // 🔹 Logout
   logout(): Observable<any> {
     const token = localStorage.getItem('refreshToken');
     localStorage.removeItem('accessToken');
@@ -69,20 +61,20 @@ refreshToken(): Observable<any> {
     return this.http.post(`${this.apiUrl}/logout`, { token });
   }
 
-  // Helper methods
+  // ------------------------------------------------------------
+  // 🔹 Hilfsmethoden
+  // ------------------------------------------------------------
   getAccessToken(): string | null {
     return localStorage.getItem('accessToken');
   }
 
-
   isLoggedIn(): boolean {
     const token = this.getAccessToken();
     if (!token) return false;
-  
+
     try {
       const payload = jwtDecode<JwtPayload>(token);
-      const isExpired = (payload.exp || 0) * 1000 < Date.now();
-      return !isExpired;
+      return !((payload.exp || 0) * 1000 < Date.now());
     } catch {
       return false;
     }
@@ -91,21 +83,17 @@ refreshToken(): Observable<any> {
   getUserRole(): string | null {
     const token = this.getAccessToken();
     if (!token) return null;
-  
     try {
       const payload = jwtDecode<{ user?: { role?: string } }>(token);
       return payload.user?.role || null;
-    } catch (error) {
-      console.error('Fehler beim Token-Dekodieren:', error);
+    } catch {
       return null;
     }
   }
-  
-  
+
   getUserId(): string | null {
     const token = this.getAccessToken();
     if (!token) return null;
-  
     try {
       const payload = jwtDecode<{ user?: { id?: string } }>(token);
       return payload.user?.id || null;
@@ -113,6 +101,4 @@ refreshToken(): Observable<any> {
       return null;
     }
   }
-  
-  
 }

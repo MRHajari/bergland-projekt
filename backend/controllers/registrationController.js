@@ -1,64 +1,45 @@
-const { Registration } = require("../models");
-const registrationSchema = require("../validators/registrationValidator");
+const { Person } = require("../models");
+const bcrypt = require("bcryptjs");
 
-// Create new registration
-exports.createRegistration = async (req, res, next) => {
+// Neue Person registrieren
+exports.registerPerson = async (req, res, next) => {
     try {
-        const { error } = registrationSchema.validate(req.body);
-        if (error) return res.status(400).json({ error: error.details[0].message });
+        const { first_name, last_name, email, password, birth_date } = req.body;
 
-        const registration = await Registration.create(req.body);
-        res.json(registration);
+        // Prüfen, ob Person existiert
+        const existing = await Person.findOne({ where: { email } });
+        if (existing)
+            return res.status(400).json({ message: "E-Mail ist bereits registriert" });
+
+        // Person erstellen
+        const person = await Person.create({
+            first_name,
+            last_name,
+            email,
+            password,
+            birth_date,
+        });
+
+        res.status(201).json({
+            message: "Registrierung erfolgreich",
+            person: {
+                id: person.id,
+                first_name: person.first_name,
+                last_name: person.last_name,
+                email: person.email,
+                birth_date: person.birth_date,
+            },
+        });
     } catch (err) {
         next(err);
     }
 };
 
-// Get all registrations
-exports.getAllRegistrations = async (req, res, next) => {
+// (Optional) alle Personen abrufen
+exports.getAllPersons = async (req, res, next) => {
     try {
-        const registrations = await Registration.findAll();
-        res.json(registrations);
-    } catch (err) {
-        next(err);
-    }
-};
-
-// Get registration by ID
-exports.getRegistrationById = async (req, res, next) => {
-    try {
-        const registration = await Registration.findByPk(req.params.id);
-        if (!registration) return res.status(404).json({ error: "Registration not found" });
-        res.json(registration);
-    } catch (err) {
-        next(err);
-    }
-};
-
-// Update registration
-exports.updateRegistration = async (req, res, next) => {
-    try {
-        const { error } = registrationSchema.validate(req.body);
-        if (error) return res.status(400).json({ error: error.details[0].message });
-
-        const registration = await Registration.findByPk(req.params.id);
-        if (!registration) return res.status(404).json({ error: "Registration not found" });
-
-        await registration.update(req.body);
-        res.json(registration);
-    } catch (err) {
-        next(err);
-    }
-};
-
-// Delete registration
-exports.deleteRegistration = async (req, res, next) => {
-    try {
-        const registration = await Registration.findByPk(req.params.id);
-        if (!registration) return res.status(404).json({ error: "Registration not found" });
-
-        await registration.destroy();
-        res.json({ message: "Registration deleted" });
+        const persons = await Person.findAll();
+        res.json(persons);
     } catch (err) {
         next(err);
     }

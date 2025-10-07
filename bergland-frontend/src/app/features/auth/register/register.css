@@ -1,4 +1,4 @@
-.auth-page {
+.register-page {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -7,8 +7,8 @@
   padding: 1rem;
 }
 
-.auth-card {
-  background: #fff;
+.register-card {
+  background: var(--card-color);
   padding: 2rem;
   border-radius: var(--border-radius);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -17,25 +17,46 @@
   text-align: center;
 }
 
-.auth-card h2 {
+.register-card h2 {
   margin-bottom: 1.5rem;
-  color: var(--secondary-color);
+  color: var(--primary-color);
 }
 
-.auth-card .logo {
+.register-card .logo {
   margin-bottom: 1rem;
 }
 
-.auth-card .logo img {
+.register-card .logo img {
   max-width: 150px;
   height: auto;
 }
 
-.auth-card form {
+.register-card form {
   text-align: left;
 }
 
-.auth-card button {
+.register-card label {
+  font-weight: 600;
+  display: block;
+  margin-top: 0.6rem;
+  color: var(--text-color);
+}
+
+.register-card input {
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+}
+
+.register-card input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.register-card button {
   margin-top: 1rem;
   width: 100%;
 }
@@ -45,11 +66,37 @@
 }
 
 .switch a {
-  color: var(--secondary-color);
+  color: var(--primary-color);
   font-weight: bold;
   text-decoration: none;
 }
 
 .switch a:hover {
   text-decoration: underline;
+}
+
+.error {
+  color: #d9534f;
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
+}
+
+.success {
+  color: #28a745;
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 480px) {
+  .register-card {
+    padding: 1.5rem;
+  }
+
+  .register-card h2 {
+    font-size: 1.3rem;
+  }
+
+  button {
+    font-size: 0.95rem;
+  }
 }

@@ -1,3 +1,4 @@
+// frontend/src/app/core/services/person.service.ts
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../api.service';
@@ -6,7 +7,7 @@ import { ApiService } from '../api.service';
   providedIn: 'root'
 })
 export class PersonService {
-  private endpoint = 'persons';
+  private endpoint = 'persons'; // ruft /api/persons im Backend auf
 
   constructor(private api: ApiService) {}
 
@@ -14,7 +15,7 @@ export class PersonService {
     return this.api.get<any[]>(this.endpoint);
   }
 
-  getById(id: string): Observable<any> {   
+  getById(id: string): Observable<any> {
     return this.api.getById(this.endpoint, id);
   }
 
@@ -22,11 +23,11 @@ export class PersonService {
     return this.api.post(this.endpoint, data);
   }
 
-  update(id: string, data: any): Observable<any> {   
+  update(id: string, data: any): Observable<any> {
     return this.api.put(this.endpoint, id, data);
   }
 
-  delete(id: string): Observable<any> {   
+  delete(id: string): Observable<any> {
     return this.api.delete(this.endpoint, id);
   }
 }

@@ -1,11 +1,11 @@
 const Joi = require("joi");
 
-const registrationSchema = Joi.object({
-    phone_number: Joi.string().pattern(/^[0-9+\- ]{6,15}$/).required(),
-    participation_type: Joi.string().valid("runner", "staff", "guest").required(),
-    wishes: Joi.string().max(255).optional(),
-    person_id: Joi.number().integer().required(),
-    event_id: Joi.number().integer().required()
+const userSchema = Joi.object({
+    first_name: Joi.string().min(2).max(50).required(),
+    last_name: Joi.string().min(2).max(50).required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().min(6).required(),
+    birth_date: Joi.date().required(),
 });
 
-module.exports = registrationSchema;
+module.exports = userSchema;

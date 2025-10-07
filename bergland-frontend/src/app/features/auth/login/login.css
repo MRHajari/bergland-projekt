@@ -1,4 +1,4 @@
-.auth-page {
+.login-page {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -7,7 +7,7 @@
   padding: 1rem;
 }
 
-.auth-card {
+.login-card {
   background: #fff;
   padding: 2rem;
   border-radius: var(--border-radius);
@@ -17,25 +17,25 @@
   text-align: center;
 }
 
-.auth-card h2 {
+.login-card h2 {
   margin-bottom: 1.5rem;
-  color: var(--secondary-color);
+  color: var(--primary-color);
 }
 
-.auth-card .logo {
+.login-card .logo {
   margin-bottom: 1rem;
 }
 
-.auth-card .logo img {
+.login-card .logo img {
   max-width: 150px;
   height: auto;
 }
 
-.auth-card form {
+.login-card form {
   text-align: left;
 }
 
-.auth-card button {
+.login-card button {
   margin-top: 1rem;
   width: 100%;
 }
@@ -45,7 +45,7 @@
 }
 
 .switch a {
-  color: var(--secondary-color);
+  color: var(--primary-color);
   font-weight: bold;
   text-decoration: none;
 }
