@@ -34,20 +34,24 @@ export class Register implements OnInit {
   }
   
 
-  onSubmit() {
-    if (this.registerForm.invalid) return;
+  // frontend/src/app/pages/auth/register/register.component.ts
+onSubmit() {
+  if (this.registerForm.invalid) return;
 
-    this.loading = true;
-    this.authService.register(this.registerForm.value).subscribe({
-      next: () => {
-        this.successMessage = 'Registrierung erfolgreich! Bitte einloggen.';
-        this.loading = false;
-        setTimeout(() => this.router.navigate(['/login']), 2000);
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Registrierung fehlgeschlagen';
-        this.loading = false;
-      }
-    });
-  }
+  this.loading = true;
+  this.authService.register(this.registerForm.value).subscribe({
+    next: () => {
+      this.successMessage = 'Registrierung erfolgreich! Bitte prüfe deine E-Mail, um dein Konto zu bestätigen.';
+      this.errorMessage = '';
+      this.loading = false;
+      // Kein automatischer Login — User muss erst bestätigen
+    },
+    error: (err) => {
+      this.errorMessage = err.error?.error || 'Registrierung fehlgeschlagen';
+      this.successMessage = '';
+      this.loading = false;
+    }
+  });
+}
+
 }

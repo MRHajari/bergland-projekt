@@ -3,6 +3,8 @@ import { Routes } from '@angular/router';
 // 🔹 Auth-Bereich
 import { Login } from './features/auth/login/login';
 import { Register } from './features/auth/register/register';
+import { VerifyEmail } from './features/auth/verify-email/verify-email';
+
 
 // 🔹 Benutzer-Bereich
 import { Events } from './features/events/events';
@@ -39,6 +41,7 @@ export const routes: Routes = [
     children: [
       { path: 'login', component: Login },
       { path: 'register', component: Register },
+      { path: 'verify/:token', component: VerifyEmail }, // 🆕
     ],
   },
 

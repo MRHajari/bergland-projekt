@@ -101,4 +101,10 @@ export class AuthService {
       return null;
     }
   }
+
+  verifyEmail(token: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/verify/${token}`);
+  }
+  
 }
+

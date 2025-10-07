@@ -86,59 +86,69 @@ entwickelt mit **Angular 17**.
 
 ## 📂 Projektstruktur
 frontend/
-│── src/
-│ ├── app/
-│ │ ├── core/ # Basisdienste, Guards, Interceptors
-│ │ │ ├── services/
-│ │ │ │ ├── api.service.ts
-│ │ │ │ ├── auth.service.ts
-│ │ │ │ ├── person.service.ts
-│ │ │ │ ├── booking.service.ts
-│ │ │ │ ├── invoice.service.ts
-│ │ │ │ ├── payment.service.ts
-│ │ │ │ ├── event.service.ts
-│ │ │ │ ├── registration.service.ts
-│ │ │ │ ├── relay-team.service.ts
-│ │ │ │ ├── route.service.ts
-│ │ │ │ └── product.service.ts
-│ │ │ ├── guards/
-│ │ │ │ └── auth.guard.ts
-│ │ │ └── interceptors/
-│ │ │ └── auth.interceptor.ts
-│ │ │
-│ │ ├── layouts/ # Layout-Komponenten
-│ │ │ ├── auth-layout/
-│ │ │ │ ├── auth-layout.ts / html / css
-│ │ │ └── main-layout/
-│ │ │ ├── main-layout.ts / html / css
-│ │ │ ├── navbar.ts / html / css
-│ │ │ └── header.ts / html / css
-│ │ │
-│ │ ├── features/ # App-Features
-│ │ │ ├── auth/
-│ │ │ │ ├── login.ts / html / css
-│ │ │ │ └── register.ts / html / css
-│ │ │ ├── events/
-│ │ │ │ └── events.ts / html / css
-│ │ │ ├── booking/
-│ │ │ │ └── booking.ts / html / css
-│ │ │ └── profile/
-│ │ │ └── profile.ts / html / css
-│ │ │
-│ │ ├── app.component.ts
-│ │ ├── app.component.html
-│ │ ├── app.component.css
-│ │ ├── app.routes.ts
-│ │ └── app.config.ts
-│ │
-│ ├── assets/ # Bilder, statische Dateien
-│ ├── environments/ # environment.ts / environment.prod.ts
-│ └── main.ts
 │
-│── angular.json
-│── package.json
-│── tsconfig.json
-│── README.md
+├── src/
+│   ├── app/
+│   │   ├── core/                        # Zentrale Dienste, Guards, Interceptors
+│   │   │   ├── services/
+│   │   │   │   ├── api.service.ts
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   ├── person.service.ts
+│   │   │   │   ├── booking.service.ts
+│   │   │   │   ├── invoice.service.ts
+│   │   │   │   ├── payment.service.ts
+│   │   │   │   ├── event.service.ts
+│   │   │   │   ├── registration.service.ts
+│   │   │   │   ├── relay-team.service.ts
+│   │   │   │   ├── route.service.ts
+│   │   │   │   └── product.service.ts
+│   │   │   ├── guards/
+│   │   │   │   ├── auth.guard.ts
+│   │   │   │   └── admin.guard.ts
+│   │   │   └── interceptors/
+│   │   │       └── auth.interceptor.ts
+│   │   │
+│   │   ├── layouts/                     # Wiederverwendbare Layout-Komponenten
+│   │   │   ├── auth-layout/
+│   │   │   │   ├── auth-layout.ts / html / css
+│   │   │   └── main-layout/
+│   │   │       ├── main-layout.ts / html / css
+│   │   │       ├── navbar.ts / html / css
+│   │   │       └── header.ts / html / css
+│   │   │
+│   │   ├── features/                    # Funktionsmodule der App
+│   │   │   ├── auth/
+│   │   │   │   ├── login.ts / html / css
+│   │   │   │   ├── register.ts / html / css
+│   │   │   │   └── verify-email.ts / html / css
+│   │   │   ├── events/
+│   │   │   │   ├── events.ts / html / css
+│   │   │   │   └── event-detail.ts / html / css
+│   │   │   ├── booking/
+│   │   │   │   └── booking.ts / html / css
+│   │   │   ├── profile/
+│   │   │   │   └── profile.ts / html / css
+│   │   │   └── admin/                   # Admin-Dashboard & Verwaltung
+│   │   │       ├── admin-dashboard.ts / html / css
+│   │   │       ├── products-admin.ts / html / css
+│   │   │       ├── events-admin.ts / html / css
+│   │   │       ├── users-admin.ts / html / css
+│   │   │       └── accommodations-admin.ts / html / css
+│   │   │
+│   │   ├── app.routes.ts                # Haupt-Routing-Konfiguration
+│   │   ├── app.component.ts / html / css
+│   │   └── app.config.ts
+│   │
+│   ├── assets/                          # Bilder, Logos, Icons
+│   ├── environments/                    # Umgebungsvariablen
+│   │   ├── environment.ts
+│   │   └── environment.prod.ts
+│   └── main.ts
+│
+├── angular.json
+├── package.json
+├── tsconfig.json
+└── README.md
 
 
 ### 1. Dependencies installieren
@@ -147,23 +157,17 @@ npm install
 
 
 #### Services
-
 auth.service.ts → Login / Register / Refresh
-
 person.service.ts → /api/persons
-
 booking.service.ts → /api/bookings
-
 invoice.service.ts → /api/invoices
-
 payment.service.ts → /api/payments
-
 event.service.ts → /api/events
-
 registration.service.ts → /api/registrations
-
 relay-team.service.ts → /api/relay-teams
-
 route.service.ts → /api/routes
-
 product.service.ts → /api/products
+
+
+###### Mailtrap
+https://mailtrap.io/

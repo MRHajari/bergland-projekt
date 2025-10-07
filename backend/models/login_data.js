@@ -1,3 +1,4 @@
+// backend/models/login_data.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -13,6 +14,7 @@ const LoginData = sequelize.define(
             defaultValue: "user",
             validate: { isIn: [["user", "admin"]] },
         },
+        is_verified: { type: DataTypes.BOOLEAN, defaultValue: false }, // 🆕
         last_login_at: { type: DataTypes.DATE, allowNull: true },
     },
     { tableName: "login_data", underscored: true }
