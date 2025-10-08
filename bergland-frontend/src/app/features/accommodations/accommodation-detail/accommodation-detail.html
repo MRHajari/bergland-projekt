@@ -1,0 +1,41 @@
+<div class="accommodation-detail-container">
+    <button class="back" (click)="goBack()">← Zurück</button>
+
+    @if (loading) {
+    <p>⏳ Lädt...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else {
+    <div class="card">
+        <h1>{{ accommodation?.unterkunft_name }}</h1>
+        <p>{{ accommodation?.strasse_hausnr }}, {{ accommodation?.plz }} {{ accommodation?.ort }}</p>
+
+        <ul>
+            <li>Einzelzimmer: {{ accommodation?.anz_ez }}</li>
+            <li>Doppelzimmer: {{ accommodation?.anz_dz }}</li>
+            <li>Mehrbettzimmer: {{ accommodation?.anz_mbz }}</li>
+            <li>Betten (MBZ): {{ accommodation?.anz_betten_mbz }}</li>
+        </ul>
+
+        <hr />
+        <h3>🗓️ Buchung</h3>
+
+        <form (ngSubmit)="bookNow()" class="booking-form">
+            <label>Check-in:</label>
+            <input type="date" [(ngModel)]="booking.checkin" name="checkin" required />
+
+            <label>Check-out:</label>
+            <input type="date" [(ngModel)]="booking.checkout" name="checkout" required />
+
+            <label>Zimmerart:</label>
+            <select [(ngModel)]="booking.room_type" name="room_type">
+                <option value="EZ">Einzelzimmer</option>
+                <option value="DZ">Doppelzimmer</option>
+                <option value="MBZ">Mehrbettzimmer</option>
+            </select>
+
+            <button type="submit" class="primary">Jetzt buchen</button>
+        </form>
+    </div>
+    }
+</div>

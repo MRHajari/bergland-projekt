@@ -29,6 +29,9 @@ export class EventRegistrationService {
 
   constructor(private http: HttpClient) {}
 
+
+  
+
   // 🔹 Header mit Token (für geschützte Routen)
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');

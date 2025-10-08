@@ -2,7 +2,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-const Accommodation = sequelize.define("Accommodation", {
+const Accommodation = sequelize.define("accommodation", {
     id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
     name: { type: DataTypes.STRING, allowNull: false },
     street: { type: DataTypes.STRING },
@@ -14,8 +14,8 @@ const Accommodation = sequelize.define("Accommodation", {
     multi_bed_rooms: { type: DataTypes.INTEGER, defaultValue: 0 },
     total_beds: { type: DataTypes.INTEGER, defaultValue: 0 },
 }, {
-    tableName: "accommodations",   // ✅ pluralisiert
-    freezeTableName: true,         // ✅ verhindert doppelte Pluralisierung
+    tableName: "accommodation", // kein „s“
+    freezeTableName: true,
 });
 
 module.exports = Accommodation;

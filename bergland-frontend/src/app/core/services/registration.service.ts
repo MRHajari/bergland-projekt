@@ -30,4 +30,14 @@ export class RegistrationService {
   delete(id: string): Observable<any> {
     return this.api.delete(this.endpoint, id);
   }
+
+  // 🔹 Alle Registrierungen zu einem bestimmten Event
+  getByEvent(eventId: string): Observable<any[]> {
+    return this.api.get<any[]>(`${this.endpoint}/by-event/${eventId}`);
+  }
+
+  // 🔹 Anzahl der Anmeldungen pro Event
+  getCountByEvent(): Observable<Record<string, number>> {
+    return this.api.get<Record<string, number>>(`${this.endpoint}/count-by-event`);
+  }
 }

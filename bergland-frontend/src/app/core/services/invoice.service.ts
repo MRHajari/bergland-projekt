@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ApiService } from '../api.service';
 
 @Injectable({
@@ -28,5 +28,11 @@ export class InvoiceService {
 
   delete(id: string): Observable<any> {
     return this.api.delete(this.endpoint, id);
+  }
+
+  // 🧩 NEU: Alle Rechnungen eines bestimmten Benutzers
+  getByUser(userId: string | null): Observable<any[]> {
+    if (!userId) return of([]); // Keine userId → nichts zurückgeben
+    return this.api.get(`${this.endpoint}/user/${userId}`);
   }
 }

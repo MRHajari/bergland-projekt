@@ -1,59 +1,51 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { BookingService } from '../../core/services/booking.service';
-import { EventService } from '../../core/services/event.service';
 import { Router } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
+import { BookingService } from '../../core/services/booking.service';
 
 @Component({
   selector: 'app-booking',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule],
   templateUrl: './booking.html',
   styleUrls: ['./booking.css']
 })
 export class Booking implements OnInit {
-  events: any[] = [];
-  selectedEventId: number | null = null;
-  guestCount: number = 1;
-  message = '';
+  bookings: any[] = [];
+  loading = true;
   errorMessage = '';
 
-  constructor(
-    private bookingService: BookingService,
-    private eventService: EventService,
-    private router: Router
-  ) {}
+  private bookingService = inject(BookingService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   ngOnInit(): void {
-    // Load events for selection
-    this.eventService.getAll().subscribe({
-      next: (data) => (this.events = data),
-      error: (err) => (this.errorMessage = err.error?.message || 'Failed to load events')
+    const userId = this.authService.getUserId();
+    if (!userId) {
+      this.errorMessage = 'Bitte logge dich ein, um deine Buchungen zu sehen.';
+      this.loading = false;
+      return;
+    }
+    
+    this.loadBookings(userId);
+  }
+
+  private loadBookings(userId: string): void {
+    this.bookingService.getByUser(userId).subscribe({
+      next: (data) => {
+        this.bookings = data;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Fehler beim Laden der Buchungen:', err);
+        this.errorMessage = '❌ Buchungen konnten nicht geladen werden.';
+        this.loading = false;
+      }
     });
   }
 
-  submitBooking() {
-    if (!this.selectedEventId) {
-      this.errorMessage = 'Please select an event.';
-      return;
-    }
-
-    const bookingData = {
-      eventId: this.selectedEventId,
-      guestCount: this.guestCount
-    };
-
-    this.bookingService.create(bookingData).subscribe({
-      next: () => {
-        this.message = 'Booking successful!';
-        this.errorMessage = '';
-        setTimeout(() => this.router.navigate(['/profile']), 1500);
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Booking failed';
-        this.message = '';
-      }
-    });
+  goToEvents(): void {
+    this.router.navigate(['/events']);
   }
 }

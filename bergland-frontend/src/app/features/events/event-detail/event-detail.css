@@ -259,3 +259,19 @@
       flex-direction: column;
     }
   }
+
+
+  .success-box {
+    background: #e8fbe8;
+    border: 1px solid #9fd89f;
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-top: 1rem;
+  }
+  
+  .success-box h3 {
+    color: #2d7a2d;
+    margin-bottom: 0.5rem;
+  }
+  

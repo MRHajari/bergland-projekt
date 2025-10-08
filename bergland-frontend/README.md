@@ -131,8 +131,6 @@ frontend/
 │   │   │   │       └── profile.ts / html / css
 │   │   │   │     └── overview/ 
 │   │   │   │        ├── overview.ts / html / css
-├── overview.html
-└── overview.css
 │   │   │   └── admin/                   # Admin-Dashboard & Verwaltung
 │   │   │       ├── admin-dashboard.ts / html / css
 │   │   │       ├── products-admin.ts / html / css

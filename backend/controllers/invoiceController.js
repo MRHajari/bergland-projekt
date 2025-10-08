@@ -77,3 +77,17 @@ exports.markAsPaid = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.getByUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const invoices = await Invoice.findAll({
+            where: { person_id: userId },
+            include: [{ all: true }]
+        });
+        res.json(invoices);
+    } catch (err) {
+        console.error('❌ Fehler beim Laden der Rechnungen:', err);
+        res.status(500).json({ message: 'Fehler beim Laden der Rechnungen' });
+    }
+};

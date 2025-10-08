@@ -8,7 +8,7 @@ import { AccommodationService } from '../../../core/services/accommodation.servi
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './accommodations-admin.html',
-  styleUrls: ['./accommodations-admin.css']
+  styleUrls: ['./accommodations-admin.css'],
 })
 export class AccommodationsAdmin implements OnInit {
   accommodations: any[] = [];
@@ -16,12 +16,19 @@ export class AccommodationsAdmin implements OnInit {
   errorMessage: string | null = null;
 
   // 🆕 Neue Unterkunft
-  newAccommodation = { name: '', location: '', capacity: 0 };
+  newAccommodation = {
+    unterkunft_name: '',
+    strasse_hausnr: '',
+    plz: '',
+    ort: '',
+    anz_ez: 0,
+    anz_dz: 0,
+    anz_mbz: 0,
+    anz_betten_mbz: 0,
+  };
 
-  // ✏️ Bearbeitung
   editingAccommodation: any = null;
 
-  // 🔍 Suche & Pagination
   searchTerm = '';
   page = 1;
   pageSize = 10;
@@ -34,8 +41,6 @@ export class AccommodationsAdmin implements OnInit {
 
   loadAccommodations(): void {
     this.loading = true;
-    this.errorMessage = null;
-
     this.accommodationService.getAll().subscribe({
       next: (data) => {
         this.accommodations = data;
@@ -45,22 +50,21 @@ export class AccommodationsAdmin implements OnInit {
         console.error('Fehler beim Laden der Unterkünfte:', err);
         this.errorMessage = '❌ Fehler beim Laden der Unterkünfte.';
         this.loading = false;
-      }
+      },
     });
   }
 
-  // 🔍 Gefilterte Liste
   get filteredAccommodations() {
     if (!this.searchTerm.trim()) return this.accommodations;
     const term = this.searchTerm.toLowerCase();
-    return this.accommodations.filter((a) =>
-      (a.name && a.name.toLowerCase().includes(term)) ||
-      (a.city && a.city.toLowerCase().includes(term)) ||
-      (a.country && a.country.toLowerCase().includes(term))
+    return this.accommodations.filter(
+      (a) =>
+        a.unterkunft_name?.toLowerCase().includes(term) ||
+        a.ort?.toLowerCase().includes(term) ||
+        a.plz?.includes(term)
     );
   }
 
-  // 📄 Pagination
   get pagedAccommodations() {
     const start = (this.page - 1) * this.pageSize;
     return this.filteredAccommodations.slice(start, start + this.pageSize);
@@ -70,60 +74,57 @@ export class AccommodationsAdmin implements OnInit {
     return Math.ceil(this.filteredAccommodations.length / this.pageSize);
   }
 
-  // ➕ Neue Unterkunft hinzufügen
   addAccommodation(): void {
-    if (!this.newAccommodation.name.trim()) {
+    if (!this.newAccommodation.unterkunft_name.trim()) {
       alert('❗ Bitte gib einen Namen ein.');
       return;
     }
 
-    const payload = {
-      name: this.newAccommodation.name,
-      city: this.newAccommodation.location,
-      total_beds: this.newAccommodation.capacity,
-    };
-
-    this.accommodationService.create(payload).subscribe({
+    this.accommodationService.create(this.newAccommodation).subscribe({
       next: () => {
-        alert(`✅ Unterkunft "${this.newAccommodation.name}" hinzugefügt.`);
-        this.newAccommodation = { name: '', location: '', capacity: 0 };
+        alert(`✅ Unterkunft "${this.newAccommodation.unterkunft_name}" hinzugefügt.`);
+        this.newAccommodation = {
+          unterkunft_name: '',
+          strasse_hausnr: '',
+          plz: '',
+          ort: '',
+          anz_ez: 0,
+          anz_dz: 0,
+          anz_mbz: 0,
+          anz_betten_mbz: 0,
+        };
         this.loadAccommodations();
       },
       error: (err) => {
         console.error('Fehler beim Erstellen:', err);
         alert('❌ Fehler beim Erstellen der Unterkunft.');
-      }
+      },
     });
   }
 
-  // ✏️ Unterkunft bearbeiten
-  editAccommodation(item: any): void {
-    this.editingAccommodation = { ...item };
+  editAccommodation(a: any): void {
+    this.editingAccommodation = { ...a };
   }
 
-  // 💾 Änderungen speichern
   saveAccommodation(): void {
     if (!this.editingAccommodation) return;
-
     this.accommodationService
       .update(this.editingAccommodation.id, this.editingAccommodation)
       .subscribe({
         next: () => {
-          alert(`💾 Änderungen gespeichert für "${this.editingAccommodation.name}".`);
+          alert(`💾 Änderungen gespeichert für "${this.editingAccommodation.unterkunft_name}".`);
           this.editingAccommodation = null;
           this.loadAccommodations();
         },
         error: (err) => {
           console.error('Fehler beim Speichern:', err);
-          alert('❌ Fehler beim Speichern der Unterkunft.');
-        }
+          alert('❌ Fehler beim Speichern.');
+        },
       });
   }
 
-  // 🗑️ Unterkunft löschen
   deleteAccommodation(id: string, name: string): void {
-    if (!confirm(`Willst du die Unterkunft "${name}" wirklich löschen?`)) return;
-
+    if (!confirm(`Willst du "${name}" wirklich löschen?`)) return;
     this.accommodationService.delete(id).subscribe({
       next: () => {
         alert(`🗑️ Unterkunft "${name}" gelöscht.`);
@@ -131,8 +132,8 @@ export class AccommodationsAdmin implements OnInit {
       },
       error: (err) => {
         console.error('Fehler beim Löschen:', err);
-        alert('❌ Fehler beim Löschen der Unterkunft.');
-      }
+        alert('❌ Fehler beim Löschen.');
+      },
     });
   }
 

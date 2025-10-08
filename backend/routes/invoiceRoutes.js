@@ -12,4 +12,6 @@ router.delete("/:id", invoiceController.deleteInvoice);
 // ✅ Route: Als bezahlt markieren
 router.patch("/:id/mark-paid", invoiceController.markAsPaid);
 
+
+
 module.exports = router;

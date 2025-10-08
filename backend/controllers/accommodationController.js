@@ -1,3 +1,4 @@
+// backend/controllers/accommodationController.js
 const { Accommodation } = require("../models");
 const accommodationSchema = require("../validators/accommodationValidator");
 
@@ -8,7 +9,7 @@ exports.createAccommodation = async (req, res, next) => {
         if (error) return res.status(400).json({ error: error.details[0].message });
 
         const accommodation = await Accommodation.create(req.body);
-        res.json(accommodation);
+        res.status(201).json(accommodation);
     } catch (err) {
         next(err);
     }
@@ -17,7 +18,7 @@ exports.createAccommodation = async (req, res, next) => {
 // Get all accommodations
 exports.getAllAccommodations = async (req, res, next) => {
     try {
-        const accommodations = await Accommodation.findAll();
+        const accommodations = await Accommodation.findAll({ order: [["unterkunft_name", "ASC"]] });
         res.json(accommodations);
     } catch (err) {
         next(err);
@@ -28,7 +29,7 @@ exports.getAllAccommodations = async (req, res, next) => {
 exports.getAccommodationById = async (req, res, next) => {
     try {
         const accommodation = await Accommodation.findByPk(req.params.id);
-        if (!accommodation) return res.status(404).json({ error: "Accommodation not found" });
+        if (!accommodation) return res.status(404).json({ error: "Unterkunft nicht gefunden" });
         res.json(accommodation);
     } catch (err) {
         next(err);
@@ -42,7 +43,7 @@ exports.updateAccommodation = async (req, res, next) => {
         if (error) return res.status(400).json({ error: error.details[0].message });
 
         const accommodation = await Accommodation.findByPk(req.params.id);
-        if (!accommodation) return res.status(404).json({ error: "Accommodation not found" });
+        if (!accommodation) return res.status(404).json({ error: "Unterkunft nicht gefunden" });
 
         await accommodation.update(req.body);
         res.json(accommodation);
@@ -55,10 +56,10 @@ exports.updateAccommodation = async (req, res, next) => {
 exports.deleteAccommodation = async (req, res, next) => {
     try {
         const accommodation = await Accommodation.findByPk(req.params.id);
-        if (!accommodation) return res.status(404).json({ error: "Accommodation not found" });
+        if (!accommodation) return res.status(404).json({ error: "Unterkunft nicht gefunden" });
 
         await accommodation.destroy();
-        res.json({ message: "Accommodation deleted" });
+        res.json({ message: "Unterkunft gelöscht" });
     } catch (err) {
         next(err);
     }

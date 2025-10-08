@@ -1,0 +1,27 @@
+<div class="accommodations-container">
+    <h1>🏡 Unsere Unterkünfte</h1>
+
+    @if (loading) {
+    <p>⏳ Lade Unterkünfte...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else {
+    <div class="accommodation-grid">
+        @for (a of accommodations; track a.id) {
+        <div class="accommodation-card">
+            <h2>{{ a.unterkunft_name }}</h2>
+            <p>{{ a.strasse_hausnr }}, {{ a.plz }} {{ a.ort }}</p>
+
+            <ul>
+                <li>🛏️ Einzelzimmer: {{ a.anz_ez }}</li>
+                <li>🛏️ Doppelzimmer: {{ a.anz_dz }}</li>
+                <li>🛏️ Mehrbettzimmer: {{ a.anz_mbz }}</li>
+                <li>👥 Betten (MBZ): {{ a.anz_betten_mbz }}</li>
+            </ul>
+
+            <button class="primary" (click)="viewDetails(a.id)">Jetzt buchen</button>
+        </div>
+        }
+    </div>
+    }
+</div>

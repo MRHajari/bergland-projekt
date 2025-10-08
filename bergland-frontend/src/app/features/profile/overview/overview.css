@@ -1,0 +1,63 @@
+.overview-page {
+    padding: 2rem;
+    background: var(--background-color);
+    color: var(--text-color);
+  }
+  
+  .page-title {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+  }
+  
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .tab {
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .tab:hover,
+  .tab.active {
+    background: var(--primary-color);
+    color: var(--text-on-primary);
+  }
+  
+  .list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+  
+  .item {
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    border: 1px solid var(--secondary-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+  
+  .item h4 {
+    margin: 0;
+    color: var(--primary-color);
+  }
+  
+  .empty {
+    text-align: center;
+    font-style: italic;
+    color: #64748b;
+  }
+  

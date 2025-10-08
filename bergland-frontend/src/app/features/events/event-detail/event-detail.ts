@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventService } from '../../../core/services/event.service';
-import { EventRegistrationService } from '../../../core/services/event-registration.service';
+import { EventRegistrationService } from '../../../core/services/event-registration.service.js';
 import { AuthService } from '../../../core/auth.service';
 
 @Component({
@@ -23,7 +23,7 @@ export class EventDetail implements OnInit {
   private fb = inject(FormBuilder);
   private eventService = inject(EventService);
   private authService = inject(AuthService);
-  private eventRegistrationService = inject(EventRegistrationService);
+  private registrationService = inject(EventRegistrationService); // ✅ ersetzt alten Service
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -39,6 +39,7 @@ export class EventDetail implements OnInit {
     this.initForm();
   }
 
+  // 🔹 Event laden
   private loadEvent(id: string): void {
     this.eventService.getById(id).subscribe({
       next: (data) => {
@@ -47,12 +48,13 @@ export class EventDetail implements OnInit {
       },
       error: (err) => {
         console.error('Fehler beim Laden des Events:', err);
-        this.errorMessage = 'Event konnte nicht geladen werden.';
+        this.errorMessage = '❌ Event konnte nicht geladen werden.';
         this.loading = false;
       }
     });
   }
 
+  // 🔹 Formular initialisieren
   private initForm(): void {
     this.registrationForm = this.fb.group({
       phone_number: [''],
@@ -69,7 +71,7 @@ export class EventDetail implements OnInit {
 
   // 🧭 Navigation-Buttons
   goBack(): void {
-    this.router.navigate(['/events']);
+    this.router.navigate(['/events']); // oder /overview falls das deine Übersicht ist
   }
 
   goToProfile(): void {
@@ -82,11 +84,14 @@ export class EventDetail implements OnInit {
 
   // 📝 Registrierung absenden
   registerForEvent(): void {
+    // Benutzer muss eingeloggt sein
     if (!this.authService.isLoggedIn()) {
+      alert('Bitte logge dich zuerst ein, um dich anzumelden.');
       this.router.navigate(['/login']);
       return;
     }
 
+    // Formular prüfen
     if (this.registrationForm.invalid) {
       this.registrationForm.markAllAsTouched();
       alert('Bitte fülle alle Pflichtfelder aus.');
@@ -94,22 +99,24 @@ export class EventDetail implements OnInit {
     }
 
     const userId = this.authService.getUserId();
-    const data = {
+
+    const registrationData = {
       ...this.registrationForm.value,
       event_id: this.event.id,
       person_id: userId,
       status: 'in_auswahl'
     };
 
-    this.eventRegistrationService.createEventRegistration(data).subscribe({
+    this.registrationService.createEventRegistration(registrationData).subscribe({
       next: () => {
         alert('✅ Erfolgreich für das Event angemeldet!');
         this.isRegistered = true;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('❌ Fehler bei Anmeldung:', err);
         alert(err.error?.message || 'Fehler bei der Anmeldung.');
-      }
+      },
     });
+    
   }
 }

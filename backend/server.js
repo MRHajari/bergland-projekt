@@ -6,7 +6,6 @@ const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
 const { sequelize, Person, LoginData, Token } = require("./models");
 
-const belegungRoutes = require("./routes/belegungRoutes");
 const eventRegistrationRoutes = require("./routes/eventRegistrationRoutes"); // 🟢 NEU
 
 const app = express();
@@ -44,7 +43,6 @@ app.use("/api/routes", require("./routes/routeRoutes"));
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/belegung", belegungRoutes);
 
 // 🟢 NEU: EventRegistration-Routen einbinden
 app.use("/api/event-registrations", eventRegistrationRoutes);

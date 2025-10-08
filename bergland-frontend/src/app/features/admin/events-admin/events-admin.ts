@@ -1,10 +1,9 @@
-// frontend/src/app/features/admin/events-admin/events-admin.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { EventService } from '../../../core/services/event.service';
-import { BelegungService } from '../../../core/services/belegung.service';
+import { RegistrationService } from '../../../core/services/registration.service'; // ✅ ersetzt BelegungService
 
 @Component({
   selector: 'app-events-admin',
@@ -21,17 +20,15 @@ export class EventsAdmin implements OnInit {
   editingEvent: any = null;
   newEvent = { name: '', description: '', start_date: '', end_date: '' };
 
-  // 🔍 Suche & Pagination
   searchTerm = '';
   page = 1;
   pageSize = 10;
 
-  // ➕ Counts Map
   countsMap: Record<string, number> = {};
 
   constructor(
     private eventService: EventService,
-    private belegungService: BelegungService,
+    private registrationService: RegistrationService, // ✅ statt belegungService
     private router: Router
   ) {}
 
@@ -50,7 +47,6 @@ export class EventsAdmin implements OnInit {
           start_date: this.formatDate(e.start_date),
           end_date: this.formatDate(e.end_date)
         }));
-        // ➕ Counts nachladen (separat)
         this.loadCounts();
         this.loading = false;
       },
@@ -63,7 +59,7 @@ export class EventsAdmin implements OnInit {
   }
 
   private loadCounts(): void {
-    this.belegungService.getCountByEvent().subscribe({
+    this.registrationService.getCountByEvent().subscribe({
       next: (map: any) => (this.countsMap = map || {}),
       error: (err: any) => {
         console.warn('Konnte Anmeldungszahlen nicht laden:', err);
@@ -71,14 +67,12 @@ export class EventsAdmin implements OnInit {
       }
     });
   }
-  
 
   private formatDate(dateStr: string): string {
     if (!dateStr) return '';
     return dateStr.split('T')[0];
   }
 
-  // 🔍 Filter
   get filteredEvents() {
     if (!this.searchTerm.trim()) return this.events;
     const term = this.searchTerm.toLowerCase();
@@ -89,7 +83,6 @@ export class EventsAdmin implements OnInit {
     );
   }
 
-  // 📄 Pagination
   get pagedEvents() {
     const start = (this.page - 1) * this.pageSize;
     return this.filteredEvents.slice(start, start + this.pageSize);
@@ -161,7 +154,6 @@ export class EventsAdmin implements OnInit {
     this.editingEvent = null;
   }
 
-  // ➕ Navigation zu Detail-Ansicht der Anmeldungen
   viewRegistrations(eventId: string): void {
     this.router.navigate(['/admin/events', eventId, 'teilnehmer']);
   }
