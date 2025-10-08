@@ -1,13 +1,14 @@
+// frontend/src/app/features/auth/register/register.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../../../core/auth.service';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../core/auth.service'; 
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule], // 👈 Wichtig
+  imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './register.html',
   styleUrls: ['./register.css']
 })
@@ -29,33 +30,37 @@ export class Register implements OnInit {
       last_name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      birth_date: ['', Validators.required] // 🆕 hinzugefügt
+      birth_date: ['', Validators.required]
     });
   }
-  
 
-  // frontend/src/app/pages/auth/register/register.component.ts
-onSubmit() {
-  if (this.registerForm.invalid) return;
+  onSubmit(): void {
+    if (this.registerForm.invalid) return;
 
-  this.loading = true;
-  this.authService.register(this.registerForm.value).subscribe({
-    next: () => {
-      this.successMessage = 'Registrierung erfolgreich! Bitte prüfe deine E-Mail, um dein Konto zu bestätigen.';
-      this.errorMessage = '';
-      this.loading = false;
-      // Kein automatischer Login — User muss erst bestätigen
-    },
-    error: (err) => {
-      this.errorMessage = err.error?.error || 'Registrierung fehlgeschlagen';
-      this.successMessage = '';
-      this.loading = false;
-    }
-  });
-}
+    this.loading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
 
-goToLogin(): void {
-  this.router.navigate(['/login']);
-}
+    // 🧭 Datum als ISO-String konvertieren
+    const formData = { ...this.registerForm.value };
+    formData.birth_date = new Date(formData.birth_date).toISOString().split('T')[0];
 
+    this.authService.register(formData).subscribe({
+      next: () => {
+        this.loading = false;
+        this.successMessage = '✅ Registrierung erfolgreich! Bitte prüfe deine E-Mail, um dein Konto zu bestätigen.';
+        this.errorMessage = '';
+        this.registerForm.reset();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = err.error?.error || '❌ Registrierung fehlgeschlagen. Bitte erneut versuchen.';
+        this.successMessage = '';
+      }
+    });
+  }
+
+  goToLogin(): void {
+    this.router.navigate(['/login']);
+  }
 }

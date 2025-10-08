@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PersonService } from '../../../core/services/person.service';
-import { LoginDataService } from '../../../core/services/login-data.service';
+import { UserService } from '../../../core/services/user.service';
 
 @Component({
   selector: 'app-users-admin',
@@ -16,26 +15,22 @@ export class UsersAdmin implements OnInit {
   loading = false;
   errorMessage: string | null = null;
 
-  // 🔍 Search and pagination
   searchTerm = '';
   page = 1;
   pageSize = 20;
 
-  constructor(
-    private personService: PersonService,
-    private loginDataService: LoginDataService
-  ) {}
+  constructor(private userService: UserService) {}
 
   ngOnInit(): void {
     this.loadUsers();
   }
 
-  // 🔹 Load all users
+  // 🔹 Benutzer laden
   loadUsers(): void {
     this.loading = true;
     this.errorMessage = null;
 
-    this.personService.getAll().subscribe({
+    this.userService.getAll().subscribe({
       next: (data) => {
         this.users = data;
         this.loading = false;
@@ -48,31 +43,24 @@ export class UsersAdmin implements OnInit {
     });
   }
 
-  // 🔹 Filtered users
+  // 🔹 Filter nach Rolle
   get adminUsers() {
-    return this.users.filter(u =>
-      u.role === 'admin' && this.matchesSearch(u)
-    );
+    return this.users.filter(u => u.role === 'admin' && this.matchesSearch(u));
   }
 
   get normalUsers() {
-    return this.users.filter(u =>
-      u.role === 'user' && this.matchesSearch(u)
-    );
+    return this.users.filter(u => u.role === 'user' && this.matchesSearch(u));
   }
 
-  // 🔍 Search logic
+  // 🔍 Suchlogik
   private matchesSearch(u: any): boolean {
     if (!this.searchTerm.trim()) return true;
     const term = this.searchTerm.toLowerCase();
-    return (
-      (u.first_name + ' ' + u.last_name + ' ' + u.email)
-        .toLowerCase()
-        .includes(term)
-    );
+    const name = `${u.person?.first_name ?? ''} ${u.person?.last_name ?? ''}`;
+    return `${name} ${u.email}`.toLowerCase().includes(term);
   }
 
-  // 🔹 Pagination for normal users
+  // 🔹 Pagination
   get pagedNormalUsers() {
     const start = (this.page - 1) * this.pageSize;
     return this.normalUsers.slice(start, start + this.pageSize);
@@ -82,11 +70,11 @@ export class UsersAdmin implements OnInit {
     return Math.ceil(this.normalUsers.length / this.pageSize);
   }
 
-  // 🔹 Save role changes
+  // 🔹 Rolle speichern
   saveUser(user: any): void {
-    this.loginDataService.updateRole(user.id, user.role).subscribe({
+    this.userService.updateRole(user.id, user.role).subscribe({
       next: () => {
-        alert(`✅ Rolle geändert für ${user.first_name} (${user.email}) → ${user.role}`);
+        alert(`✅ Rolle geändert für ${user.person?.first_name} (${user.email}) → ${user.role}`);
       },
       error: (err) => {
         console.error('Fehler beim Speichern:', err);
@@ -95,11 +83,11 @@ export class UsersAdmin implements OnInit {
     });
   }
 
-  // 🔹 Delete user
+  // 🔹 Benutzer löschen
   deleteUser(id: string, email: string): void {
     if (!confirm(`Willst du den Benutzer "${email}" wirklich löschen?`)) return;
 
-    this.personService.delete(id).subscribe({
+    this.userService.delete(id).subscribe({
       next: () => {
         this.users = this.users.filter(u => u.id !== id);
         alert(`🗑️ Benutzer "${email}" gelöscht.`);

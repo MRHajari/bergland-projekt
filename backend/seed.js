@@ -4,30 +4,33 @@ const bcrypt = require("bcrypt");
 const {
     sequelize,
     Person,
-    LoginData,
+    User,
     Accommodation,
     Event,
     Booking,
     RelayTeam,
     Route,
-    Registration,
+    EventRegistration,
     Runtime,
     Invoice,
     Product,
-    Token
+    Token,
 } = require("./models");
 
 module.exports = async function runSeed() {
     console.log("🌱 Starte Datenbank-Seeding...");
 
     try {
+        // ------------------------------------------------------
+        // 🔄 DB reset
+        // ------------------------------------------------------
         await sequelize.sync({ force: true });
         console.log("✅ Tabellen neu erstellt.");
 
         // =====================================================
-        // 👤 Personen + Logins
+        // 👤 Personen
         // =====================================================
-        const users = await Promise.all([
+        const persons = await Promise.all([
             Person.create({
                 first_name: "Mohammad",
                 last_name: "Hajari",
@@ -59,19 +62,52 @@ module.exports = async function runSeed() {
                 birth_date: "1992-01-15",
             }),
         ]);
-        console.log("👤 Benutzer erstellt: Mohammad, Clara, Anna, Markus, Sandra");
+        console.log("👤 Personen erstellt: Mohammad, Clara, Anna, Markus, Sandra");
 
+        // =====================================================
+        // 🔐 Benutzer (User)
+        // =====================================================
         const hashedAdmin = await bcrypt.hash("Admin123!", 10);
         const hashedUser = await bcrypt.hash("User123!", 10);
 
         await Promise.all([
-            LoginData.create({ person_id: users[0].id, password_hash: hashedAdmin, role: "admin", is_verified: true }),
-            LoginData.create({ person_id: users[1].id, password_hash: hashedAdmin, role: "admin", is_verified: true }),
-            LoginData.create({ person_id: users[2].id, password_hash: hashedUser, role: "user", is_verified: true }),
-            LoginData.create({ person_id: users[3].id, password_hash: hashedUser, role: "user", is_verified: true }),
-            LoginData.create({ person_id: users[4].id, password_hash: hashedUser, role: "user", is_verified: true }),
+            User.create({
+                email: "mohammad@test.com",
+                password_hash: hashedAdmin,
+                role: "admin",
+                is_verified: true,
+                person_id: persons[0].id,
+            }),
+            User.create({
+                email: "clara@test.com",
+                password_hash: hashedAdmin,
+                role: "admin",
+                is_verified: true,
+                person_id: persons[1].id,
+            }),
+            User.create({
+                email: "anna@test.com",
+                password_hash: hashedUser,
+                role: "user",
+                is_verified: true,
+                person_id: persons[2].id,
+            }),
+            User.create({
+                email: "markus@test.com",
+                password_hash: hashedUser,
+                role: "user",
+                is_verified: true,
+                person_id: persons[3].id,
+            }),
+            User.create({
+                email: "sandra@test.com",
+                password_hash: hashedUser,
+                role: "user",
+                is_verified: true,
+                person_id: persons[4].id,
+            }),
         ]);
-        console.log("🔐 Login-Daten erstellt.");
+        console.log("🔐 User erstellt (Admins & Users).");
 
         // =====================================================
         // 🏨 Unterkünfte
@@ -125,13 +161,13 @@ module.exports = async function runSeed() {
             },
             {
                 name: "Pfälzer Trail Run",
-                description: "10km Trail-Lauf durch das Pfälzer Bergland",
+                description: "10 km Trail-Lauf durch das Pfälzer Bergland",
                 start_date: "2025-09-14",
                 end_date: "2025-09-14",
             },
             {
                 name: "Winterlauf Garmisch",
-                description: "5km Winterlauf durch verschneite Wälder",
+                description: "5 km Winterlauf durch verschneite Wälder",
                 start_date: "2025-12-10",
                 end_date: "2025-12-10",
             },
@@ -141,7 +177,7 @@ module.exports = async function runSeed() {
         // =====================================================
         // 🗺️ Routen
         // =====================================================
-        const routes = await Route.bulkCreate([
+        await Route.bulkCreate([
             {
                 name: "Tirol Panorama Strecke",
                 distance_km: 21.1,
@@ -161,7 +197,7 @@ module.exports = async function runSeed() {
                 event_id: events[2].id,
             },
         ]);
-        console.log("🗺️ 3 Routen hinzugefügt.");
+        console.log("🗺️ Routen hinzugefügt.");
 
         // =====================================================
         // 🏃‍♂️ Teams
@@ -174,49 +210,83 @@ module.exports = async function runSeed() {
         console.log("🏃‍♂️ 3 Relay Teams hinzugefügt.");
 
         // =====================================================
-        // 📝 Registrierungen
+        // 📝 Event-Registrierungen
         // =====================================================
-        const registrations = await Registration.bulkCreate(
+        const regs = await EventRegistration.bulkCreate(
             [
                 {
-                    person_id: users[2].id,
+                    person_id: persons[2].id,
                     event_id: events[0].id,
                     participation_type: "single",
                     wishes: "vegetarisch",
                 },
                 {
-                    person_id: users[3].id,
+                    person_id: persons[3].id,
                     event_id: events[1].id,
                     participation_type: "relay",
                     relay_team_id: teams[1].id,
                 },
             ],
-            { returning: true } // 🔥 zwingend notwendig bei SQLite
+            { returning: true }
         );
-        console.log("📝 2 Registrierungen hinzugefügt.");
+        console.log("📝 Event-Registrierungen hinzugefügt.");
 
         // =====================================================
-        // ⏱️ Laufzeiten (Runtime)
+        // 🛍️ Produkte
+        // =====================================================
+        const products = await Product.bulkCreate([
+            {
+                name: "Startgebühr Halbmarathon",
+                description: "Teilnahmegebühr für den Berglauf 2025",
+                price: 49.5,
+            },
+            {
+                name: "Pfälzer Trail Shirt",
+                description: "Offizielles Laufshirt aus atmungsaktivem Material",
+                price: 25.0,
+            },
+            {
+                name: "Finisher Medaille",
+                description: "Limitierte Teilnehmer-Medaille",
+                price: 10.0,
+            },
+        ]);
+        console.log("🛍️ 3 Produkte hinzugefügt.");
+
+        // =====================================================
+        // 💰 Beispielrechnung (Invoice) mit verknüpften Produkten
+        // =====================================================
+        const invoice = await Invoice.create({
+            person_id: persons[2].id, // Anna Schmidt
+            total_amount: 84.5,
+            issued_at: new Date(),
+            paid: false,
+        });
+        await invoice.addProducts([products[0], products[1]]); // Startgebühr + Shirt
+        console.log("💰 Beispielrechnung hinzugefügt und mit Produkten verknüpft.");
+
+
+        // =====================================================
+        // ⏱️ Laufzeiten
         // =====================================================
         await Runtime.bulkCreate([
-            { registration_id: registrations[0].id },
-            { registration_id: registrations[1].id },
+            { registration_id: regs[0].id },
+            { registration_id: regs[1].id },
         ]);
         console.log("⏱️ 2 Laufzeiten hinzugefügt.");
-
 
         // =====================================================
         // 📦 Buchungen
         // =====================================================
         await Booking.bulkCreate([
             {
-                person_id: users[2].id,
+                person_id: persons[2].id,
                 accommodation_id: accommodations[0].id,
                 event_id: events[0].id,
                 single_beds: 1,
             },
             {
-                person_id: users[3].id,
+                person_id: persons[3].id,
                 accommodation_id: accommodations[1].id,
                 event_id: events[1].id,
                 double_beds: 1,
@@ -224,7 +294,7 @@ module.exports = async function runSeed() {
         ]);
         console.log("📦 2 Buchungen hinzugefügt.");
 
-        console.log("✅ Seeding erfolgreich!");
+        console.log("✅ Seeding erfolgreich abgeschlossen!");
     } catch (err) {
         console.error("❌ Fehler beim Seeding:", err);
     }

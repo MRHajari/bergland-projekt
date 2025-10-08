@@ -1,3 +1,4 @@
+<!-- frontend/src/app/features/auth/register/register.html -->
 <div class="register-page">
     <div class="register-card">
         <div class="logo">
@@ -19,7 +20,6 @@
             <div class="error">Nachname erforderlich</div>
             }
 
-            <!-- 🆕 Neues Feld: Geburtsdatum -->
             <label>Geburtsdatum</label>
             <input type="date" formControlName="birth_date" />
             @if (registerForm.get('birth_date')?.invalid && registerForm.get('birth_date')?.touched) {
@@ -38,18 +38,17 @@
             <div class="error">Passwort min. 6 Zeichen</div>
             }
 
-            <button type="submit" class="primary" [disabled]="loading">Registrieren</button>
+            <button type="submit" class="primary" [disabled]="loading">
+                @if (loading) { Lade... } @else { Registrieren }
+            </button>
         </form>
 
-        @if (errorMessage) {
-        <div class="error">{{ errorMessage }}</div>
-        }
-        @if (successMessage) {
-        <div class="success">{{ successMessage }}</div>
-        }
+        @if (errorMessage) { <div class="error">{{ errorMessage }}</div> }
+        @if (successMessage) { <div class="success">{{ successMessage }}</div> }
 
         <p class="switch">
             Schon ein Konto?
             <a (click)="goToLogin()">Login</a>
         </p>
     </div>
+</div>

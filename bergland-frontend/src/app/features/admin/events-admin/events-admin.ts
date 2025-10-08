@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { EventService } from '../../../core/services/event.service';
-import { RegistrationService } from '../../../core/services/registration.service'; // ✅ ersetzt BelegungService
+import { RegistrationService } from '../../../core/services/user.registration.service'; // ✅ ersetzt BelegungService
 
 @Component({
   selector: 'app-events-admin',

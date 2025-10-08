@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { RegistrationService } from '../../../../core/services/registration.service';
+import { RegistrationService } from '../../../../core/services/user.registration.service';
 import { EventService } from '../../../../core/services/event.service';
 
 @Component({

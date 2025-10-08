@@ -1,7 +1,6 @@
 <div class="admin-container">
     <h1>👥 Benutzerverwaltung</h1>
 
-    <!-- 🔍 Suchfeld -->
     <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Benutzer suchen (Name oder Email)..."
         class="search-input" />
 
@@ -13,7 +12,7 @@
     <p>Keine Benutzer gefunden.</p>
     } @else {
 
-    <!-- 🔹 Admin-Benutzer -->
+    <!-- 🔹 Admins -->
     <section class="list-section">
         <h2>🛡️ Admin Benutzer</h2>
 
@@ -34,11 +33,11 @@
             <tbody>
                 @for (u of adminUsers; track u.id) {
                 <tr>
-                    <td>{{ u.first_name }}</td>
-                    <td>{{ u.last_name }}</td>
+                    <td>{{ u.person?.first_name || '–' }}</td>
+                    <td>{{ u.person?.last_name || '–' }}</td>
                     <td>{{ u.email }}</td>
                     <td>
-                        {{ u.birth_date ? (u.birth_date | date:'dd.MM.yyyy') : '–' }}
+                        {{ u.person?.birth_date ? (u.person.birth_date | date:'dd.MM.yyyy') : '–' }}
                     </td>
                     <td>
                         <select [(ngModel)]="u.role">
@@ -78,11 +77,11 @@
             <tbody>
                 @for (u of pagedNormalUsers; track u.id) {
                 <tr>
-                    <td>{{ u.first_name }}</td>
-                    <td>{{ u.last_name }}</td>
+                    <td>{{ u.person?.first_name || '–' }}</td>
+                    <td>{{ u.person?.last_name || '–' }}</td>
                     <td>{{ u.email }}</td>
                     <td>
-                        {{ u.birth_date ? (u.birth_date | date:'dd.MM.yyyy') : '–' }}
+                        {{ u.person?.birth_date ? (u.person.birth_date | date:'dd.MM.yyyy') : '–' }}
                     </td>
                     <td>
                         <select [(ngModel)]="u.role">
@@ -99,15 +98,10 @@
             </tbody>
         </table>
 
-        <!-- 📄 Pagination -->
         <div class="pagination">
-            <button (click)="page = page - 1" [disabled]="page === 1">
-                ◀️ Zurück
-            </button>
+            <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
             <span>Seite {{ page }} / {{ totalPages }}</span>
-            <button (click)="page = page + 1" [disabled]="page === totalPages">
-                ▶️ Weiter
-            </button>
+            <button (click)="page = page + 1" [disabled]="page === totalPages">▶️ Weiter</button>
         </div>
         }
     </section>

@@ -1,7 +1,8 @@
+// frontend/src/app/features/auth/verify-email/verify-email.component.ts
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../../core/auth.service';
+import { AuthService } from '../../../core/auth.service'; // ✅ korrigierter Pfad
 
 @Component({
   selector: 'app-verify-email',
@@ -18,31 +19,34 @@ export class VerifyEmail implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private authService: AuthService,
-    public router: Router // 🔹 public statt private
+    public router: Router
   ) {}
 
   ngOnInit(): void {
     const token = this.route.snapshot.paramMap.get('token');
+
     if (!token) {
-      this.error = 'Kein Verifikationstoken angegeben.';
+      this.error = '❌ Kein Verifikationstoken angegeben.';
       this.loading = false;
       return;
     }
 
     this.authService.verifyEmail(token).subscribe({
       next: (res) => {
-        this.message = res.message || 'E-Mail erfolgreich bestätigt!';
         this.loading = false;
+        this.message = res.message || '✅ E-Mail erfolgreich bestätigt!';
+        // ⏳ 3 Sekunden warten, dann Redirect
         setTimeout(() => this.router.navigate(['/login']), 3000);
       },
       error: (err) => {
-        this.error = err.error?.error || 'Der Bestätigungslink ist ungültig oder abgelaufen.';
         this.loading = false;
-      }
+        this.error =
+          err.error?.error ||
+          '⚠️ Der Bestätigungslink ist ungültig oder abgelaufen.';
+      },
     });
   }
 
-  // 🔹 Methode für Template-Navigation
   goToRegister(): void {
     this.router.navigate(['/register']);
   }

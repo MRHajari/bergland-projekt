@@ -1,13 +1,14 @@
+// frontend/src/app/features/auth/login/login.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { AuthService } from '../../../core/auth.service';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../core/auth.service'; // ✅ korrigierter Pfad
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, RouterModule], // 👈 RouterModule hinzufügen
+  imports: [ReactiveFormsModule, CommonModule, RouterModule],
   templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
@@ -25,30 +26,42 @@ export class Login implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // 🔹 Optionaler Redirect-Zielpfad
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/events';
 
+    // 🔹 Formular initialisieren
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
+      password: ['', Validators.required],
     });
   }
 
-  onSubmit() {
+  onSubmit(): void {
     if (this.loginForm.invalid) return;
-  
+
     this.loading = true;
+    this.errorMessage = '';
+
     this.authService.login(this.loginForm.value).subscribe({
-      next: () => {
-        console.log('Login erfolgreich');
-        this.router.navigateByUrl(this.returnUrl || '/events');
+      next: (res) => {
+        console.log('✅ Login erfolgreich:', res);
+        this.loading = false;
+
+        // ✅ Weiterleitung nach erfolgreichem Login
+        this.router.navigateByUrl(this.returnUrl);
       },
       error: (err) => {
-        console.error('Login fehlgeschlagen', err);
-        this.errorMessage = err.error?.message || 'Login fehlgeschlagen';
+        console.error('❌ Login fehlgeschlagen:', err);
         this.loading = false;
-      }
+
+        if (err.status === 403) {
+          this.errorMessage = 'Bitte bestätige zuerst deine E-Mail-Adresse.';
+        } else if (err.status === 401) {
+          this.errorMessage = 'Ungültige Zugangsdaten.';
+        } else {
+          this.errorMessage = err.error?.error || 'Login fehlgeschlagen. Bitte erneut versuchen.';
+        }
+      },
     });
   }
-  
-  
 }

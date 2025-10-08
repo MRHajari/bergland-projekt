@@ -8,18 +8,17 @@ import { jwtDecode, JwtPayload } from 'jwt-decode';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:3000/api/auth'; // ✅ Backend-Basis-URL
+  private apiUrl = 'http://localhost:3000/api/auth'; // ✅ Backend-Base
 
   constructor(private http: HttpClient) {}
 
-  // 🔹 Benutzer registrieren
+  // 🔹 Registrierung
   register(userData: {
     first_name: string;
     last_name: string;
     birth_date: string;
     email: string;
     password: string;
-    role?: string;
   }): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, userData);
   }
@@ -31,23 +30,23 @@ export class AuthService {
         if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
         if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
       }),
-      catchError((err) => {
-        console.error('Login fehlgeschlagen:', err);
+      catchError(err => {
+        console.error('❌ Login fehlgeschlagen:', err);
         return throwError(() => err);
       })
     );
   }
 
-  // 🔹 Refresh-Token
+  // 🔹 Refresh Token
   refreshToken(): Observable<any> {
     const token = localStorage.getItem('refreshToken');
-    return this.http.post(`${this.apiUrl}/refresh`, { token }).pipe(
+    return this.http.post(`${this.apiUrl}/refresh-token`, { token }).pipe(
       tap((res: any) => {
         if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
         if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
       }),
-      catchError((err) => {
-        console.error('Token-Aktualisierung fehlgeschlagen:', err);
+      catchError(err => {
+        console.error('❌ Token-Aktualisierung fehlgeschlagen:', err);
         return throwError(() => err);
       })
     );
@@ -61,9 +60,7 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/logout`, { token });
   }
 
-  // ------------------------------------------------------------
   // 🔹 Hilfsmethoden
-  // ------------------------------------------------------------
   getAccessToken(): string | null {
     return localStorage.getItem('accessToken');
   }
@@ -71,7 +68,6 @@ export class AuthService {
   isLoggedIn(): boolean {
     const token = this.getAccessToken();
     if (!token) return false;
-
     try {
       const payload = jwtDecode<JwtPayload>(token);
       return !((payload.exp || 0) * 1000 < Date.now());
@@ -102,9 +98,8 @@ export class AuthService {
     }
   }
 
+  // 🔹 E-Mail-Verifikation
   verifyEmail(token: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/verify/${token}`);
   }
-  
 }
-

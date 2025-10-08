@@ -1,3 +1,4 @@
+<!-- frontend/src/app/features/auth/login/login.html -->
 <div class="login-page">
     <div class="login-card">
         <div class="logo">
@@ -19,7 +20,9 @@
             <div class="error">Passwort erforderlich</div>
             }
 
-            <button type="submit" class="primary" [disabled]="loading">Login</button>
+            <button type="submit" class="primary" [disabled]="loading">
+                @if (loading) { Einloggen... } @else { Login }
+            </button>
         </form>
 
         @if (errorMessage) {
