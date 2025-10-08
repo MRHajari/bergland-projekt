@@ -9,9 +9,10 @@ import { VerifyEmail } from './features/auth/verify-email/verify-email';
 // 🔹 Benutzer-Bereich
 import { Events } from './features/events/events';
 import { Booking } from './features/booking/booking';
-import { Profile } from './features/profile/profile';
+import { Profile } from './features/profile/profile/profile';
+import { Overview } from './features/profile/overview/overview';
 import { Products } from './features/products/products';
-import { EventDetail } from './features/events/event-detail.ts/event-detail';
+import { EventDetail } from './features/events/event-detail/event-detail';
 
 // 🔹 Admin-Bereich
 import { AdminDashboard } from './features/admin/admin-dashboard/admin-dashboard';
@@ -56,6 +57,8 @@ export const routes: Routes = [
       { path: 'products', component: Products },
       { path: 'booking', component: Booking, canActivate: [authGuard] },
       { path: 'profile', component: Profile, canActivate: [authGuard] },
+      { path: 'overview', component: Overview, canActivate: [authGuard] },
+
   
       // ⚙️ Adminbereich
       {

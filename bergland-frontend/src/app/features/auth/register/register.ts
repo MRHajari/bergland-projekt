@@ -54,4 +54,8 @@ onSubmit() {
   });
 }
 
+goToLogin(): void {
+  this.router.navigate(['/login']);
+}
+
 }

@@ -13,6 +13,8 @@ const RelayTeam = require("./relay_team");
 const Route = require("./route");
 const Invoice = require("./invoice");
 const Product = require("./product");
+const EventRegistration = require("./eventRegistration");
+
 
 // 🟢 Nur das neue Belegung-Model ist im Funktionsstil definiert
 const { DataTypes } = require("sequelize");
@@ -73,6 +75,27 @@ Route.belongsTo(Event, { foreignKey: "event_id", as: "event" });
 Registration.hasOne(Runtime, { foreignKey: "registration_id", as: "runtime", onDelete: "CASCADE" });
 Runtime.belongsTo(Registration, { foreignKey: "registration_id", as: "registration" });
 
+// --------------------------------------------------------------
+// 🟢 EventRegistration-Relationen
+// --------------------------------------------------------------
+
+// Eine Person kann sich mehrfach für Events anmelden
+Person.hasMany(EventRegistration, { foreignKey: "person_id", as: "eventRegistrations", onDelete: "CASCADE" });
+EventRegistration.belongsTo(Person, { foreignKey: "person_id", as: "person" });
+
+// Ein Event hat viele Anmeldungen
+Event.hasMany(EventRegistration, { foreignKey: "event_id", as: "eventRegistrations", onDelete: "CASCADE" });
+EventRegistration.belongsTo(Event, { foreignKey: "event_id", as: "event" });
+
+// Eine Staffel (RelayTeam) kann mehrere Anmeldungen haben
+RelayTeam.hasMany(EventRegistration, { foreignKey: "relay_team_id", as: "eventRegistrations", onDelete: "SET NULL" });
+EventRegistration.belongsTo(RelayTeam, { foreignKey: "relay_team_id", as: "relayTeam" });
+
+// Eine EventRegistration kann eine Laufzeit (Runtime) haben
+EventRegistration.hasOne(Runtime, { foreignKey: "registration_id", as: "runtime", onDelete: "CASCADE" });
+Runtime.belongsTo(EventRegistration, { foreignKey: "registration_id", as: "eventRegistration" });
+
+
 Invoice.belongsToMany(Product, {
     through: { model: "invoice_products" },
     foreignKey: "invoice_id",
@@ -93,7 +116,7 @@ module.exports = {
     sequelize,
     Person, Address, LoginData,
     Accommodation, Booking,
-    Event, Registration, Runtime, RelayTeam, Route,
+    Event, Registration, EventRegistration, Runtime, RelayTeam, Route,
     Invoice, Product,
     Belegung, Token
 };

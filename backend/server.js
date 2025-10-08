@@ -2,26 +2,35 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const { sequelize, Person, LoginData } = require("./models");
 const bcrypt = require("bcrypt");
-const belegungRoutes = require('./routes/belegungRoutes');
+const { Op } = require("sequelize");
+const { sequelize, Person, LoginData, Token } = require("./models");
+
+const belegungRoutes = require("./routes/belegungRoutes");
+const eventRegistrationRoutes = require("./routes/eventRegistrationRoutes"); // 🟢 NEU
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ CORS ganz oben!
+// ============================================================
+// ✅ 1. Middleware
+// ============================================================
 app.use(cors({
-    origin: '*', // im Dev erlaubt alle
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    origin: "*", // im Dev erlaubt alles — später Domain eintragen
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(bodyParser.json());
 
-// ✅ Root test
+// ============================================================
+// ✅ 2. Root Test Route
+// ============================================================
 app.get("/", (req, res) => res.send("Backend is running 🚀"));
 
-// ✅ Import routes
+// ============================================================
+// ✅ 3. Import aller Routen
+// ============================================================
 app.use("/api/persons", require("./routes/personRoutes"));
 app.use("/api/addresses", require("./routes/addressRoutes"));
 app.use("/api/logins", require("./routes/loginDataRoutes"));
@@ -35,10 +44,13 @@ app.use("/api/routes", require("./routes/routeRoutes"));
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
-app.use('/api/belegung', belegungRoutes);
+app.use("/api/belegung", belegungRoutes);
+
+// 🟢 NEU: EventRegistration-Routen einbinden
+app.use("/api/event-registrations", eventRegistrationRoutes);
 
 // ============================================================
-// ✅ Funktion: Standard-Admin automatisch anlegen
+// ✅ 4. Admin-Setup-Funktion
 // ============================================================
 async function ensureAdminUser() {
     try {
@@ -49,57 +61,54 @@ async function ensureAdminUser() {
 
         if (existingPerson) {
             const login = await LoginData.findOne({ where: { person_id: existingPerson.id } });
+            const hashed = await bcrypt.hash(adminPassword, 10);
+
             if (login) {
-                const newHashed = await bcrypt.hash(adminPassword, 10);
-                await login.update({ password_hash: newHashed, role: 'admin' }); // Rolle absichern
-                console.log(`🔑 Passwort und Rolle für Admin ${adminEmail} wurden aktualisiert.`);
+                await login.update({ password_hash: hashed, role: "admin" });
+                console.log(`🔑 Admin ${adminEmail} aktualisiert.`);
             } else {
-                // falls Person existiert, aber LoginData fehlt
-                const newHashed = await bcrypt.hash(adminPassword, 10);
                 await LoginData.create({
                     person_id: existingPerson.id,
-                    password_hash: newHashed,
+                    password_hash: hashed,
                     role: "admin",
+                    is_verified: true,
                 });
-                console.log(`🆕 LoginData für bestehenden Admin ${adminEmail} erstellt.`);
+                console.log(`🆕 LoginData für Admin ${adminEmail} erstellt.`);
             }
             return;
         }
 
-        // Hash Passwort
+        // Falls Admin noch nicht existiert → neu anlegen
         const hashedPassword = await bcrypt.hash(adminPassword, 10);
-
-        // Person erstellen
         const person = await Person.create({
             first_name: "System",
             last_name: "Administrator",
             email: adminEmail,
-            birth_date: "2000-01-01", // 🆕 Geburtsdatum hinzugefügt
+            birth_date: "2000-01-01",
+            is_verified: true,
         });
 
-        // LoginData mit Adminrolle anlegen
         await LoginData.create({
             person_id: person.id,
             password_hash: hashedPassword,
             role: "admin",
+            is_verified: true,
         });
 
-        console.log("✅ Default Admin created:");
+        console.log("✅ Default Admin erstellt:");
         console.log(`   Email: ${adminEmail}`);
         console.log(`   Password: ${adminPassword}`);
     } catch (err) {
-        console.error("❌ Error creating default admin:", err);
+        console.error("❌ Fehler beim Anlegen des Admins:", err);
     }
 }
 
 // ============================================================
-// ✅ Server starten (nach DB-Sync) only vor dewelopmen
+// ✅ 5. DB-Sync + Serverstart
 // ============================================================
-sequelize
-// ⚙️ Nutze "alter: true"
 async function startServer() {
     try {
-        await sequelize.sync({ force: true }); // oder .sync()
+        await sequelize.sync({ alter: true }); // ⚙️ ändere von { force: true } → { alter: true }
         console.log("📦 Database connected");
 
         await ensureAdminUser();
@@ -114,9 +123,9 @@ async function startServer() {
 
 startServer();
 
-
-
-
+// ============================================================
+// ✅ 6. Token-Cleanup (1x täglich)
+// ============================================================
 setInterval(async () => {
     await Token.destroy({ where: { expires_at: { [Op.lt]: new Date() } } });
-}, 24 * 60 * 60 * 1000); // einmal pro Tag
+}, 24 * 60 * 60 * 1000);

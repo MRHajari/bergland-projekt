@@ -21,6 +21,7 @@ const {
     Belegung,
     Token
 } = require("./models");
+const { verify } = require("jsonwebtoken");
 
 (async () => {
     try {
@@ -45,6 +46,7 @@ const {
                 password: "Mrh123!",
                 role: "admin",
                 birth_date: "1990-01-15",
+                verifyd: true,
             },
             {
                 first_name: "Clara",
@@ -53,6 +55,7 @@ const {
                 password: "Passwort123",
                 role: "admin",
                 birth_date: "1988-06-22",
+                verifyd: true,
             },
             {
                 first_name: "Lisa",
@@ -61,6 +64,7 @@ const {
                 password: "Passwort123",
                 role: "admin",
                 birth_date: "1992-04-12",
+                verifyd: true,
             },
             {
                 first_name: "Tom",
@@ -69,6 +73,7 @@ const {
                 password: "Passwort123",
                 role: "admin",
                 birth_date: "1985-09-01",
+                verifyd: true,
             },
         ];
 
@@ -78,6 +83,7 @@ const {
                 last_name: admin.last_name,
                 email: admin.email,
                 birth_date: admin.birth_date,
+                verifyd: true,
             });
 
             const password_hash = await bcrypt.hash(admin.password, 10);
@@ -85,6 +91,7 @@ const {
                 person_id: person.id,
                 password_hash,
                 role: admin.role,
+                verifyd: true,
             });
             console.log(`🛡️ Admin erstellt: ${admin.first_name} ${admin.last_name}`);
         }
@@ -93,12 +100,12 @@ const {
         // 👥 NORMAL USERS
         // =====================================================
         const users = [
-            { first_name: "Anna", last_name: "Berg", email: "anna@example.com", password: "Passwort123", role: "user", birth_date: "1990-01-15" },
-            { first_name: "Markus", last_name: "Klein", email: "markus@example.com", password: "Passwort123", role: "user", birth_date: "1989-12-05" },
-            { first_name: "Felix", last_name: "Hoch", email: "felix@example.com", password: "Passwort123", role: "user", birth_date: "1993-02-18" },
-            { first_name: "Sandra", last_name: "Tal", email: "sandra@example.com", password: "Passwort123", role: "user", birth_date: "1997-05-14" },
-            { first_name: "Nina", last_name: "Kraft", email: "nina@example.com", password: "Passwort123", role: "user", birth_date: "1986-11-22" },
-            { first_name: "Jonas", last_name: "Müller", email: "jonas@example.com", password: "Passwort123", role: "user", birth_date: "1994-03-09" },
+            { first_name: "Anna", last_name: "Berg", email: "anna@example.com", password: "Passwort123", role: "user", birth_date: "1990-01-15", verifyd: true, },
+            { first_name: "Markus", last_name: "Klein", email: "markus@example.com", password: "Passwort123", role: "user", birth_date: "1989-12-05", verifyd: true, },
+            { first_name: "Felix", last_name: "Hoch", email: "felix@example.com", password: "Passwort123", role: "user", birth_date: "1993-02-18", verifyd: true, },
+            { first_name: "Sandra", last_name: "Tal", email: "sandra@example.com", password: "Passwort123", role: "user", birth_date: "1997-05-14", verifyd: true, },
+            { first_name: "Nina", last_name: "Kraft", email: "nina@example.com", password: "Passwort123", role: "user", birth_date: "1986-11-22", verifyd: true, },
+            { first_name: "Jonas", last_name: "Müller", email: "jonas@example.com", password: "Passwort123", role: "user", birth_date: "1994-03-09", verifyd: true, },
         ];
 
         for (const user of users) {
@@ -107,6 +114,7 @@ const {
                 last_name: user.last_name,
                 email: user.email,
                 birth_date: user.birth_date,
+                verifyd: true,
             });
 
             const password_hash = await bcrypt.hash(user.password, 10);
@@ -114,6 +122,7 @@ const {
                 person_id: person.id,
                 password_hash,
                 role: user.role,
+                verifyd: true,
             });
             console.log(`👥 User erstellt: ${user.first_name} ${user.last_name}`);
         }

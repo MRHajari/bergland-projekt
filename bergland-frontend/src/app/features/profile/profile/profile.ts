@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PersonService } from '../../core/services/person.service';
-import { BookingService } from '../../core/services/booking.service';
+import { PersonService } from '../../../core/services/person.service';
+import { BookingService } from '../../../core/services/booking.service';
 
 @Component({
   selector: 'app-profile',

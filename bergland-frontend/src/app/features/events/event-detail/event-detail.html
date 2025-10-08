@@ -1,0 +1,96 @@
+<div class="event-detail-container">
+    @if (loading) {
+    <p class="loading">⏳ Event wird geladen...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else {
+    <div class="card">
+        <!-- 🔹 Event Header -->
+        <div class="event-header">
+            <button class="back-btn" (click)="goBack()">← Zurück zur Übersicht</button>
+            <h1>{{ event?.name }}</h1>
+            <div class="event-meta">
+                <p>
+                    📅 <strong>Datum:</strong>
+                    {{ event?.start_date | date: 'dd.MM.yyyy' }}
+                    <span *ngIf="event?.end_date && event?.start_date !== event?.end_date">
+                        – {{ event?.end_date | date: 'dd.MM.yyyy' }}
+                    </span>
+                </p>
+            </div>
+            <p class="desc">{{ event?.description || 'Keine Beschreibung verfügbar.' }}</p>
+        </div>
+
+        <hr />
+
+        <!-- 🔹 Anmeldung -->
+        <h3 class="section-title">📝 Anmeldung</h3>
+
+        <form [formGroup]="registrationForm" (ngSubmit)="registerForEvent()" class="registration-form">
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>Telefonnummer</label>
+                    <input formControlName="phone_number" placeholder="z. B. +49 171 2345678" />
+                </div>
+
+                <div class="form-field">
+                    <label>KFZ-Kennzeichen</label>
+                    <input formControlName="license_plate" placeholder="z. B. KL-AB 123" />
+                </div>
+
+                <div class="form-field">
+                    <label>Teilnahme-Art</label>
+                    <select formControlName="participation_type">
+                        <option value="einzeln">Einzeln</option>
+                        <option value="staffel">Staffel</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Verpflegung</label>
+                    <input formControlName="catering_type" placeholder="Vegetarisch, Vegan, ..." />
+                </div>
+
+                <div class="form-field">
+                    <label>Wünsche</label>
+                    <input formControlName="wishes" placeholder="Besondere Wünsche..." />
+                </div>
+
+                <div class="form-field">
+                    <label>Geschlecht</label>
+                    <select formControlName="gender">
+                        <option value="m">Männlich</option>
+                        <option value="w">Weiblich</option>
+                        <option value="d">Divers</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Verein</label>
+                    <input formControlName="club" placeholder="z. B. Laufteam Kaiserslautern" />
+                </div>
+
+                <div class="form-field">
+                    <label>Startnummer</label>
+                    <input formControlName="start_number" placeholder="optional" />
+                </div>
+
+                <!-- Haftungsausschluss -->
+                <div class="checkbox-row">
+                    <input type="checkbox" formControlName="liability_accept" />
+                    <span>Ich akzeptiere den <strong>Haftungsausschluss</strong></span>
+                </div>
+            </div>
+
+            <!-- 🔹 Buttons -->
+            <div class="btn-group">
+                <button type="submit" class="btn primary" [disabled]="registrationForm.invalid">
+                    Jetzt anmelden
+                </button>
+                <button type="button" class="btn secondary" (click)="goToProfile()">👤 Mein Profil</button>
+                <button type="button" class="btn secondary" (click)="goToBooking()">📦 Buchungen</button>
+            </div>
+        </form>
+    </div>
+    }
+</div>

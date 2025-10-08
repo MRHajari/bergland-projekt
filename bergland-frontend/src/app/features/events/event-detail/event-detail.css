@@ -1,0 +1,261 @@
+/* ================================
+   Event Detail Styles (nutzt globale Variablen)
+   ================================ */
+
+   .event-detail-container {
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1rem;
+    background: var(--background-color);
+    min-height: 100vh;
+    font-family: "Inter", system-ui, sans-serif;
+    color: var(--text-color);
+  }
+  
+  /* 🔹 Hauptkarte */
+  .card {
+    background: var(--card-color);
+    max-width: 800px;
+    width: 100%;
+    padding: 2rem 2.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    animation: fadeIn 0.4s ease;
+  }
+  
+  /* 🔹 Event Header */
+  .event-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+  
+  .event-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    color: var(--primary-color);
+  }
+  
+  .event-meta {
+    background: var(--secondary-color);
+    padding: 0.6rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+    color: var(--text-color);
+    margin-bottom: 0.8rem;
+  }
+  
+  .desc {
+    color: var(--text-color);
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+  
+  /* 🔹 Zurück-Button */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--secondary-color);
+    border: none;
+    color: var(--text-color);
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: all 0.25s ease;
+    margin-bottom: 0.8rem;
+  }
+  
+  .back-btn:hover {
+    background: #b8d4f2;
+    transform: translateX(-2px);
+  }
+  
+  /* 🔹 Abschnittstitel */
+  .section-title {
+    margin-top: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+  
+  /* 🔹 Formular */
+  .registration-form {
+    margin-top: 1rem;
+    background: var(--card-color);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  }
+  
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 1.2rem;
+  }
+  
+  .form-field label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+    color: var(--text-color);
+  }
+  
+  .form-field input,
+  .form-field select {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--border-radius);
+    background: #f9fafb;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  
+  .form-field input:focus,
+  .form-field select:focus {
+    border-color: var(--primary-color);
+    background: #fff;
+    outline: none;
+  }
+  
+  /* ================================
+     Checkbox (Haftungsausschluss)
+     ================================ */
+     .checkbox-row {
+      grid-column: 1 / span 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: transparent; /* kein Hintergrund mehr */
+      color: var(--text-color);
+      padding: 0.9rem 1rem;
+      border: 2px solid var(--secondary-color); /* zarte Rahmenfarbe */
+      border-radius: var(--border-radius);
+      font-size: 0.95rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.25s ease;
+      margin-top: 0.6rem;
+    }
+    
+    .checkbox-row:hover {
+      border-color: var(--primary-color); /* Rahmen wechselt zu Primärfarbe */
+      background: rgba(18, 65, 112, 0.03); /* leichter Farbton beim Hover */
+    }
+    
+    .checkbox-row input[type="checkbox"] {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--primary-color);
+      border-radius: 4px;
+      display: inline-block;
+      position: relative;
+      margin: 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .checkbox-row input[type="checkbox"]:checked {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+    
+    .checkbox-row input[type="checkbox"]:checked::after {
+      content: "✔";
+      position: absolute;
+      top: -1px;
+      left: 3px;
+      color: var(--text-on-primary);
+      font-size: 0.9rem;
+      line-height: 1;
+    }
+    
+    .checkbox-row span {
+      font-weight: 500;
+      color: var(--text-color);
+      line-height: 1.4;
+    }
+    
+  
+  /* 🔹 Buttons */
+  .btn-group {
+    margin-top: 1.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+  }
+  
+  .btn.primary {
+    background-color: var(--primary-color);
+    color: var(--text-on-primary);
+  }
+  
+  .btn.primary:hover {
+    background-color: #0f3a63;
+  }
+  
+  .btn.secondary {
+    background-color: var(--secondary-color);
+    color: var(--secondary-text-on);
+  }
+  
+  .btn.secondary:hover {
+    background-color: #b8d4f2;
+  }
+  
+  /* 🔹 Loading & Error */
+  .loading {
+    color: #475569;
+    font-style: italic;
+    text-align: center;
+  }
+  
+  .error {
+    color: #dc2626;
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  /* 🔹 Animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* 🔹 Responsive */
+  @media (max-width: 700px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .btn-group {
+      flex-direction: column;
+    }
+  }

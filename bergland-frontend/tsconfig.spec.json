@@ -10,6 +10,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/app/features/admin/events-admin/event-anmeldungen-admin"
+    "src/app/features/admin/events-admin/event-anmeldungen-admin",
+    "src/app/features/events/event-detail"
   ]
 }

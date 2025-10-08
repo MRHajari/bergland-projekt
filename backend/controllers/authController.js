@@ -177,7 +177,11 @@ exports.login = async (req, res, next) => {
         if (!person) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
 
         const login = await LoginData.findOne({ where: { person_id: person.id } });
+
+
         if (!login) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
+
+        console.log('valid ----: ', login);
 
         if (!login.is_verified)
             return res.status(403).json({
@@ -185,6 +189,7 @@ exports.login = async (req, res, next) => {
             });
 
         const valid = await bcrypt.compare(password, login.password_hash);
+        console.log('valid ----: ', valid);
         if (!valid) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
 
         await login.update({ last_login_at: new Date() });
