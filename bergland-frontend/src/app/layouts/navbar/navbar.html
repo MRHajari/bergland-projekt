@@ -1,5 +1,6 @@
 <nav class="side-navbar" [class.collapsed]="isCollapsed">
     <ul class="nav-links">
+        <!-- Events -->
         <li class="nav-item" [class.collapsed]="isCollapsed">
             <a routerLink="/events" routerLinkActive="active">
                 <i class="fa-solid fa-calendar-days"></i>
@@ -10,6 +11,7 @@
             </a>
         </li>
 
+        <!-- Buchungen -->
         <li class="nav-item" [class.collapsed]="isCollapsed">
             <a routerLink="/booking" routerLinkActive="active">
                 <i class="fa-solid fa-book"></i>
@@ -20,13 +22,14 @@
             </a>
         </li>
 
+        <!-- Unterkünfte -->
         <li class="nav-item" [class.collapsed]="isCollapsed">
-            <a routerLink="/profile" routerLinkActive="active">
-                <i class="fa-solid fa-user"></i>
+            <a routerLink="/accommodations" routerLinkActive="active">
+                <i class="fa-solid fa-bed"></i>
                 @if (!isCollapsed) {
-                <span class="label">Profil</span>
+                <span class="label">Unterkünfte</span>
                 }
-                <span class="tooltip-text">Profil</span>
+                <span class="tooltip-text">Unterkünfte</span>
             </a>
         </li>
     </ul>

@@ -4,9 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
-const { sequelize, Person, LoginData, Token } = require("./models");
-
-const eventRegistrationRoutes = require("./routes/eventRegistrationRoutes"); // 🟢 NEU
+const { sequelize, Person, User, Token } = require("./models");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,11 +13,10 @@ const PORT = process.env.PORT || 3000;
 // ✅ 1. Middleware
 // ============================================================
 app.use(cors({
-    origin: "*", // im Dev erlaubt alles — später Domain eintragen
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
 }));
-
 app.use(bodyParser.json());
 
 // ============================================================
@@ -31,21 +28,18 @@ app.get("/", (req, res) => res.send("Backend is running 🚀"));
 // ✅ 3. Import aller Routen
 // ============================================================
 app.use("/api/persons", require("./routes/personRoutes"));
-app.use("/api/addresses", require("./routes/addressRoutes"));
-app.use("/api/logins", require("./routes/loginDataRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/accommodations", require("./routes/accommodationRoutes"));
 app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/events", require("./routes/eventRoutes"));
-app.use("/api/registrations", require("./routes/registrationRoutes"));
-app.use("/api/runtimes", require("./routes/runtimeRoutes"));
 app.use("/api/relay-teams", require("./routes/relayTeamRoutes"));
 app.use("/api/routes", require("./routes/routeRoutes"));
+app.use("/api/runtimes", require("./routes/runtimeRoutes"));
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
+app.use("/api/event-registrations", require("./routes/eventRegistrationRoutes"));
+app.use("/api/user-registrations", require("./routes/userRegistrationRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
-
-// 🟢 NEU: EventRegistration-Routen einbinden
-app.use("/api/event-registrations", eventRegistrationRoutes);
 
 // ============================================================
 // ✅ 4. Admin-Setup-Funktion
@@ -55,42 +49,29 @@ async function ensureAdminUser() {
         const adminEmail = "admin@test.com";
         const adminPassword = "Admin123!";
 
-        const existingPerson = await Person.findOne({ where: { email: adminEmail } });
+        const existingUser = await User.findOne({ where: { email: adminEmail } });
+        const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
-        if (existingPerson) {
-            const login = await LoginData.findOne({ where: { person_id: existingPerson.id } });
-            const hashed = await bcrypt.hash(adminPassword, 10);
-
-            if (login) {
-                await login.update({ password_hash: hashed, role: "admin" });
-                console.log(`🔑 Admin ${adminEmail} aktualisiert.`);
-            } else {
-                await LoginData.create({
-                    person_id: existingPerson.id,
-                    password_hash: hashed,
-                    role: "admin",
-                    is_verified: true,
-                });
-                console.log(`🆕 LoginData für Admin ${adminEmail} erstellt.`);
-            }
+        if (existingUser) {
+            await existingUser.update({ password_hash: hashedPassword, role: "admin", is_verified: true });
+            console.log(`🔑 Admin ${adminEmail} aktualisiert.`);
             return;
         }
 
-        // Falls Admin noch nicht existiert → neu anlegen
-        const hashedPassword = await bcrypt.hash(adminPassword, 10);
+        // Admin-Person + User anlegen
         const person = await Person.create({
             first_name: "System",
             last_name: "Administrator",
             email: adminEmail,
             birth_date: "2000-01-01",
-            is_verified: true,
         });
 
-        await LoginData.create({
-            person_id: person.id,
+        await User.create({
+            email: adminEmail,
             password_hash: hashedPassword,
             role: "admin",
             is_verified: true,
+            person_id: person.id,
         });
 
         console.log("✅ Default Admin erstellt:");
@@ -106,14 +87,29 @@ async function ensureAdminUser() {
 // ============================================================
 async function startServer() {
     try {
-        await sequelize.sync({ alter: true }); // ⚙️ ändere von { force: true } → { alter: true }
-        console.log("📦 Database connected");
+        console.log("🔄 Verbinde mit Datenbank...");
 
+        if (process.env.NODE_ENV === "development") {
+            console.log("⚠️ DEV-Modus: Tabellen werden neu erstellt...");
+            await sequelize.sync({ force: true });
+
+            console.log("🌱 Starte Seeding...");
+            const runSeed = require("./seed");
+            await runSeed();
+        } else {
+            await sequelize.sync();
+        }
+
+        console.log("✅ Database connected.");
+
+        // 🔑 Admin anlegen
         await ensureAdminUser();
 
+        // 🚀 Server starten
         app.listen(PORT, "0.0.0.0", () => {
-            console.log(`🚀 Server running at http://localhost:${PORT}`);
+            console.log(`🚀 Server läuft auf http://localhost:${PORT}`);
         });
+
     } catch (err) {
         console.error("❌ Database connection failed:", err);
     }

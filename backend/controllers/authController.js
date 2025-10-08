@@ -5,7 +5,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const { Person, LoginData, Token, sequelize } = require("../models");
+const { User, Person, Token, sequelize } = require("../models");
 const { registerSchema, loginSchema } = require("../validators/authValidator");
 const dotenv = require("dotenv");
 
@@ -30,11 +30,11 @@ const {
 // 🔹 Mailtrap SMTP Transporter einrichten
 // ============================================================
 const transporter = nodemailer.createTransport({
-    host: process.env.MAIL_HOST,
-    port: Number(process.env.MAIL_PORT),
+    host: MAIL_HOST,
+    port: Number(MAIL_PORT),
     auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
+        user: MAIL_USER,
+        pass: MAIL_PASS,
     },
     secure: false,
     tls: { rejectUnauthorized: false },
@@ -49,9 +49,6 @@ const transporter = nodemailer.createTransport({
         console.error("❌ Mailtrap Verbindung fehlgeschlagen:", err.message);
     }
 })();
-
-
-
 
 // ============================================================
 // 🔹 Token-Generatoren
@@ -69,7 +66,7 @@ async function generateRefreshToken(payload) {
     const expiresAt = new Date(decoded.exp * 1000);
 
     await Token.create({
-        person_id: payload.user.id,
+        user_id: payload.user.id,
         token,
         expires_at: expiresAt,
     });
@@ -87,24 +84,32 @@ exports.register = async (req, res, next) => {
 
         const { first_name, last_name, birth_date, email, password } = req.body;
 
-        const existing = await Person.findOne({ where: { email } });
+        const existing = await User.findOne({ where: { email } });
         if (existing)
             return res.status(409).json({ error: "Diese E-Mail ist bereits registriert." });
 
         const password_hash = await bcrypt.hash(password, 10);
 
         const result = await sequelize.transaction(async (t) => {
+            // Person anlegen
             const person = await Person.create(
                 { first_name, last_name, birth_date, email },
                 { transaction: t }
             );
 
-            const login = await LoginData.create(
-                { person_id: person.id, password_hash, role: "user", is_verified: false },
+            // User mit Verknüpfung zur Person anlegen
+            const user = await User.create(
+                {
+                    email,
+                    password_hash,
+                    role: "user",
+                    is_verified: false,
+                    person_id: person.id,
+                },
                 { transaction: t }
             );
 
-            return { person, login };
+            return { person, user };
         });
 
         // 🔹 Verifikationslink erzeugen
@@ -145,16 +150,13 @@ exports.verifyEmail = async (req, res) => {
         const decoded = jwt.verify(token, EMAIL_SECRET);
         const { email } = decoded;
 
-        const person = await Person.findOne({ where: { email } });
-        if (!person) return res.status(404).json({ error: "Benutzer nicht gefunden." });
+        const user = await User.findOne({ where: { email } });
+        if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden." });
 
-        const login = await LoginData.findOne({ where: { person_id: person.id } });
-        if (!login) return res.status(404).json({ error: "Login-Daten nicht gefunden." });
-
-        if (login.is_verified)
+        if (user.is_verified)
             return res.json({ message: "E-Mail wurde bereits bestätigt." });
 
-        await login.update({ is_verified: true });
+        await user.update({ is_verified: true });
 
         res.json({ message: "E-Mail erfolgreich bestätigt! Du kannst dich jetzt einloggen." });
     } catch (err) {
@@ -173,34 +175,30 @@ exports.login = async (req, res, next) => {
 
         const { email, password } = value;
 
-        const person = await Person.findOne({ where: { email } });
-        if (!person) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
+        const user = await User.findOne({
+            where: { email },
+            include: [{ model: Person, as: "person" }],
+        });
 
-        const login = await LoginData.findOne({ where: { person_id: person.id } });
+        if (!user) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
 
-
-        if (!login) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
-
-        console.log('valid ----: ', login);
-
-        if (!login.is_verified)
+        if (!user.is_verified)
             return res.status(403).json({
                 error: "Bitte bestätige zuerst deine E-Mail-Adresse.",
             });
 
-        const valid = await bcrypt.compare(password, login.password_hash);
-        console.log('valid ----: ', valid);
+        const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
 
-        await login.update({ last_login_at: new Date() });
+        await user.update({ last_login_at: new Date() });
 
         const payload = {
             user: {
-                id: person.id,
-                email: person.email,
-                first_name: person.first_name,
-                last_name: person.last_name,
-                role: login.role,
+                id: user.id,
+                email: user.email,
+                first_name: user.person?.first_name,
+                last_name: user.person?.last_name,
+                role: user.role,
             },
         };
 
@@ -239,6 +237,9 @@ exports.refreshToken = async (req, res) => {
     }
 };
 
+// ============================================================
+// 🔹 Logout
+// ============================================================
 exports.logout = async (req, res) => {
     const { token } = req.body || {};
     if (!token) return res.status(400).json({ error: "Kein Token angegeben." });

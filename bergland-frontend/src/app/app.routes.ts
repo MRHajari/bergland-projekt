@@ -5,7 +5,6 @@ import { Login } from './features/auth/login/login';
 import { Register } from './features/auth/register/register';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 
-
 // 🔹 Benutzer-Bereich
 import { Events } from './features/events/events';
 import { Booking } from './features/booking/booking';
@@ -22,14 +21,13 @@ import { UsersAdmin } from './features/admin/users-admin/users-admin';
 import { AccommodationsAdmin } from './features/admin/accommodations-admin/accommodations-admin';
 import { EventAnmeldungenAdmin } from './features/admin/events-admin/event-anmeldungen-admin/event-anmeldungen-admin';
 
-
 // 🔹 Layouts
 import { AuthLayout } from './layouts/auth-layout/auth-layout';
 import { MainLayout } from './layouts/main-layout/main-layout';
 
 // 🔹 Guards
 import { authGuard } from './core/guards/auth.guard';
-import { adminGuard } from './core/guards/admin.guard'; // ⬅️ Diesen Guard brauchst du für Admin-Bereich
+import { adminGuard } from './core/guards/admin.guard'; // ⬅️ Admin-Bereich absichern
 
 export const routes: Routes = [
   // 🔸 Standardweiterleitung
@@ -42,7 +40,7 @@ export const routes: Routes = [
     children: [
       { path: 'login', component: Login },
       { path: 'register', component: Register },
-      { path: 'verify/:token', component: VerifyEmail }, // 🆕
+      { path: 'verify/:token', component: VerifyEmail },
     ],
   },
 
@@ -56,10 +54,28 @@ export const routes: Routes = [
       { path: 'event-detail/:id', component: EventDetail },
       { path: 'products', component: Products },
       { path: 'booking', component: Booking, canActivate: [authGuard] },
+
+      // 🏨 Unterkünfte (Benutzer)
+      {
+        path: 'accommodations',
+        loadComponent: () =>
+          import('./features/accommodations/accommodations-list/accommodations-list').then(
+            (m) => m.AccommodationsList
+          ),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'accommodations/:id',
+        loadComponent: () =>
+          import('./features/accommodations/accommodation-detail/accommodation-detail').then(
+            (m) => m.AccommodationDetail
+          ),
+        canActivate: [authGuard],
+      },
+
       { path: 'profile', component: Profile, canActivate: [authGuard] },
       { path: 'overview', component: Overview, canActivate: [authGuard] },
 
-  
       // ⚙️ Adminbereich
       {
         path: 'admin',
@@ -68,12 +84,11 @@ export const routes: Routes = [
           { path: '', component: AdminDashboard },
           { path: 'products', component: ProductsAdmin },
           { path: 'events', component: EventsAdmin },
-          { path: 'events/:id/teilnehmer', component: EventAnmeldungenAdmin }, // ✅ richtig!
+          { path: 'events/:id/teilnehmer', component: EventAnmeldungenAdmin },
           { path: 'users', component: UsersAdmin },
           { path: 'accommodations', component: AccommodationsAdmin },
         ],
       },
-      
     ],
   },
 

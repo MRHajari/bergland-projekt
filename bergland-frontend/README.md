@@ -89,69 +89,84 @@ frontend/
 │
 ├── src/
 │   ├── app/
-│   │   ├── core/                        # Zentrale Dienste, Guards, Interceptors
-│   │   │   ├── services/
-│   │   │   │   ├── api.service.ts
-│   │   │   │   ├── auth.service.ts
-│   │   │   │   ├── person.service.ts
-│   │   │   │   ├── booking.service.ts
-│   │   │   │   ├── invoice.service.ts
-│   │   │   │   ├── payment.service.ts
-│   │   │   │   ├── event.service.ts
-│   │   │   │   ├── registration.service.ts
-│   │   │   │   ├── relay-team.service.ts
-│   │   │   │   ├── route.service.ts
-│   │   │   │   └── product.service.ts
+│   │   ├── core/
 │   │   │   ├── guards/
 │   │   │   │   ├── auth.guard.ts
 │   │   │   │   └── admin.guard.ts
-│   │   │   └── interceptors/
-│   │   │       └── auth.interceptor.ts
+│   │   │   ├── interceptors/
+│   │   │   │   └── auth.interceptor.ts
+│   │   │   ├── services/
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   ├── api.service.ts
+│   │   │   │   ├── booking.service.ts
+│   │   │   │   ├── accommodation.service.ts
+│   │   │   │   ├── event.service.ts
+│   │   │   │   ├── event-registration.service.ts
+│   │   │   │   └── runtime.service.ts
+│   │   │   ├── models/
+│   │   │   │   ├── person.model.ts
+│   │   │   │   ├── booking.model.ts
+│   │   │   │   ├── event.model.ts
+│   │   │   │   ├── accommodation.model.ts
+│   │   │   │   ├── relay-team.model.ts
+│   │   │   │   └── event-registration.model.ts
+│   │   │   └── utils/
+│   │   │       └── format-date.ts
 │   │   │
-│   │   ├── layouts/                     # Wiederverwendbare Layout-Komponenten
+│   │   ├── layouts/
+│   │   │   ├── main-layout/
+│   │   │   │   ├── main-layout.ts
+│   │   │   │   └── main-layout.html
 │   │   │   ├── auth-layout/
-│   │   │   │   ├── auth-layout.ts / html / css
-│   │   │   └── main-layout/
-│   │   │       ├── main-layout.ts / html / css
-│   │   │       ├── navbar.ts / html / css
-│   │   │       └── header.ts / html / css
+│   │   │   │   ├── auth-layout.ts
+│   │   │   │   └── auth-layout.html
+│   │   │   └── shared/
+│   │   │       ├── navbar/
+│   │   │       └── footer/
 │   │   │
-│   │   ├── features/                    # Funktionsmodule der App
+│   │   ├── features/
 │   │   │   ├── auth/
-│   │   │   │   ├── login.ts / html / css
-│   │   │   │   ├── register.ts / html / css
-│   │   │   │   └── verify-email.ts / html / css
+│   │   │   │   ├── login/
+│   │   │   │   ├── register/
+│   │   │   │   └── verify-email/
 │   │   │   ├── events/
-│   │   │   │   ├── events.ts / html / css
-│   │   │   │   └── event-detail.ts / html / css
+│   │   │   │   ├── events.ts
+│   │   │   │   └── event-detail/
+│   │   │   ├── accommodations/
+│   │   │   │   ├── accommodations-list/
+│   │   │   │   └── accommodation-detail/
 │   │   │   ├── booking/
-│   │   │   │   └── booking.ts / html / css
+│   │   │   │   └── booking.ts
 │   │   │   ├── profile/
-│   │   │   │     └── profile/  
-│   │   │   │       └── profile.ts / html / css
-│   │   │   │     └── overview/ 
-│   │   │   │        ├── overview.ts / html / css
-│   │   │   └── admin/                   # Admin-Dashboard & Verwaltung
-│   │   │       ├── admin-dashboard.ts / html / css
-│   │   │       ├── products-admin.ts / html / css
-│   │   │       ├── events-admin.ts / html / css
-│   │   │       ├── users-admin.ts / html / css
-│   │   │       └── accommodations-admin.ts / html / css
+│   │   │   │   ├── overview/
+│   │   │   │   └── profile/
+│   │   │   ├── admin/
+│   │   │   │   ├── admin-dashboard/
+│   │   │   │   ├── events-admin/
+│   │   │   │   ├── products-admin/
+│   │   │   │   ├── users-admin/
+│   │   │   │   └── accommodations-admin/
+│   │   │   └── shared/
+│   │   │       └── components/
+│   │   │           └── card/
 │   │   │
-│   │   ├── app.routes.ts                # Haupt-Routing-Konfiguration
-│   │   ├── app.component.ts / html / css
-│   │   └── app.config.ts
+│   │   ├── app.routes.ts
+│   │   ├── app.config.ts
+│   │   └── app.component.ts
 │   │
-│   ├── assets/                          # Bilder, Logos, Icons
-│   ├── environments/                    # Umgebungsvariablen
+│   ├── assets/
+│   │   ├── images/
+│   │   └── icons/
+│   │
+│   ├── environments/
 │   │   ├── environment.ts
 │   │   └── environment.prod.ts
+│   │
 │   └── main.ts
 │
-├── angular.json
 ├── package.json
-├── tsconfig.json
-└── README.md
+└── angular.json
+
 
 
 ### 1. Dependencies installieren

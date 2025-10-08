@@ -25,86 +25,82 @@ Backend-API für die **Bergland-App** (Reservierung, Events, Rechnungen, Zahlung
 ## 📂 Projektstruktur
 backend/
 │
-├── config/                  # DB-Konfiguration (Sequelize)
-│   ├── db.js
-│   └── config.js
+├── config/
+│   ├── db.js                     # Sequelize-DB-Verbindung
+│   └── mail.js                   # Mailtrap / SMTP Config (optional)
 │
-├── db/                      # SQLite-Datenbank
-│   └── database.sqlite
-│
-├── controllers/             # Business-Logik (CRUD + Auth)
+├── controllers/                  # Business-Logik
+│   ├── personController.js
+│   ├── userController.js              # ✅ neu – CRUD für App-User
+│   ├── userRegistrationController.js  # ✅ neu – Registrierung (Signup)
+│   ├── authController.js              # ✅ Login / JWT / Verify / Logout
 │   ├── accommodationController.js
-│   ├── addressController.js
-│   ├── authController.js
 │   ├── bookingController.js
 │   ├── eventController.js
-│   ├── invoiceController.js
-│   ├── loginDataController.js
-│   ├── paymentController.js
-│   ├── paymentIntegrationController.js
-│   ├── personController.js
-│   ├── productController.js
-│   ├── registrationController.js
+│   ├── eventRegistrationController.js # ✅ Event-Anmeldung (Person ↔ Event)
 │   ├── relayTeamController.js
 │   ├── routeController.js
-│   └── runtimeController.js
+│   ├── runtimeController.js
+│   ├── invoiceController.js
+│   ├── productController.js
+│   └── tokenController.js
 │
-├── middlewares/             # Globale Middleware (Auth, Error Handling)
-│   ├── authMiddleware.js
-│   └── errorMiddleware.js
-│
-├── models/                  # Sequelize-Modelle
-│   ├── accommodation.js
+├── models/                       # Sequelize Models
+│   ├── index.js                  # Beziehungen & Export
+│   ├── person.js                 # Personendaten (ohne Passwort)
+│   ├── user.js                   # ✅ App-Benutzer mit Passwort & Rolle
+│   ├── userRegistration.js       # ✅ Registrierung im App-System
 │   ├── address.js
+│   ├── login_data.js             # ⚠️ optional (Legacy, kann später entfernt werden)
+│   ├── accommodation.js
 │   ├── booking.js
 │   ├── event.js
-│   ├── index.js
-│   ├── invoice.js
-│   ├── loginData.js
-│   ├── payment.js
-│   ├── person.js
-│   ├── product.js
-│   ├── registration.js
-│   ├── relayTeam.js
+│   ├── eventRegistration.js      # ✅ Anmeldung zu Events
+│   ├── relay_team.js
 │   ├── route.js
-│   └── runtime.js
+│   ├── runtime.js
+│   ├── invoice.js
+│   ├── product.js
+│   └── token.js
 │
-├── routes/                  # Express-Routen (mit Controllern verknüpft)
+├── routes/                       # Express Router
+│   ├── personRoutes.js
+│   ├── userRoutes.js                 # ✅ neu – CRUD für User
+│   ├── userRegistrationRoutes.js     # ✅ neu – Registrierung (Signup)
+│   ├── authRoutes.js                 # ✅ Login / Logout / Verify
 │   ├── accommodationRoutes.js
-│   ├── addressRoutes.js
-│   ├── authRoutes.js
 │   ├── bookingRoutes.js
 │   ├── eventRoutes.js
-│   ├── invoiceRoutes.js
-│   ├── loginDataRoutes.js
-│   ├── paymentIntegrationRoutes.js
-│   ├── paymentRoutes.js
-│   ├── personRoutes.js
-│   ├── productRoutes.js
-│   ├── registrationRoutes.js
+│   ├── eventRegistrationRoutes.js    # ✅ Event-Anmeldung
 │   ├── relayTeamRoutes.js
 │   ├── routeRoutes.js
-│   └── runtimeRoutes.js
+│   ├── runtimeRoutes.js
+│   ├── invoiceRoutes.js
+│   ├── productRoutes.js
+│   └── tokenRoutes.js
 │
-├── validators/              # Eingabevalidierung (Joi-Schemas)
+├── validators/                   # Joi-Validierungen
+│   ├── personValidator.js
+│   ├── userValidator.js              # ✅ neu – Validierung für User
+│   ├── userRegistrationValidator.js  # ✅ neu – Validierung für Registrierung
+│   ├── authValidator.js              # ✅ neu – Login / Passwort-Reset
 │   ├── accommodationValidator.js
-│   ├── addressValidator.js
 │   ├── bookingValidator.js
 │   ├── eventValidator.js
-│   ├── invoiceValidator.js
-│   ├── loginDataValidator.js
-│   ├── paymentValidator.js
-│   ├── personValidator.js
-│   ├── productValidator.js
-│   ├── registrationValidator.js
+│   ├── eventRegistrationValidator.js # ✅ Anmeldung zu Events
 │   ├── relayTeamValidator.js
 │   ├── routeValidator.js
-│   └── runtimeValidator.js
+│   ├── runtimeValidator.js
+│   ├── invoiceValidator.js
+│   └── productValidator.js
 │
-├── .env                     # Environment-Variablen (nicht ins Repo pushen!)
-├── package.json             # Abhängigkeiten & Scripts
-├── server.js                # Einstiegspunkt des Backends
-└── seed.js                  # Seeder für Testdaten
+├── db/
+│   └── database.sqlite              # Lokale SQLite-Datei
+│
+├── seed.js                          # Beispiel-Daten (Personen, Events, usw.)
+├── server.js                        # Express-Startpunkt (mit ensureAdminUser)
+├── .env                             # DB-Pfad, Mailtrap-Credentials etc.
+└── package.json
 
 
 #### Development starten

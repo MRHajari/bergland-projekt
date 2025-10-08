@@ -2,35 +2,15 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const Person = sequelize.define("person", {
-    id: {
-        type: DataTypes.UUID,
-        primaryKey: true,
-        defaultValue: DataTypes.UUIDV4,
-    },
-    first_name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    last_name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-        validate: {
-            isEmail: true,
-        },
-    },
-    birth_date: {
-        type: DataTypes.DATEONLY,
-        allowNull: false,
-    },
-    // 🧹 Passwort entfernt — wird in LoginData gespeichert
+    id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+    first_name: { type: DataTypes.STRING, allowNull: false },
+    last_name: { type: DataTypes.STRING, allowNull: false },
+    birth_date: { type: DataTypes.DATEONLY, allowNull: true },
+    email: { type: DataTypes.STRING, allowNull: true },
+    phone: { type: DataTypes.STRING, allowNull: true },
 }, {
     tableName: "person",
-    underscored: true,
+    timestamps: true,
 });
 
 module.exports = Person;

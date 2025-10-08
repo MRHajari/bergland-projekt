@@ -1,23 +1,24 @@
+// backend/models/booking.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const Booking = sequelize.define("booking", {
     id: {
         type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
+        defaultValue: DataTypes.UUIDV4,
     },
-    accommodation_id: {
+    person_id: {
         type: DataTypes.UUID,
         allowNull: false,
     },
     event_id: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
     },
-    person_id: {
+    accommodation_id: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
     },
     single_beds: {
         type: DataTypes.INTEGER,
@@ -33,7 +34,8 @@ const Booking = sequelize.define("booking", {
     },
 }, {
     tableName: "booking",
-    timestamps: true,
+    freezeTableName: true,
+    timestamps: true, // ✅ Sequelize erstellt createdAt & updatedAt automatisch
 });
 
 module.exports = Booking;

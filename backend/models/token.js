@@ -1,35 +1,31 @@
-// backend/models/token.js
-module.exports = (sequelize, DataTypes) => {
-    const Token = sequelize.define(
-        "Token",
-        {
-            id: {
-                type: DataTypes.INTEGER,
-                primaryKey: true,
-                autoIncrement: true,
-            },
-            person_id: {
-                type: DataTypes.INTEGER,
-                allowNull: false,
-            },
-            token: {
-                type: DataTypes.TEXT,
-                allowNull: false,
-            },
-            expires_at: {
-                type: DataTypes.DATE,
-                allowNull: false,
-            },
-            revoked: {
-                type: DataTypes.BOOLEAN,
-                defaultValue: false,
-            },
-        },
-        {
-            tableName: "tokens",
-            timestamps: false,
-        }
-    );
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-    return Token;
-};
+const Token = sequelize.define(
+    "token",
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+        },
+        person_id: {
+            type: DataTypes.UUID,
+            allowNull: false,
+        },
+        token: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        expires_at: {
+            type: DataTypes.DATE,
+            allowNull: false,
+        },
+    },
+    {
+        tableName: "token",
+        timestamps: true,
+    }
+);
+
+module.exports = Token;

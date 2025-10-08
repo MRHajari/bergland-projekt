@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 
 @Component({
@@ -11,9 +11,10 @@ import { AuthService } from '../../core/auth.service';
   styleUrls: ['./navbar.css']
 })
 export class Navbar implements OnInit {
-  isCollapsed = false;      // Sidebar Zustand (eingeklappt / ausgeklappt)
-  isAdmin = false;          // Wird dynamisch vom Token gesetzt
-  private authService = inject(AuthService); // ✅ Angular inject-Methode
+  isCollapsed = false; // Sidebar Zustand
+  isAdmin = false;
+
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.isAdmin = this.authService.getUserRole() === 'admin';
@@ -29,7 +30,7 @@ export class Navbar implements OnInit {
         localStorage.clear();
         window.location.href = '/login';
       },
-      error: (err) => console.error('Logout failed', err)
+      error: (err) => console.error('Logout fehlgeschlagen:', err)
     });
   }
 }

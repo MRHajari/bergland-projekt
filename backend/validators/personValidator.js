@@ -1,10 +1,9 @@
 const Joi = require("joi");
 
-const personSchema = Joi.object({
-    first_name: Joi.string().min(2).max(50).required(),
-    last_name: Joi.string().min(2).max(50).required(),
-    birth_date: Joi.date().optional(), // ✅ Already correct
-    email: Joi.string().email().required()
+exports.personSchema = Joi.object({
+    first_name: Joi.string().min(2).max(100).required(),
+    last_name: Joi.string().min(2).max(100).required(),
+    birth_date: Joi.date().optional(),
+    email: Joi.string().email().optional(),
+    phone: Joi.string().optional(),
 });
-
-module.exports = personSchema;
