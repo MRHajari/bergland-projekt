@@ -5,6 +5,8 @@ const {
     sequelize,
     Person,
     User,
+    Address,
+    RelPersonAddress,
     Accommodation,
     Event,
     Booking,
@@ -108,6 +110,55 @@ module.exports = async function runSeed() {
             }),
         ]);
         console.log("🔐 User erstellt (Admins & Users).");
+
+        // =====================================================
+        // 🏠 Adressen
+        // =====================================================
+        const addresses = await Address.bulkCreate([
+            {
+                street: "Spinozastraße 18",
+                postal_code: "67663",
+                city: "Kaiserslautern",
+                country: "Deutschland",
+            },
+            {
+                street: "Bahnhofstraße 12",
+                postal_code: "80335",
+                city: "München",
+                country: "Deutschland",
+            },
+            {
+                street: "Marktplatz 5",
+                postal_code: "50667",
+                city: "Köln",
+                country: "Deutschland",
+            },
+            {
+                street: "Hauptstraße 44",
+                postal_code: "20095",
+                city: "Hamburg",
+                country: "Deutschland",
+            },
+            {
+                street: "Schlossweg 7",
+                postal_code: "69117",
+                city: "Heidelberg",
+                country: "Deutschland",
+            },
+        ]);
+        console.log("🏠 Adressen erstellt.");
+
+        // =====================================================
+        // 🔗 RelPersonAddress (Zuordnung)
+        // =====================================================
+        await RelPersonAddress.bulkCreate([
+            { person_id: persons[0].id, address_id: addresses[0].id },
+            { person_id: persons[1].id, address_id: addresses[1].id },
+            { person_id: persons[2].id, address_id: addresses[2].id },
+            { person_id: persons[3].id, address_id: addresses[3].id },
+            { person_id: persons[4].id, address_id: addresses[4].id },
+        ]);
+        console.log("🔗 Personen mit Adressen verknüpft.");
 
         // =====================================================
         // 🏨 Unterkünfte
@@ -254,17 +305,16 @@ module.exports = async function runSeed() {
         console.log("🛍️ 3 Produkte hinzugefügt.");
 
         // =====================================================
-        // 💰 Beispielrechnung (Invoice) mit verknüpften Produkten
+        // 💰 Beispielrechnung (Invoice) mit Produkten
         // =====================================================
         const invoice = await Invoice.create({
-            person_id: persons[2].id, // Anna Schmidt
+            person_id: persons[2].id,
             total_amount: 84.5,
             issued_at: new Date(),
             paid: false,
         });
-        await invoice.addProducts([products[0], products[1]]); // Startgebühr + Shirt
+        await invoice.addProducts([products[0], products[1]]);
         console.log("💰 Beispielrechnung hinzugefügt und mit Produkten verknüpft.");
-
 
         // =====================================================
         // ⏱️ Laufzeiten

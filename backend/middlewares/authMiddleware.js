@@ -1,7 +1,10 @@
+// backend/middlewares/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// 🔹 Middleware: prüft Access Token
+// ============================================================
+// 🔹 Middleware: prüft Access Token und fügt Benutzer zu req.user hinzu
+// ============================================================
 exports.authenticateToken = (req, res, next) => {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
@@ -14,11 +17,11 @@ exports.authenticateToken = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
 
-        // 🔥 Falls Payload verschachtelt ist (z. B. { user: {...} })
+        // ✅ Falls Payload verschachtelt ist (z. B. { user: {...} })
         req.user = decoded.user || decoded;
 
-        // Optional: Debug
-        // console.log("✅ Token erfolgreich verifiziert:", req.user);
+        // Optional: Debug anzeigen
+        console.log("✅ Token erfolgreich verifiziert:", req.user?.email || req.user?.id);
 
         next();
     } catch (err) {
@@ -27,11 +30,14 @@ exports.authenticateToken = (req, res, next) => {
     }
 };
 
+// ============================================================
 // 🔹 Autorisierung: erlaubt nur Admins
+// ============================================================
 exports.authorizeAdmin = (req, res, next) => {
     if (!req.user || req.user.role !== "admin") {
-        console.warn("🚫 Zugriff verweigert – kein Admin:", req.user);
+        console.warn("🚫 Zugriff verweigert – kein Admin:", req.user?.email || req.user?.id);
         return res.status(403).json({ error: "Forbidden: Admins only" });
     }
+
     next();
 };

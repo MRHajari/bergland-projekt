@@ -1,64 +1,77 @@
-const { Address } = require("../models");
-const addressSchema = require("../validators/addressValidator");
+// backend/controllers/addressController.js
+const { Address, Person } = require("../models");
+const { addressSchema } = require("../validators/addressValidator");
 
-// Create new address
-exports.createAddress = async (req, res, next) => {
+// ============================================================
+// 🔹 Alle Adressen abrufen
+// ============================================================
+exports.getAll = async (req, res, next) => {
     try {
-        const { error } = addressSchema.validate(req.body);
-        if (error) return res.status(400).json({ error: error.details[0].message });
-
-        const address = await Address.create(req.body);
-        res.json(address);
-    } catch (err) {
-        next(err);
-    }
-};
-
-// Get all addresses
-exports.getAllAddresses = async (req, res, next) => {
-    try {
-        const addresses = await Address.findAll();
+        const addresses = await Address.findAll({ include: [{ model: Person, as: "person" }] });
         res.json(addresses);
     } catch (err) {
         next(err);
     }
 };
 
-// Get one address
-exports.getAddressById = async (req, res, next) => {
+// ============================================================
+// 🔹 Adresse nach ID abrufen
+// ============================================================
+exports.getById = async (req, res, next) => {
     try {
-        const address = await Address.findByPk(req.params.id);
-        if (!address) return res.status(404).json({ error: "Address not found" });
+        const address = await Address.findByPk(req.params.id, {
+            include: [{ model: Person, as: "person" }],
+        });
+        if (!address) return res.status(404).json({ error: "Adresse nicht gefunden" });
         res.json(address);
     } catch (err) {
         next(err);
     }
 };
 
-// Update address
-exports.updateAddress = async (req, res, next) => {
+// ============================================================
+// 🔹 Neue Adresse erstellen
+// ============================================================
+exports.create = async (req, res, next) => {
     try {
-        const { error } = addressSchema.validate(req.body);
+        const { error, value } = addressSchema.validate(req.body);
+        if (error) return res.status(400).json({ error: error.details[0].message });
+
+        const newAddress = await Address.create(value);
+        res.status(201).json(newAddress);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ============================================================
+// 🔹 Adresse aktualisieren
+// ============================================================
+exports.update = async (req, res, next) => {
+    try {
+        const { error, value } = addressSchema.validate(req.body);
         if (error) return res.status(400).json({ error: error.details[0].message });
 
         const address = await Address.findByPk(req.params.id);
-        if (!address) return res.status(404).json({ error: "Address not found" });
+        if (!address) return res.status(404).json({ error: "Adresse nicht gefunden" });
 
-        await address.update(req.body);
-        res.json(address);
+        await address.update(value);
+        res.json({ message: "Adresse aktualisiert", address });
     } catch (err) {
         next(err);
     }
 };
 
-// Delete address
-exports.deleteAddress = async (req, res, next) => {
+// ============================================================
+// 🔹 Adresse löschen
+// ============================================================
+exports.delete = async (req, res, next) => {
     try {
         const address = await Address.findByPk(req.params.id);
-        if (!address) return res.status(404).json({ error: "Address not found" });
+        if (!address) return res.status(404).json({ error: "Adresse nicht gefunden" });
 
         await address.destroy();
-        res.json({ message: "Address deleted" });
+        res.json({ message: "Adresse gelöscht" });
     } catch (err) {
         next(err);
     }

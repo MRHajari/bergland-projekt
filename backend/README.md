@@ -27,35 +27,39 @@ backend/
 │
 ├── config/
 │   ├── db.js                     # Sequelize-DB-Verbindung
-│   └── mail.js                   # Mailtrap / SMTP Config (optional)
+│   └── mail.js                   # Mailtrap / SMTP Config
 │
-├── controllers/                  # Business-Logik
-│   ├── personController.js
-│   ├── userController.js              # ✅ neu – CRUD für App-User
-│   ├── userRegistrationController.js  # ✅ neu – Registrierung (Signup)
-│   ├── authController.js              # ✅ Login / JWT / Verify / Logout
+├── controllers/                  # Business-Logik (CRUD, Auth etc.)
 │   ├── accommodationController.js
+│   ├── addressController.js
+│   ├── authController.js              # ✅ Login / Verify / Logout / Refresh
 │   ├── bookingController.js
 │   ├── eventController.js
 │   ├── eventRegistrationController.js # ✅ Event-Anmeldung (Person ↔ Event)
+│   ├── invoiceController.js
+│   ├── personController.js
+│   ├── productController.js
 │   ├── relayTeamController.js
 │   ├── routeController.js
 │   ├── runtimeController.js
-│   ├── invoiceController.js
-│   ├── productController.js
-│   └── tokenController.js
+│   ├── tokenController.js
+│   ├── userController.js              # ✅ CRUD für App-User
+│   └── userRegistrationController.js  # ✅ Registrierung (Signup)
 │
-├── models/                       # Sequelize Models
-│   ├── index.js                  # Beziehungen & Export
-│   ├── person.js                 # Personendaten (ohne Passwort)
-│   ├── user.js                   # ✅ App-Benutzer mit Passwort & Rolle
-│   ├── userRegistration.js       # ✅ Registrierung im App-System
+├── middleware/
+│   └── authMiddleware.js          # ✅ JWT-Authentifizierung & Admin-Check
+│
+├── models/                        # Sequelize Models
+│   ├── index.js                   # Beziehungen & Exporte
+│   ├── person.js                  # Personen-Stammdaten
+│   ├── user.js                    # ✅ App-Benutzer mit Rolle & Login
+│   ├── userRegistration.js        # ✅ App-Registrierung
 │   ├── address.js
-│   ├── login_data.js             # ⚠️ optional (Legacy, kann später entfernt werden)
+│   ├── rel_person_address.js      # ✅ n:m Verbindung Person ↔ Address
 │   ├── accommodation.js
 │   ├── booking.js
 │   ├── event.js
-│   ├── eventRegistration.js      # ✅ Anmeldung zu Events
+│   ├── eventRegistration.js       # ✅ Anmeldung zu Events
 │   ├── relay_team.js
 │   ├── route.js
 │   ├── runtime.js
@@ -63,43 +67,45 @@ backend/
 │   ├── product.js
 │   └── token.js
 │
-├── routes/                       # Express Router
-│   ├── personRoutes.js
-│   ├── userRoutes.js                 # ✅ neu – CRUD für User
-│   ├── userRegistrationRoutes.js     # ✅ neu – Registrierung (Signup)
-│   ├── authRoutes.js                 # ✅ Login / Logout / Verify
+├── routes/                        # Express Router
 │   ├── accommodationRoutes.js
+│   ├── addressRoutes.js
+│   ├── authRoutes.js
 │   ├── bookingRoutes.js
 │   ├── eventRoutes.js
-│   ├── eventRegistrationRoutes.js    # ✅ Event-Anmeldung
+│   ├── eventRegistrationRoutes.js
+│   ├── invoiceRoutes.js
+│   ├── personRoutes.js
+│   ├── productRoutes.js
 │   ├── relayTeamRoutes.js
 │   ├── routeRoutes.js
 │   ├── runtimeRoutes.js
-│   ├── invoiceRoutes.js
-│   ├── productRoutes.js
-│   └── tokenRoutes.js
+│   ├── tokenRoutes.js
+│   ├── userRoutes.js
+│   └── userRegistrationRoutes.js
 │
-├── validators/                   # Joi-Validierungen
-│   ├── personValidator.js
-│   ├── userValidator.js              # ✅ neu – Validierung für User
-│   ├── userRegistrationValidator.js  # ✅ neu – Validierung für Registrierung
-│   ├── authValidator.js              # ✅ neu – Login / Passwort-Reset
+├── validators/                    # Joi Validierungen
 │   ├── accommodationValidator.js
+│   ├── addressValidator.js
+│   ├── authValidator.js
 │   ├── bookingValidator.js
 │   ├── eventValidator.js
-│   ├── eventRegistrationValidator.js # ✅ Anmeldung zu Events
+│   ├── eventRegistrationValidator.js
+│   ├── invoiceValidator.js
+│   ├── personValidator.js
+│   ├── productValidator.js
 │   ├── relayTeamValidator.js
 │   ├── routeValidator.js
 │   ├── runtimeValidator.js
-│   ├── invoiceValidator.js
-│   └── productValidator.js
+│   ├── userValidator.js
+│   └── userRegistrationValidator.js
 │
 ├── db/
-│   └── database.sqlite              # Lokale SQLite-Datei
+│   └── database.sqlite            # Lokale SQLite-Datenbank
 │
-├── seed.js                          # Beispiel-Daten (Personen, Events, usw.)
-├── server.js                        # Express-Startpunkt (mit ensureAdminUser)
-├── .env                             # DB-Pfad, Mailtrap-Credentials etc.
+├── seed.js                        # Datenbank-Seeding (Personen, Events, usw.)
+├── server.js                      # Express-Startpunkt (mit ensureAdminUser)
+├── .env                           # ENV-Variablen (z. B. DB_PATH, JWT_SECRET)
 └── package.json
 
 

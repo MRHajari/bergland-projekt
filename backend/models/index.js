@@ -1,64 +1,80 @@
+// backend/models/index.js
 const sequelize = require("../config/db");
 
 // --------------------------------------------------------------
 // 🔹 Importiere alle Models
 // --------------------------------------------------------------
 const Person = require("./person");
-const User = require("./user"); // ✅ Benutzer im System
+const User = require("./user");
 const Address = require("./address");
+const RelPersonAddress = require("./rel_person_address");
 const Accommodation = require("./accommodation");
 const Booking = require("./booking");
 const Event = require("./event");
-const UserRegistration = require("./userRegistration"); // ✅ App-Registrierung (nicht Event)
+const UserRegistration = require("./userRegistration"); // App-Registrierung
 const Runtime = require("./runtime");
 const RelayTeam = require("./relay_team");
 const Route = require("./route");
 const Invoice = require("./invoice");
 const Product = require("./product");
-const EventRegistration = require("./eventRegistration"); // ✅ Event-Anmeldung
+const EventRegistration = require("./eventRegistration"); // Event-Anmeldung
 const Token = require("./token");
 
+// --------------------------------------------------------------
+// 🧩 Debug-Log
+// --------------------------------------------------------------
 console.log("DEBUG MODELS:", {
     Person: !!Person?.getTableName,
     User: !!User?.getTableName,
-    UserRegistration: !!UserRegistration?.getTableName,
-    EventRegistration: !!EventRegistration?.getTableName,
+    Address: !!Address?.getTableName,
+    RelPersonAddress: !!RelPersonAddress?.getTableName,
     Accommodation: !!Accommodation?.getTableName,
     Booking: !!Booking?.getTableName,
+    Event: !!Event?.getTableName,
+    EventRegistration: !!EventRegistration?.getTableName,
     Token: !!Token?.getTableName,
 });
 
 // --------------------------------------------------------------
-// 🔹 RELATIONEN DEFINIEREN
+// 🔗 RELATIONEN DEFINIEREN
 // --------------------------------------------------------------
 
-// 🧍 Person – Address (1:n)
-Person.hasMany(Address, {
-    foreignKey: "person_id",
-    as: "addresses",
-    onDelete: "CASCADE",
-});
-Address.belongsTo(Person, {
-    foreignKey: "person_id",
-    as: "person",
-});
-
-
-// 🧍 Person – User (1:1) [modernes Auth-System]
+// 🧍 Person ↔ User (1:1) [modernes Auth-System]
 Person.hasOne(User, {
     foreignKey: "person_id",
     as: "user",
-    onDelete: "SET NULL",
+    onDelete: "CASCADE",
 });
 User.belongsTo(Person, {
     foreignKey: "person_id",
     as: "person",
 });
 
+// 🧍 Person ↔ RelPersonAddress (1:n)
+Person.hasMany(RelPersonAddress, {
+    foreignKey: "person_id",
+    as: "personAddresses",
+    onDelete: "CASCADE",
+});
+RelPersonAddress.belongsTo(Person, {
+    foreignKey: "person_id",
+    as: "person",
+});
+
+// 🏠 Address ↔ RelPersonAddress (1:n)
+Address.hasMany(RelPersonAddress, {
+    foreignKey: "address_id",
+    as: "personAddresses",
+    onDelete: "CASCADE",
+});
+RelPersonAddress.belongsTo(Address, {
+    foreignKey: "address_id",
+    as: "address",
+});
+
 // --------------------------------------------------------------
 // 💻 UserRegistration (App-Registrierung, kein Event)
 // --------------------------------------------------------------
-// Ein Benutzer kann mehrere Registrierungsversuche haben (z. B. vor Aktivierung)
 User.hasMany(UserRegistration, {
     foreignKey: "user_id",
     as: "registrations",
@@ -70,7 +86,8 @@ UserRegistration.belongsTo(User, {
 });
 
 // --------------------------------------------------------------
-// 💰 Person – Invoice (1:n)
+// 💰 Person ↔ Invoice (1:n)
+// --------------------------------------------------------------
 Person.hasMany(Invoice, {
     foreignKey: "person_id",
     as: "invoices",
@@ -84,35 +101,17 @@ Invoice.belongsTo(Person, {
 // --------------------------------------------------------------
 // 🏡 Booking
 // --------------------------------------------------------------
-Booking.belongsTo(Event, {
-    foreignKey: "event_id",
-    as: "event",
-});
-Event.hasMany(Booking, {
-    foreignKey: "event_id",
-    as: "bookings",
-});
+Booking.belongsTo(Event, { foreignKey: "event_id", as: "event" });
+Event.hasMany(Booking, { foreignKey: "event_id", as: "bookings" });
 
-Booking.belongsTo(Person, {
-    foreignKey: "person_id",
-    as: "person",
-});
-Person.hasMany(Booking, {
-    foreignKey: "person_id",
-    as: "bookings",
-});
+Booking.belongsTo(Person, { foreignKey: "person_id", as: "person" });
+Person.hasMany(Booking, { foreignKey: "person_id", as: "bookings" });
 
-Booking.belongsTo(Accommodation, {
-    foreignKey: "accommodation_id",
-    as: "accommodation",
-});
-Accommodation.hasMany(Booking, {
-    foreignKey: "accommodation_id",
-    as: "bookings",
-});
+Booking.belongsTo(Accommodation, { foreignKey: "accommodation_id", as: "accommodation" });
+Accommodation.hasMany(Booking, { foreignKey: "accommodation_id", as: "bookings" });
 
 // --------------------------------------------------------------
-// 🗺️ Event – Route
+// 🗺️ Event ↔ Route (1:n)
 // --------------------------------------------------------------
 Event.hasMany(Route, {
     foreignKey: "event_id",
@@ -157,7 +156,7 @@ EventRegistration.belongsTo(RelayTeam, {
     as: "relayTeam",
 });
 
-// ⚙️ Runtime nur für EventRegistration
+// ⚙️ Runtime nur für EventRegistration (1:1)
 EventRegistration.hasOne(Runtime, {
     foreignKey: "registration_id",
     as: "runtime",
@@ -169,7 +168,7 @@ Runtime.belongsTo(EventRegistration, {
 });
 
 // --------------------------------------------------------------
-// 💰 Rechnungen & Produkte (n:m)
+// 💰 Invoice ↔ Product (n:m)
 // --------------------------------------------------------------
 Invoice.belongsToMany(Product, {
     through: { model: "invoice_products" },
@@ -185,18 +184,19 @@ Product.belongsToMany(Invoice, {
 });
 
 // --------------------------------------------------------------
-// ✅ EXPORT
+// ✅ EXPORTIEREN
 // --------------------------------------------------------------
 module.exports = {
     sequelize,
     Person,
     User,
-    UserRegistration,
     Address,
+    RelPersonAddress,
     Accommodation,
     Booking,
     Event,
     EventRegistration,
+    UserRegistration,
     Runtime,
     RelayTeam,
     Route,

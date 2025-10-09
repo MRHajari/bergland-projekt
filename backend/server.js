@@ -12,11 +12,13 @@ const PORT = process.env.PORT || 3000;
 // ============================================================
 // ✅ 1. Middleware
 // ============================================================
-app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-}));
+app.use(
+    cors({
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+    })
+);
 app.use(bodyParser.json());
 
 // ============================================================
@@ -27,8 +29,12 @@ app.get("/", (req, res) => res.send("Backend is running 🚀"));
 // ============================================================
 // ✅ 3. Import aller Routen
 // ============================================================
+
+// 🧍 Personen & Benutzer
 app.use("/api/persons", require("./routes/personRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
+
+// 📦 Allgemeine Funktionalität
 app.use("/api/accommodations", require("./routes/accommodationRoutes"));
 app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/events", require("./routes/eventRoutes"));
@@ -37,9 +43,15 @@ app.use("/api/routes", require("./routes/routeRoutes"));
 app.use("/api/runtimes", require("./routes/runtimeRoutes"));
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
+
+// 🏃 Registrierungen & Auth
 app.use("/api/event-registrations", require("./routes/eventRegistrationRoutes"));
 app.use("/api/user-registrations", require("./routes/userRegistrationRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
+
+// 🏠 Adressen (neu)
+app.use("/api/addresses", require("./routes/addressRoutes"));
+app.use("/api/person-address", require("./routes/relPersonAddressRoutes"));
 
 // ============================================================
 // ✅ 4. Admin-Setup-Funktion
@@ -53,12 +65,16 @@ async function ensureAdminUser() {
         const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
         if (existingUser) {
-            await existingUser.update({ password_hash: hashedPassword, role: "admin", is_verified: true });
+            await existingUser.update({
+                password_hash: hashedPassword,
+                role: "admin",
+                is_verified: true,
+            });
             console.log(`🔑 Admin ${adminEmail} aktualisiert.`);
             return;
         }
 
-        // Admin-Person + User anlegen
+        // 🧍 Admin-Person + User anlegen
         const person = await Person.create({
             first_name: "System",
             last_name: "Administrator",
@@ -109,7 +125,6 @@ async function startServer() {
         app.listen(PORT, "0.0.0.0", () => {
             console.log(`🚀 Server läuft auf http://localhost:${PORT}`);
         });
-
     } catch (err) {
         console.error("❌ Database connection failed:", err);
     }
@@ -121,5 +136,7 @@ startServer();
 // ✅ 6. Token-Cleanup (1x täglich)
 // ============================================================
 setInterval(async () => {
-    await Token.destroy({ where: { expires_at: { [Op.lt]: new Date() } } });
+    await Token.destroy({
+        where: { expires_at: { [Op.lt]: new Date() } },
+    });
 }, 24 * 60 * 60 * 1000);
