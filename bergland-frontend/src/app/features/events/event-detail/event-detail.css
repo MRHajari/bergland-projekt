@@ -24,28 +24,71 @@
   }
   
   /* 🔹 Event Header */
-  .event-header {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-  }
+.event-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+}
+
+/* 🔹 Zeile mit linkem und rechtem Bereich */
+.event-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap; /* für mobile Geräte */
+  gap: 1.5rem;
+}
   
-  .event-header h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.3rem;
-    color: var(--primary-color);
-  }
-  
-  .event-meta {
-    background: var(--secondary-color);
-    padding: 0.6rem 1rem;
-    border-radius: var(--border-radius);
-    font-size: 0.95rem;
-    color: var(--text-color);
-    margin-bottom: 0.8rem;
-  }
+
+/* 🔹 Linke Seite: Name + Beschreibung */
+.event-info {
+  flex: 2;
+  min-width: 300px;
+}
+
+.event-info h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.3rem;
+}
+
+.event-info .desc {
+  font-size: 1rem;
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+
+/* 🔹 Rechte Seite: Datum + Deadline */
+.event-meta {
+  flex: 1;
+  min-width: 260px;
+  background: var(--secondary-color);
+  border-radius: var(--border-radius);
+  padding: 1rem 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  font-size: 0.95rem;
+  color: var(--text-color);
+}
+
+.event-meta p {
+  margin: 0 0 0.5rem;
+}
+
+.deadline-info {
+  background: var(--tertiary-color);
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 0.8rem;
+  color: var(--primary-color);
+  font-weight: 600;
+  display: inline-block;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+
+
   
   .desc {
     color: var(--text-color);
@@ -56,6 +99,7 @@
   
   /* 🔹 Zurück-Button */
   .back-btn {
+    width: fit-content;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -248,6 +292,18 @@
       transform: translateY(0);
     }
   }
+
+
+  /* 🔹 Responsiv */
+@media (max-width: 768px) {
+  .event-header-row {
+    flex-direction: column;
+  }
+
+  .event-meta {
+    width: 100%;
+  }
+}
   
   /* 🔹 Responsive */
   @media (max-width: 700px) {
@@ -274,4 +330,22 @@
     color: #2d7a2d;
     margin-bottom: 0.5rem;
   }
+
+
+  /* 🔸 Anmeldeschluss (Deadline) */
+.deadline-info {
+  background: var(--tertiary-color);          /* helles Gelb */
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 0.9rem;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--primary-color);
+  font-weight: 600;
+  display: inline-block;
+}
+
   
+.event-meta p:first-child {
+  margin-bottom: 0.4rem; /* etwas Abstand */
+}

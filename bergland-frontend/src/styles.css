@@ -2,23 +2,29 @@
    Globale Variablen für Farben, Abstände
    ================================ */
    :root {
-    --primary-color: #124170;      /* Hauptfarbe: kräftiges Türkisblau */
-    --secondary-color: #cde4fa;    /* Akzent: frisches Mittelgrün */
-    --accent-color: #124170;       /* Dunkles Blaugrün für Kontraste */
-    --card-color: #ffffff;         /* Karten/Boxen */
-    --text-color: #0f262e;         /* Dunkles Blaugrün für Fließtext */
+    --primary-color: #124170;        /* Hauptfarbe: kräftiges Türkisblau */
+    --secondary-color: #cde4fa;      /* Sekundärfarbe: helles Blau für Hintergründe */
+    --accent-color: #124170;         /* Akzentfarbe: dunkles Blaugrün für Kontraste */
+    --tertiary-color: #fff7cc;       /* 🔆 Dritte Farbe: helles Gelb für Highlights */
+    
+    --card-color: #ffffff;           /* Karten/Boxen */
+    --text-color: #0f262e;           /* Dunkles Blaugrün für Fließtext */
+  
+    --background-color: #f9fafc;     /* Allgemeiner Seitenhintergrund */
+  
+    --primary-text-on: #ffffff;
+    --secondary-text-on: #0c0b0b;
+    
+    --text-on-primary: #ffffff;      /* Weißer Text auf dunklem Header */
+    --text-on-secondary: #0c0b0b;    /* Dunkler Text auf hellen Buttons */
+    --text-on-tertiary: #0c0b0b;    /* Dunkler Text auf hellen Buttons */
 
-    --background-color: #f9fafc;
---primary-text-on: #ffffff;
---secondary-text-on: #0c0b0b;
-  
-    --text-on-primary: #ffffff;    /* Weißer Text auf dunklem Header */
-    --text-on-secondary: #0c0b0b;  /* Weißer Text auf grünem Button */
-    --text-on-accent: #ffffff;     /* Weißer Text auf Akzentflächen */
-  
+    --text-on-accent: #ffffff;       /* Weißer Text auf Akzentflächen */
+    
     --border-radius: 10px;
     --spacing: 1rem;
   }
+  
 
   html, body {
     height: 100%;

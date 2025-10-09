@@ -7,23 +7,38 @@
     <div class="card">
         <!-- 🔹 Event Header -->
         <div class="event-header">
+            <!-- 🔙 Zurück-Button -->
             <button class="back-btn" (click)="goBack()">← Zurück zur Übersicht</button>
-            <h1>{{ event?.name }}</h1>
 
-            <div class="event-meta">
-                <p>
-                    📅 <strong>Datum:</strong>
-                    {{ event?.start_date | date: 'dd.MM.yyyy' }}
-                    <span *ngIf="event?.end_date && event?.start_date !== event?.end_date">
+            <div class="event-header-row">
+                <!-- 🔹 Linke Seite -->
+                <div class="event-info">
+                    <h1>{{ event?.name }}</h1>
+                    <p class="desc">
+                        {{ event?.description || 'Keine Beschreibung verfügbar.' }}
+                    </p>
+                </div>
+
+                <!-- 🔹 Rechte Seite (Meta-Box) -->
+                <div class="event-meta">
+                    <p>
+                        📅 <strong>Datum:</strong>
+                        {{ event?.start_date | date: 'dd.MM.yyyy' }}
+                        @if (event?.end_date && event?.start_date !== event?.end_date) {
                         – {{ event?.end_date | date: 'dd.MM.yyyy' }}
-                    </span>
-                </p>
-            </div>
+                        }
+                    </p>
 
-            <p class="desc">
-                {{ event?.description || 'Keine Beschreibung verfügbar.' }}
-            </p>
+                    @if (event?.registration_deadline) {
+                    <p class="deadline-info">
+                        ⏰ <strong>Anmeldung bis:</strong>
+                        {{ event.registration_deadline | date: 'dd.MM.yyyy' }}
+                    </p>
+                    }
+                </div>
+            </div>
         </div>
+
 
         <hr />
 

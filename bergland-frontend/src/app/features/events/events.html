@@ -1,22 +1,32 @@
 <section class="events-page">
     <h2 class="page-title">🏔️ Kommende Events</h2>
 
-    <div *ngIf="loading" class="loading">⏳ Events werden geladen...</div>
-    <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
-
-    <div *ngIf="!loading && !errorMessage" class="event-grid">
-        <article class="event-card" *ngFor="let event of events">
+    @if (loading) {
+    <div class="loading">⏳ Events werden geladen...</div>
+    } @else if (errorMessage) {
+    <div class="error">{{ errorMessage }}</div>
+    } @else {
+    <div class="event-grid">
+        @for (event of events; track event.id) {
+        <article class="event-card">
             <header>
                 <h3>{{ event.name }}</h3>
                 <p class="date">
                     📅 {{ event.start_date }}
-                    <span *ngIf="event.end_date && event.start_date !== event.end_date">
-                        – {{ event.end_date }}
-                    </span>
+                    @if (event.end_date && event.start_date !== event.end_date) {
+                    – {{ event.end_date }}
+                    }
                 </p>
+
             </header>
 
             <p class="description">{{ event.description }}</p>
+
+            @if (event.registration_deadline) {
+            <p class="deadline">
+                ⏰ Anmeldung bis: <strong>{{ event.registration_deadline }}</strong>
+            </p>
+            }
 
             <footer>
                 <button class="details-btn" [routerLink]="['/event-detail', event.id]">
@@ -24,5 +34,7 @@
                 </button>
             </footer>
         </article>
+        }
     </div>
+    }
 </section>

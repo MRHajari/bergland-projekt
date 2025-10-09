@@ -34,24 +34,30 @@ app.get("/", (req, res) => res.send("Backend is running 🚀"));
 app.use("/api/persons", require("./routes/personRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 
-// 📦 Allgemeine Funktionalität
-app.use("/api/accommodations", require("./routes/accommodationRoutes"));
-app.use("/api/bookings", require("./routes/bookingRoutes"));
-app.use("/api/events", require("./routes/eventRoutes"));
-app.use("/api/relay-teams", require("./routes/relayTeamRoutes"));
-app.use("/api/routes", require("./routes/routeRoutes"));
-app.use("/api/runtimes", require("./routes/runtimeRoutes"));
-app.use("/api/invoices", require("./routes/invoiceRoutes"));
-app.use("/api/products", require("./routes/productRoutes"));
+// 🏠 Adressen
+app.use("/api/addresses", require("./routes/addressRoutes"));
+app.use("/api/person-address", require("./routes/relPersonAddressRoutes"));
 
-// 🏃 Registrierungen & Auth
-app.use("/api/event-registrations", require("./routes/eventRegistrationRoutes"));
+// 📦 Unterkunft & Buchung
+app.use("/api/accommodations", require("./routes/accommodationRoutes"));
+app.use("/api/occupancies", require("./routes/occupancyRoutes")); // 🆕 Belegung hinzufügen
+app.use("/api/bookings", require("./routes/bookingRoutes"));
+
+// 🏔️ Events & verbundene Module
+app.use("/api/events", require("./routes/eventRoutes"));
+app.use("/api/relay-teams", require("./routes/relayTeamRoutes")); // Lauftage
+app.use("/api/routes", require("./routes/routeRoutes"));          // Strecken
+app.use("/api/runtimes", require("./routes/runtimeRoutes"));      // Laufzeiten
+app.use("/api/squadrons", require("./routes/squadronRoutes"));    // Staffeln
+app.use("/api/event-registrations", require("./routes/eventRegistrationRoutes")); // Anmeldungen
+
+// 👤 Benutzer-Registrierung & Auth
 app.use("/api/user-registrations", require("./routes/userRegistrationRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 
-// 🏠 Adressen (neu)
-app.use("/api/addresses", require("./routes/addressRoutes"));
-app.use("/api/person-address", require("./routes/relPersonAddressRoutes"));
+// 💰 Rechnungen & Produkte
+app.use("/api/invoices", require("./routes/invoiceRoutes"));
+app.use("/api/products", require("./routes/productRoutes"));
 
 // ============================================================
 // ✅ 4. Admin-Setup-Funktion

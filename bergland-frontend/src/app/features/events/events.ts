@@ -24,11 +24,19 @@ export class Events implements OnInit {
   private loadEvents(): void {
     this.eventService.getAll().subscribe({
       next: (data) => {
+        const formatDate = (dateStr?: string) => {
+          if (!dateStr) return '';
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('de-DE'); // z.B. 25.04.2024
+        };
+  
         this.events = data.map((e: any) => ({
           ...e,
-          start_date: e.start_date?.split('T')[0],
-          end_date: e.end_date?.split('T')[0]
+          start_date: formatDate(e.start_date),
+          end_date: formatDate(e.end_date),
+          registration_deadline: formatDate(e.registration_deadline)
         }));
+  
         this.loading = false;
       },
       error: (err) => {
@@ -37,4 +45,6 @@ export class Events implements OnInit {
       }
     });
   }
+  
+  
 }

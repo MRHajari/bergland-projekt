@@ -13,12 +13,14 @@ const Booking = require("./booking");
 const Event = require("./event");
 const EventRegistration = require("./eventRegistration");
 const UserRegistration = require("./userRegistration");
-const RelayTeam = require("./relay_team");
+const RelayTeam = require("./relay_team"); // Lauftag (RunDate)
 const Route = require("./route");
 const Runtime = require("./runtime");
+const Squadron = require("./squadron"); // Staffel
 const Invoice = require("./invoice");
 const Product = require("./product");
 const Token = require("./token");
+const Occupancy = require("./occupancy");
 
 // --------------------------------------------------------------
 // 🧩 Debug-Log
@@ -27,12 +29,13 @@ console.log("DEBUG MODELS:", {
     Person: !!Person?.getTableName,
     User: !!User?.getTableName,
     Address: !!Address?.getTableName,
-    RelPersonAddress: !!RelPersonAddress?.getTableName,
-    Accommodation: !!Accommodation?.getTableName,
     Booking: !!Booking?.getTableName,
     Event: !!Event?.getTableName,
     EventRegistration: !!EventRegistration?.getTableName,
-    Token: !!Token?.getTableName,
+    Route: !!Route?.getTableName,
+    Runtime: !!Runtime?.getTableName,
+    Squadron: !!Squadron?.getTableName,
+    RelayTeam: !!RelayTeam?.getTableName,
 });
 
 // --------------------------------------------------------------
@@ -73,7 +76,7 @@ RelPersonAddress.belongsTo(Address, {
 });
 
 // --------------------------------------------------------------
-// 💻 UserRegistration (App-Registrierung, kein Event)
+// 💻 UserRegistration (App-Registrierung)
 // --------------------------------------------------------------
 User.hasMany(UserRegistration, {
     foreignKey: "user_id",
@@ -107,8 +110,43 @@ Event.hasMany(Booking, { foreignKey: "event_id", as: "bookings" });
 Booking.belongsTo(Person, { foreignKey: "person_id", as: "person" });
 Person.hasMany(Booking, { foreignKey: "person_id", as: "bookings" });
 
-Booking.belongsTo(Accommodation, { foreignKey: "accommodation_id", as: "accommodation" });
-Accommodation.hasMany(Booking, { foreignKey: "accommodation_id", as: "bookings" });
+Booking.belongsTo(Accommodation, {
+    foreignKey: "accommodation_id",
+    as: "accommodation",
+});
+Accommodation.hasMany(Booking, {
+    foreignKey: "accommodation_id",
+    as: "bookings",
+});
+
+
+// --------------------------------------------------------------
+// 🏨 Accommodation ↔ Occupancy (1:n)
+// --------------------------------------------------------------
+
+Accommodation.hasMany(Occupancy, {
+    foreignKey: "accommodation_id",
+    as: "occupancies",
+    onDelete: "CASCADE",
+});
+
+Occupancy.belongsTo(Accommodation, {
+    foreignKey: "accommodation_id",
+    as: "accommodation",
+});
+
+// 🎯 Event ↔ Occupancy (1:n)
+Event.hasMany(Occupancy, {
+    foreignKey: "event_id",
+    as: "occupancies",
+    onDelete: "CASCADE",
+});
+Occupancy.belongsTo(Event, {
+    foreignKey: "event_id",
+    as: "event",
+});
+
+
 
 // --------------------------------------------------------------
 // 🗺️ Event ↔ Route (1:n)
@@ -124,7 +162,33 @@ Route.belongsTo(Event, {
 });
 
 // --------------------------------------------------------------
-// 🟢 EventRegistration (Event-Anmeldung)
+// 🕓 Route ↔ Runtime (1:n)
+// --------------------------------------------------------------
+Route.hasMany(Runtime, {
+    foreignKey: "route_id",
+    as: "runtimes",
+    onDelete: "CASCADE",
+});
+Runtime.belongsTo(Route, {
+    foreignKey: "route_id",
+    as: "route",
+});
+
+// --------------------------------------------------------------
+// 🕓 EventRegistration ↔ Runtime (1:n)
+// --------------------------------------------------------------
+EventRegistration.hasMany(Runtime, {
+    foreignKey: "registration_id",
+    as: "runtimes",
+    onDelete: "CASCADE",
+});
+Runtime.belongsTo(EventRegistration, {
+    foreignKey: "registration_id",
+    as: "eventRegistration",
+});
+
+// --------------------------------------------------------------
+// 🟢 EventRegistration ↔ Person/Event (n:1)
 // --------------------------------------------------------------
 Person.hasMany(EventRegistration, {
     foreignKey: "person_id",
@@ -146,6 +210,22 @@ EventRegistration.belongsTo(Event, {
     as: "event",
 });
 
+// --------------------------------------------------------------
+// 🧭 Squadron (Staffel) ↔ EventRegistration (1:n)
+// --------------------------------------------------------------
+Squadron.hasMany(EventRegistration, {
+    foreignKey: "squadron_id",
+    as: "eventRegistrations",
+    onDelete: "SET NULL",
+});
+EventRegistration.belongsTo(Squadron, {
+    foreignKey: "squadron_id",
+    as: "squadron",
+});
+
+// --------------------------------------------------------------
+// 🗓️ RelayTeam (Lauftag) ↔ EventRegistration (1:n)
+// --------------------------------------------------------------
 RelayTeam.hasMany(EventRegistration, {
     foreignKey: "relay_team_id",
     as: "eventRegistrations",
@@ -156,15 +236,25 @@ EventRegistration.belongsTo(RelayTeam, {
     as: "relayTeam",
 });
 
-// ⚙️ Runtime nur für EventRegistration (1:1)
-EventRegistration.hasOne(Runtime, {
-    foreignKey: "registration_id",
-    as: "runtime",
-    onDelete: "CASCADE",
+// --------------------------------------------------------------
+// 🗓️ RelayTeam ↔ Event & Route (n:1, n:1)
+// --------------------------------------------------------------
+RelayTeam.belongsTo(Event, {
+    foreignKey: "event_id",
+    as: "event",
 });
-Runtime.belongsTo(EventRegistration, {
-    foreignKey: "registration_id",
-    as: "eventRegistration",
+Event.hasMany(RelayTeam, {
+    foreignKey: "event_id",
+    as: "relayTeams",
+});
+
+RelayTeam.belongsTo(Route, {
+    foreignKey: "route_id",
+    as: "route",
+});
+Route.hasMany(RelayTeam, {
+    foreignKey: "route_id",
+    as: "relayTeams",
 });
 
 // --------------------------------------------------------------
@@ -200,7 +290,9 @@ module.exports = {
     Runtime,
     RelayTeam,
     Route,
+    Squadron,
+    Occupancy,
     Invoice,
     Product,
-    Token,
+    Token
 };

@@ -1,88 +1,114 @@
-.events-page {
-  padding: 1.5rem;
-}
+/* ================================
+   Events Page – finale Version 
+   ================================ */
 
-.page-title {
-  margin-bottom: 1.2rem;
-  color: var(--primary-color, #004080);
-  text-align: center;
-}
-
-.loading,
-.error {
-  text-align: center;
-  font-size: 1.1rem;
-}
-
-.error {
-  color: #e53935;
-  font-weight: 600;
-}
-
-.event-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); /* ⬅️ vorher 280px */
-  gap: 1.5rem; /* ⬅️ etwas mehr Abstand */
-}
-
-.event-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1rem 1.2rem;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
- 
-}
-
-.event-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
-}
-
-.event-card h3 {
-  margin: 0;
-  color: var(--accent-color, #1a237e);
-  font-size: 1.3rem;
-}
-
-.date {
-  font-size: 0.9rem;
-  color: #666;
-  margin: 0.2rem 0 0.5rem;
-}
-
-.description {
-  flex-grow: 1;
-  margin: 0.5rem 0 1rem;
-  color: #333;
-  font-size: 0.95rem;
-  line-height: 1.4;
-}
-
-.details-btn {
-  background: var(--primary-color, #1976d2);
-  color: var(--text-on-primary, white);
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s ease;
-}
-
-.details-btn:hover {
-  opacity: 0.9;
-}
-
-
-@media (max-width: 600px) {
-  .events-page {
-    padding: 1rem;
+   .events-page {
+    padding: var(--spacing);
+    background-color: var(--background-color);
   }
+  
   .page-title {
-    font-size: 1.4rem;
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 1.8rem;
+    font-weight: 600;
+    font-size: 1.8rem;
   }
-}
+  
+  /* 🟦 Karten-Layout */
+  .event-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); /* ⬅️ jetzt deutlich breiter */
+    gap: 2rem; /* mehr Abstand zwischen Karten */
+    justify-items: center;
+  }
+  
+  .event-card {
+    width: 100%;
+    max-width: 600px; /* ⬅️ maximale Kartenbreite */
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem 1.8rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .event-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* 🟩 Titel & Datum */
+  .event-card h3 {
+    margin: 0;
+    color: var(--accent-color);
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+  
+  .date {
+    font-size: 1rem;
+    color: var(--text-color);
+    margin: 0.3rem 0 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  
+  /* 🟨 Beschreibung */
+  .description {
+    flex-grow: 1;
+    margin: 0.8rem 0 1.2rem;
+    color: var(--text-color);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  /* 🟥 Anmeldeschluss */
+  .deadline {
+    margin: 0.6rem 0 1.2rem;
+    padding: 0.5rem 0.8rem;
+    background: var(--tertiary-color);
+    color: var(--text-on-tertiary);
+    border-left: 5px solid var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  
+  /* 🔵 Button */
+  .details-btn {
+    background: var(--primary-color);
+    color: var(--text-on-primary);
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    font-weight: 500;
+    align-self: flex-start;
+    transition: background 0.25s ease, transform 0.1s ease;
+  }
+  
+  .details-btn:hover {
+    background: #0d3660;
+    transform: translateY(-1px);
+  }
+  
+  /* 📱 Responsive Anpassung */
+  @media (max-width: 1024px) {
+    .event-grid {
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .event-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
