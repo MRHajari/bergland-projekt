@@ -1,0 +1,117 @@
+<div class="event-registration-container">
+    @if (loading) {
+    <p class="loading">⏳ Event wird geladen...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else {
+    <div class="card">
+
+        <!-- Header kompakt: Titel links, Datum rechts -->
+        <div class="header">
+            <h1 class="event-title">{{ event?.name }}</h1>
+            <div class="event-date">
+                📅 {{ event?.start_date | date: 'dd.MM.yyyy' }}
+                @if (event?.end_date && event?.end_date !== event?.start_date) {
+                – {{ event?.end_date | date: 'dd.MM.yyyy' }}
+                }
+            </div>
+        </div>
+
+        <!-- kurze Beschreibung -->
+        @if (event?.description) {
+        <p class="event-description">{{ event.description }}</p>
+        }
+
+        @if (event?.registration_deadline) {
+        <p class="deadline">⏰ Anmeldung bis: <strong>{{ event.registration_deadline | date:'dd.MM.yyyy' }}</strong></p>
+        }
+
+        <hr />
+
+        @if (isRegistered) {
+        <div class="success-box">
+            <h3>✅ Du bist bereits angemeldet!</h3>
+        </div>
+        } @else {
+        <form [formGroup]="registrationForm" (ngSubmit)="registerForEvent()" class="registration-form">
+            <h3 class="section-title">📝 Anmeldung</h3>
+
+            <div class="form-grid">
+                <!-- Teilnahme-Art -->
+                <div class="form-field">
+                    <label>Teilnahme-Art</label>
+                    <select formControlName="participation_type">
+                        <option value="einzeln">Einzeln</option>
+                        <option value="staffel">Staffel</option>
+                    </select>
+                </div>
+
+                <!-- Staffel nur bei participation_type=staffel -->
+                @if (registrationForm.value.participation_type === 'staffel') {
+                <div class="form-field">
+                    <label>Staffel</label>
+                    <select formControlName="squadron_id">
+                        <option value="">-- Bitte wählen --</option>
+                        @for (s of squadrons; track s.id) {
+                        <option [value]="s.id">{{ s.name }}</option>
+                        }
+                    </select>
+                </div>
+                }
+
+                <!-- Lauftag (RelayTeam) – immer sichtbar, wird ggf. automatisch belegt -->
+                <div class="form-field">
+                    <label>Lauftag</label>
+                    <select formControlName="relay_team_id">
+                        <option value="">-- Bitte wählen --</option>
+                        @for (rt of relayTeams; track rt.id) {
+                        <option [value]="rt.id">{{ rt.name }} ({{ rt.run_date | date:'dd.MM.yyyy' }})</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Kontakt + Optionen (alle Felder bleiben sichtbar, auch optional) -->
+                <div class="form-field"><label>Telefonnummer</label>
+                    <input formControlName="phone_number" placeholder="+49 171 2345678" />
+                </div>
+
+                <div class="form-field"><label>KFZ-Kennzeichen</label>
+                    <input formControlName="license_plate" placeholder="KL-AB 123" />
+                </div>
+
+                <div class="form-field"><label>Verpflegung</label>
+                    <input formControlName="catering_type" placeholder="Vegan, Vegetarisch, ..." />
+                </div>
+
+                <div class="form-field"><label>Wünsche</label>
+                    <input formControlName="wishes" placeholder="Besondere Wünsche ..." />
+                </div>
+
+                <div class="form-field"><label>Geschlecht</label>
+                    <select formControlName="gender">
+                        <option value="m">Männlich</option>
+                        <option value="w">Weiblich</option>
+                        <option value="d">Divers</option>
+                    </select>
+                </div>
+
+                <div class="form-field"><label>Verein</label>
+                    <input formControlName="club" placeholder="z. B. Laufteam Pfalz" />
+                </div>
+
+                <!-- Haftung -->
+                <div class="checkbox-row">
+                    <input type="checkbox" formControlName="liability_accept" />
+                    <span>Ich akzeptiere den <strong>Haftungsausschluss</strong>.</span>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn primary" [disabled]="registrationForm.invalid">Jetzt anmelden</button>
+                <button type="button" class="btn secondary" (click)="goBack()">Zurück</button>
+            </div>
+        </form>
+        }
+    </div>
+    }
+</div>

@@ -11,7 +11,7 @@ import { Booking } from './features/booking/booking';
 import { Profile } from './features/profile/profile/profile';
 import { Overview } from './features/profile/overview/overview';
 import { Products } from './features/products/products';
-import { EventDetail } from './features/events/event-detail/event-detail';
+import { EventRegistration } from './features/events/event-registration/event-registration';
 
 // 🔹 Admin-Bereich
 import { AdminDashboard } from './features/admin/admin-dashboard/admin-dashboard';
@@ -51,7 +51,7 @@ export const routes: Routes = [
     children: [
       // 👤 Benutzerbereich
       { path: 'events', component: Events },
-      { path: 'event-detail/:id', component: EventDetail },
+      { path: 'event-registration/:id', component: EventRegistration },
       { path: 'products', component: Products },
       { path: 'booking', component: Booking, canActivate: [authGuard] },
 

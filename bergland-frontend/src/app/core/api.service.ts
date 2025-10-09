@@ -1,4 +1,3 @@
-// frontend/src/app/core/services/api.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -17,70 +16,117 @@ export class ApiService {
     private auth: AuthService
   ) {}
 
-  // ------------------------------------------------------------
-  // 🔹 Hilfsfunktion: Header mit Token erzeugen
-  // ------------------------------------------------------------
-  private getAuthHeaders(): HttpHeaders {
+  // ============================================================
+  // 🔹 Header mit Auth-Token
+  // ============================================================
+  private getAuthHeaders(extraHeaders: Record<string, string> = {}): HttpHeaders {
     const token = this.auth.getAccessToken();
-    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    const headersObj: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...extraHeaders
+    };
 
     if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
+      headersObj['Authorization'] = `Bearer ${token}`;
     }
 
-    return headers;
+    return new HttpHeaders(headersObj);
   }
 
-  // ------------------------------------------------------------
-  // 🔹 Allgemeine Fehlerbehandlung
-  // ------------------------------------------------------------
+  // ============================================================
+  // 🔹 Einheitliche Fehlerbehandlung
+  // ============================================================
   private handleError(error: HttpErrorResponse) {
+    const msg =
+      error.error?.message ||
+      error.message ||
+      'Unbekannter Serverfehler. Bitte später erneut versuchen.';
+
+    console.error('❌ API-Fehler:', msg, error);
+
+    // Falls Auth-Token ungültig
     if (error.status === 401) {
-      console.warn('⚠️ 401 – Token abgelaufen oder ungültig. Benutzer wird ausgeloggt.');
-      this.auth.logout(); // optional: direkt Logout
-    } else {
-      console.error('❌ API-Fehler:', error);
+      console.warn('⚠️ 401 – Ungültiger oder abgelaufener Token. Benutzer wird ausgeloggt.');
+      this.auth.logout();
     }
-    return throwError(() => error);
+
+    return throwError(() => new Error(msg));
   }
 
-  // ------------------------------------------------------------
+  // ============================================================
   // 🔹 CRUD-Methoden mit Auth-Header
-  // ------------------------------------------------------------
-  get<T>(endpoint: string): Observable<T> {
+  // ============================================================
+
+  /** 🔹 GET: Liste oder benutzerdefinierte URL */
+  get<T>(endpoint: string, params?: any): Observable<T> {
     return this.http
-      .get<T>(`${this.baseUrl}/${endpoint}`, { headers: this.getAuthHeaders() })
+      .get<T>(`${this.baseUrl}/${endpoint}`, {
+        headers: this.getAuthHeaders(),
+        params
+      })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  getById<T>(endpoint: string, id: number | string): Observable<T> {
+  /** 🔹 GET by ID */
+  getById<T>(endpoint: string, id: string | number): Observable<T> {
     return this.http
-      .get<T>(`${this.baseUrl}/${endpoint}/${id}`, { headers: this.getAuthHeaders() })
+      .get<T>(`${this.baseUrl}/${endpoint}/${id}`, {
+        headers: this.getAuthHeaders()
+      })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  /** 🔹 POST */
   post<T>(endpoint: string, data: any): Observable<T> {
     return this.http
-      .post<T>(`${this.baseUrl}/${endpoint}`, data, { headers: this.getAuthHeaders() })
+      .post<T>(`${this.baseUrl}/${endpoint}`, data, {
+        headers: this.getAuthHeaders()
+      })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  put<T>(endpoint: string, id: number | string, data: any): Observable<T> {
+  /** 🔹 PUT by ID */
+  put<T>(endpoint: string, id: string | number, data: any): Observable<T> {
     return this.http
-      .put<T>(`${this.baseUrl}/${endpoint}/${id}`, data, { headers: this.getAuthHeaders() })
+      .put<T>(`${this.baseUrl}/${endpoint}/${id}`, data, {
+        headers: this.getAuthHeaders()
+      })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  /** ✅ Flexiblere PUT-Variante ohne automatisches "/:id" */
+  /** 🔹 PUT custom (wenn kein /:id) */
   putCustom<T>(url: string, data: any): Observable<T> {
     return this.http
-      .put<T>(`${this.baseUrl}/${url}`, data, { headers: this.getAuthHeaders() })
+      .put<T>(`${this.baseUrl}/${url}`, data, {
+        headers: this.getAuthHeaders()
+      })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  delete<T>(endpoint: string, id: string): Observable<T> {
+  /** 🔹 PATCH (für Teilupdates) */
+  patch<T>(endpoint: string, id: string | number, data: any): Observable<T> {
     return this.http
-      .delete<T>(`${this.baseUrl}/${endpoint}/${id}`, { headers: this.getAuthHeaders() })
+      .patch<T>(`${this.baseUrl}/${endpoint}/${id}`, data, {
+        headers: this.getAuthHeaders()
+      })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  /** 🔹 DELETE */
+  delete<T>(endpoint: string, id: string | number): Observable<T> {
+    return this.http
+      .delete<T>(`${this.baseUrl}/${endpoint}/${id}`, {
+        headers: this.getAuthHeaders()
+      })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  /** 🔹 DELETE Custom (z. B. mit Queryparametern oder anderem Pfad) */
+  deleteCustom<T>(url: string): Observable<T> {
+    return this.http
+      .delete<T>(`${this.baseUrl}/${url}`, {
+        headers: this.getAuthHeaders()
+      })
       .pipe(catchError(this.handleError.bind(this)));
   }
 }
