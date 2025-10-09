@@ -11,13 +11,13 @@ const RelPersonAddress = require("./rel_person_address");
 const Accommodation = require("./accommodation");
 const Booking = require("./booking");
 const Event = require("./event");
-const UserRegistration = require("./userRegistration"); // App-Registrierung
-const Runtime = require("./runtime");
+const EventRegistration = require("./eventRegistration");
+const UserRegistration = require("./userRegistration");
 const RelayTeam = require("./relay_team");
 const Route = require("./route");
+const Runtime = require("./runtime");
 const Invoice = require("./invoice");
 const Product = require("./product");
-const EventRegistration = require("./eventRegistration"); // Event-Anmeldung
 const Token = require("./token");
 
 // --------------------------------------------------------------
@@ -39,7 +39,7 @@ console.log("DEBUG MODELS:", {
 // 🔗 RELATIONEN DEFINIEREN
 // --------------------------------------------------------------
 
-// 🧍 Person ↔ User (1:1) [modernes Auth-System]
+// 🧍 Person ↔ User (1:1)
 Person.hasOne(User, {
     foreignKey: "person_id",
     as: "user",

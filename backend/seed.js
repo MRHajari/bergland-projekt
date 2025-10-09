@@ -201,7 +201,7 @@ module.exports = async function runSeed() {
         console.log("🏨 3 Unterkünfte hinzugefügt.");
 
         // =====================================================
-        // 🎯 Events
+        // 🎯 Events (inkl. Anmeldeschluss)
         // =====================================================
         const events = await Event.bulkCreate([
             {
@@ -209,21 +209,25 @@ module.exports = async function runSeed() {
                 description: "Halbmarathon durch die Tiroler Alpen",
                 start_date: "2025-06-21",
                 end_date: "2025-06-22",
+                registration_deadline: "2025-06-10", // ⏰ 10 Tage vor Start
             },
             {
                 name: "Pfälzer Trail Run",
                 description: "10 km Trail-Lauf durch das Pfälzer Bergland",
                 start_date: "2025-09-14",
                 end_date: "2025-09-14",
+                registration_deadline: "2025-09-07", // ⏰ 1 Woche vorher
             },
             {
                 name: "Winterlauf Garmisch",
                 description: "5 km Winterlauf durch verschneite Wälder",
                 start_date: "2025-12-10",
                 end_date: "2025-12-10",
+                registration_deadline: "2025-11-30", // ⏰ 10 Tage vorher
             },
         ]);
-        console.log("🎯 3 Events hinzugefügt.");
+        console.log("🎯 3 Events mit Anmeldeschluss hinzugefügt.");
+
 
         // =====================================================
         // 🗺️ Routen

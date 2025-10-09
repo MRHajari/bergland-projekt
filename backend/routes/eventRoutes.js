@@ -4,13 +4,27 @@ const router = express.Router();
 const eventController = require("../controllers/eventController");
 const { authenticateToken, authorizeAdmin } = require("../middlewares/authMiddleware");
 
-// Jeder eingeloggte Nutzer darf Events sehen
-router.get("/", authenticateToken, eventController.getAllEvents);
-router.get("/:id", authenticateToken, eventController.getEventById);
+// ============================================================
+// 🔹 Öffentliche Routen (sichtbar für alle Benutzer)
+// ============================================================
 
-// Nur Admin darf Events anlegen, ändern oder löschen
+// 📅 Alle Events abrufen
+router.get("/", eventController.getAllEvents);
+
+// 📅 Event nach ID abrufen
+router.get("/:id", eventController.getEventById);
+
+// ============================================================
+// 🔐 Admin-Routen (CRUD geschützt)
+// ============================================================
+
+// ➕ Neues Event erstellen
 router.post("/", authenticateToken, authorizeAdmin, eventController.createEvent);
+
+// ✏️ Event aktualisieren
 router.put("/:id", authenticateToken, authorizeAdmin, eventController.updateEvent);
+
+// 🗑️ Event löschen
 router.delete("/:id", authenticateToken, authorizeAdmin, eventController.deleteEvent);
 
 module.exports = router;

@@ -1,10 +1,14 @@
+// backend/validators/eventValidator.js
 const Joi = require("joi");
 
-const eventSchema = Joi.object({
-    name: Joi.string().min(2).max(100).required(),
-    description: Joi.string().allow("", null).optional(),
-    start_date: Joi.date().required(),
-    end_date: Joi.date().greater(Joi.ref("start_date")).required()
-});
+exports.validateEvent = (data) => {
+    const schema = Joi.object({
+        name: Joi.string().min(2).max(255).required(),
+        description: Joi.string().allow("", null),
+        start_date: Joi.date().optional(),
+        end_date: Joi.date().optional(),
+        registration_deadline: Joi.date().optional(), // 🟢 neu
+    });
 
-module.exports = eventSchema;
+    return schema.validate(data, { abortEarly: false });
+};

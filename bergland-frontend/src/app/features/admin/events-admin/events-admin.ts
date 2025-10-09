@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { EventService } from '../../../core/services/event.service';
-import { RegistrationService } from '../../../core/services/user.registration.service'; // ✅ ersetzt BelegungService
+import { RegistrationService } from '../../../core/services/user.registration.service';
 
 @Component({
   selector: 'app-events-admin',
@@ -18,17 +18,22 @@ export class EventsAdmin implements OnInit {
   errorMessage: string | null = null;
 
   editingEvent: any = null;
-  newEvent = { name: '', description: '', start_date: '', end_date: '' };
+  newEvent = {
+    name: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    registration_deadline: ''
+  };
 
   searchTerm = '';
   page = 1;
   pageSize = 10;
-
   countsMap: Record<string, number> = {};
 
   constructor(
     private eventService: EventService,
-    private registrationService: RegistrationService, // ✅ statt belegungService
+    private registrationService: RegistrationService,
     private router: Router
   ) {}
 
@@ -45,7 +50,8 @@ export class EventsAdmin implements OnInit {
         this.events = data.map((e: any) => ({
           ...e,
           start_date: this.formatDate(e.start_date),
-          end_date: this.formatDate(e.end_date)
+          end_date: this.formatDate(e.end_date),
+          registration_deadline: this.formatDate(e.registration_deadline)
         }));
         this.loadCounts();
         this.loading = false;
@@ -101,7 +107,13 @@ export class EventsAdmin implements OnInit {
     this.eventService.create(this.newEvent).subscribe({
       next: () => {
         alert(`✅ Event "${this.newEvent.name}" hinzugefügt.`);
-        this.newEvent = { name: '', description: '', start_date: '', end_date: '' };
+        this.newEvent = {
+          name: '',
+          description: '',
+          start_date: '',
+          end_date: '',
+          registration_deadline: ''
+        };
         this.loadEvents();
       },
       error: (err) => {
@@ -112,11 +124,7 @@ export class EventsAdmin implements OnInit {
   }
 
   editEvent(event: any): void {
-    this.editingEvent = {
-      ...event,
-      start_date: this.formatDate(event.start_date),
-      end_date: this.formatDate(event.end_date)
-    };
+    this.editingEvent = { ...event };
   }
 
   saveEvent(): void {

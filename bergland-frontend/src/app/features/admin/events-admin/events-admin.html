@@ -13,25 +13,31 @@
 
         <form (ngSubmit)="addEvent()" class="event-form">
             <div class="form-group">
-                <label for="name">Name:</label>
-                <input id="name" type="text" [(ngModel)]="newEvent.name" name="name" placeholder="Eventname" required />
+                <label>Name:</label>
+                <input type="text" [(ngModel)]="newEvent.name" name="name" placeholder="Eventname" required />
             </div>
 
             <div class="form-group">
-                <label for="description">Beschreibung:</label>
-                <textarea id="description" [(ngModel)]="newEvent.description" name="description" rows="2"
+                <label>Beschreibung:</label>
+                <textarea [(ngModel)]="newEvent.description" name="description" rows="2"
                     placeholder="Kurze Beschreibung..."></textarea>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="start_date">Startdatum:</label>
-                    <input id="start_date" type="date" [(ngModel)]="newEvent.start_date" name="start_date" />
+                    <label>Startdatum:</label>
+                    <input type="date" [(ngModel)]="newEvent.start_date" name="start_date" />
                 </div>
 
                 <div class="form-group">
-                    <label for="end_date">Enddatum:</label>
-                    <input id="end_date" type="date" [(ngModel)]="newEvent.end_date" name="end_date" />
+                    <label>Enddatum:</label>
+                    <input type="date" [(ngModel)]="newEvent.end_date" name="end_date" />
+                </div>
+
+                <!-- 🟢 NEU: Anmeldeschluss -->
+                <div class="form-group">
+                    <label>Anmeldeschluss:</label>
+                    <input type="date" [(ngModel)]="newEvent.registration_deadline" name="registration_deadline" />
                 </div>
             </div>
 
@@ -39,26 +45,25 @@
         </form>
     </section>
 
+
     <!-- 📋 Eventliste -->
     <section class="list-section">
         <h2>📅 Bestehende Events</h2>
 
-        <!-- 🔍 Suchfeld -->
         <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Events suchen (Name oder Beschreibung)..."
             class="search-input" />
 
         @if (filteredEvents.length === 0) {
         <p>Keine passenden Events gefunden.</p>
         } @else {
-        <!-- ... oberer Teil unverändert ... -->
-
         <table class="user-table">
             <thead>
                 <tr>
                     <th>Name</th>
                     <th>Startdatum</th>
                     <th>Enddatum</th>
-                    <th>Anmeldungen</th> <!-- ➕ neu -->
+                    <th>Anmeldeschluss</th>
+                    <th>Anmeldungen</th>
                     <th>Aktionen</th>
                 </tr>
             </thead>
@@ -73,34 +78,20 @@
                         }
                     </td>
 
-                    <td>
-                        @if (editingEvent?.id === e.id) {
-                        <input type="date" [(ngModel)]="editingEvent.start_date" />
-                        } @else {
-                        {{ e.start_date }}
-                        }
-                    </td>
+                    <td>{{ e.start_date | date:'dd.MM.yyyy' }}</td>
+                    <td>{{ e.end_date | date:'dd.MM.yyyy' }}</td>
+                    <td>{{ e.registration_deadline | date:'dd.MM.yyyy' }}</td>
 
-                    <td>
-                        @if (editingEvent?.id === e.id) {
-                        <input type="date" [(ngModel)]="editingEvent.end_date" />
-                        } @else {
-                        {{ e.end_date }}
-                        }
-                    </td>
+                    <td>{{ countsMap[e.id] || 0 }}</td>
 
-                    <td>
-                        {{ countsMap[e.id] || 0 }} <!-- ➕ Anzahl -->
-                    </td>
-
-                    <td>
+                    <td class="button-group">
                         @if (editingEvent?.id === e.id) {
                         <button class="primary" (click)="saveEvent()">Speichern</button>
                         <button (click)="cancelEdit()">Abbrechen</button>
                         } @else {
                         <button class="secondary" (click)="editEvent(e)">Bearbeiten</button>
                         <button class="danger" (click)="deleteEvent(e.id, e.name)">Löschen</button>
-                        <button (click)="viewRegistrations(e.id)">👥 Details</button> <!-- ➕ neu -->
+                        <button class="details" (click)="viewRegistrations(e.id)">👥 Details</button>
                         }
                     </td>
                 </tr>
@@ -108,8 +99,6 @@
             </tbody>
         </table>
 
-
-        <!-- 📄 Pagination -->
         <div class="pagination">
             <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
             <span>Seite {{ page }} / {{ totalPages }}</span>

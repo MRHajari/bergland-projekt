@@ -2,24 +2,38 @@
 const { EventRegistration, Event, Person } = require("../models");
 const { eventRegistrationSchema } = require("../validators/eventRegistrationValidator");
 
+// 🔹 Neue Anmeldung
 exports.createEventRegistration = async (req, res, next) => {
     try {
         const { error } = eventRegistrationSchema.validate(req.body);
-        if (error) return res.status(400).json({ error: error.details[0].message });
+        if (error)
+            return res.status(400).json({ error: error.details[0].message });
 
         const { person_id, event_id } = req.body;
 
-        // 🔹 Sicherstellen, dass beide IDs vorhanden sind
         if (!person_id || !event_id) {
-            return res.status(400).json({ error: "person_id und event_id sind erforderlich." });
+            return res
+                .status(400)
+                .json({ error: "person_id und event_id sind erforderlich." });
         }
 
-        // 🔹 Optional prüfen, ob Person & Event existieren
+        // 🔸 Prüfen, ob Person & Event existieren
         const person = await Person.findByPk(person_id);
         const event = await Event.findByPk(event_id);
 
         if (!person) return res.status(404).json({ error: "Benutzer nicht gefunden." });
         if (!event) return res.status(404).json({ error: "Event nicht gefunden." });
+
+        // 🕐 NEU: Anmeldeschluss prüfen
+        if (event.registration_deadline) {
+            const today = new Date();
+            const deadline = new Date(event.registration_deadline);
+            if (today > deadline) {
+                return res.status(400).json({
+                    error: `❌ Der Anmeldeschluss für dieses Event war am ${deadline.toLocaleDateString("de-DE")}.`,
+                });
+            }
+        }
 
         // 🔹 Anmeldung erstellen
         const registration = await EventRegistration.create(req.body);
@@ -39,6 +53,7 @@ exports.getAllEventRegistrations = async (req, res, next) => {
     try {
         const registrations = await EventRegistration.findAll({
             include: [{ model: Event, as: "event" }],
+            order: [["createdAt", "DESC"]],
         });
         res.json(registrations);
     } catch (err) {
@@ -63,8 +78,11 @@ exports.getEventRegistrationById = async (req, res, next) => {
 // 🔹 Anmeldung aktualisieren
 exports.updateEventRegistration = async (req, res, next) => {
     try {
-        const { error } = eventRegistrationSchema.validate(req.body, { allowUnknown: true });
-        if (error) return res.status(400).json({ error: error.details[0].message });
+        const { error } = eventRegistrationSchema.validate(req.body, {
+            allowUnknown: true,
+        });
+        if (error)
+            return res.status(400).json({ error: error.details[0].message });
 
         const registration = await EventRegistration.findByPk(req.params.id);
         if (!registration)
@@ -85,13 +103,13 @@ exports.deleteEventRegistration = async (req, res, next) => {
             return res.status(404).json({ error: "Anmeldung nicht gefunden" });
 
         await registration.destroy();
-        res.json({ message: "Anmeldung gelöscht" });
+        res.json({ message: "🗑️ Anmeldung gelöscht" });
     } catch (err) {
         next(err);
     }
 };
 
-// 🔹 Alle Anmeldungen eines Benutzers abrufen
+// 🔹 Alle Anmeldungen einer Person abrufen
 exports.getByUser = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -99,6 +117,7 @@ exports.getByUser = async (req, res) => {
         const registrations = await EventRegistration.findAll({
             where: { person_id: userId },
             include: [{ model: Event, as: "event" }],
+            order: [["createdAt", "DESC"]],
         });
 
         res.json(registrations);

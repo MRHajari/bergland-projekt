@@ -4,10 +4,12 @@
   min-height: 100vh;
 }
 
+/* Titel */
 h1 {
   margin-bottom: 1.2rem;
 }
 
+/* Suchfeld */
 .search-input {
   width: 100%;
   max-width: 400px;
@@ -17,6 +19,7 @@ h1 {
   border: 1px solid #ccc;
 }
 
+/* Abschnitte */
 .form-section,
 .list-section {
   background: white;
@@ -26,6 +29,7 @@ h1 {
   margin-bottom: 2rem;
 }
 
+/* Formular */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -38,6 +42,7 @@ h1 {
   gap: 1rem;
 }
 
+/* Tabelle */
 .user-table {
   width: 100%;
   border-collapse: collapse;
@@ -45,13 +50,12 @@ h1 {
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1.5rem;
 }
 
 .user-table th,
 .user-table td {
   border: 1px solid #ddd;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.6rem;
   text-align: left;
 }
 
@@ -60,20 +64,29 @@ h1 {
   color: white;
 }
 
+/* Button-Gruppe */
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
 button {
-  margin-right: 0.5rem;
   border: none;
   border-radius: 6px;
   padding: 0.4rem 0.8rem;
+  min-width: 90px;
+  height: 32px;
   cursor: pointer;
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
+/* Farben */
 button.primary {
   background: var(--primary-color, #1976d2);
   color: white;
 }
-
 button.primary:hover {
   opacity: 0.9;
 }
@@ -82,7 +95,6 @@ button.secondary {
   background: #6c757d;
   color: white;
 }
-
 button.secondary:hover {
   background: #5a6268;
 }
@@ -91,11 +103,19 @@ button.danger {
   background: #d9534f;
   color: white;
 }
-
 button.danger:hover {
   background: #b52b27;
 }
 
+button.details {
+  background: #17a2b8;
+  color: white;
+}
+button.details:hover {
+  background: #138496;
+}
+
+/* Pagination */
 .pagination {
   display: flex;
   justify-content: center;
@@ -108,12 +128,29 @@ button.danger:hover {
   padding: 0.3rem 0.8rem;
 }
 
+/* Loading + Error */
 .loading {
   color: #555;
   font-style: italic;
 }
-
 .error {
   color: #d9534f;
   font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .button-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .user-table {
+    display: block;
+    overflow-x: auto;
+  }
 }
