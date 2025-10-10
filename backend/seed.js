@@ -1,4 +1,3 @@
-// backend/seed.js
 require("dotenv").config();
 const bcrypt = require("bcrypt");
 const {
@@ -10,12 +9,12 @@ const {
     Accommodation,
     Event,
     Booking,
-    RelayTeam,      // Lauftag
     Route,
     EventRegistration,
     Runtime,
-    Squadron,       // Staffel
-    Occupancy,      // 🆕 Belegung hinzugefügt
+    Squadron,
+    RelPersonSquadron,
+    Occupancy,
     Invoice,
     Product,
     Token,
@@ -31,13 +30,38 @@ module.exports = async function runSeed() {
         // =====================================================
         // 👤 Personen
         // =====================================================
+        const mohammad = await Person.create({
+            first_name: "Mohammad",
+            last_name: "Hajari",
+            email: "mohammad@test.com",
+            birth_date: "1990-06-12",
+        });
+
         const persons = await Promise.all([
-            Person.create({ first_name: "Mohammad", last_name: "Hajari", email: "mohammad@test.com", birth_date: "1990-06-12" }),
-            Person.create({ first_name: "Clara", last_name: "Fischer", email: "clara@test.com", birth_date: "1985-09-22" }),
-            Person.create({ first_name: "Anna", last_name: "Schmidt", email: "anna@test.com", birth_date: "1994-03-10" }),
-            Person.create({ first_name: "Markus", last_name: "Weber", email: "markus@test.com", birth_date: "1988-07-19" }),
+            mohammad,
+            Person.create({
+                first_name: "Clara",
+                last_name: "Fischer",
+                email: "clara@test.com",
+                birth_date: "1985-09-22",
+                owner_id: mohammad.id, // 👈 gehört Mohammad
+            }),
+            Person.create({
+                first_name: "Anna",
+                last_name: "Schmidt",
+                email: "anna@test.com",
+                birth_date: "1994-03-10",
+                owner_id: mohammad.id,
+            }),
+            Person.create({
+                first_name: "Markus",
+                last_name: "Weber",
+                email: "markus@test.com",
+                birth_date: "1988-07-19",
+                owner_id: mohammad.id,
+            }),
         ]);
-        console.log("👤 Personen erstellt.");
+        console.log("👤 Personen erstellt (inkl. Owner-Beziehung).");
 
         // =====================================================
         // 🔐 Benutzer
@@ -46,22 +70,57 @@ module.exports = async function runSeed() {
         const hashedUser = await bcrypt.hash("User123!", 10);
 
         await Promise.all([
-            User.create({ email: "mohammad@test.com", password_hash: hashedAdmin, role: "admin", is_verified: true, person_id: persons[0].id }),
-            User.create({ email: "clara@test.com", password_hash: hashedAdmin, role: "admin", is_verified: true, person_id: persons[1].id }),
-            User.create({ email: "anna@test.com", password_hash: hashedUser, role: "user", is_verified: true, person_id: persons[2].id }),
-            User.create({ email: "markus@test.com", password_hash: hashedUser, role: "user", is_verified: true, person_id: persons[3].id }),
+            User.create({
+                email: "mohammad@test.com",
+                password_hash: hashedAdmin,
+                role: "admin",
+                is_verified: true,
+                person_id: mohammad.id,
+            }),
+            User.create({
+                email: "clara@test.com",
+                password_hash: hashedAdmin,
+                role: "admin",
+                is_verified: true,
+                person_id: persons[1].id,
+            }),
+            User.create({
+                email: "anna@test.com",
+                password_hash: hashedUser,
+                role: "user",
+                is_verified: true,
+                person_id: persons[2].id,
+            }),
+            User.create({
+                email: "markus@test.com",
+                password_hash: hashedUser,
+                role: "user",
+                is_verified: true,
+                person_id: persons[3].id,
+            }),
         ]);
-        console.log("🔐 User erstellt.");
+        console.log("🔐 Benutzer erstellt.");
 
         // =====================================================
         // 🏠 Adressen
         // =====================================================
         const addresses = await Address.bulkCreate([
-            { street: "Spinozastraße 18", postal_code: "67663", city: "Kaiserslautern", country: "Deutschland" },
-            { street: "Bahnhofstraße 12", postal_code: "80335", city: "München", country: "Deutschland" },
+            {
+                street: "Spinozastraße 18",
+                postal_code: "67663",
+                city: "Kaiserslautern",
+                country: "Deutschland",
+            },
+            {
+                street: "Bahnhofstraße 12",
+                postal_code: "80335",
+                city: "München",
+                country: "Deutschland",
+            },
         ]);
+
         await RelPersonAddress.bulkCreate([
-            { person_id: persons[0].id, address_id: addresses[0].id },
+            { person_id: mohammad.id, address_id: addresses[0].id },
             { person_id: persons[1].id, address_id: addresses[1].id },
         ]);
         console.log("🏠 Adressen verknüpft.");
@@ -117,45 +176,23 @@ module.exports = async function runSeed() {
         console.log("🎯 Events erstellt.");
 
         // =====================================================
-        // 🏨 Belegungen (Occupancy)
-        // =====================================================
-        const occupancies = [];
-        for (const event of events) {
-            for (const acc of accommodations) {
-                occupancies.push({
-                    event_id: event.id,
-                    accommodation_id: acc.id,
-                    single_beds_total: acc.single_rooms,
-                    double_beds_total: acc.double_rooms,
-                    multi_beds_total: acc.multi_bed_rooms,
-                    single_beds_booked: Math.floor(acc.single_rooms * 0.3),
-                    double_beds_booked: Math.floor(acc.double_rooms * 0.5),
-                    multi_beds_booked: Math.floor(acc.multi_bed_rooms * 0.2),
-                });
-            }
-        }
-        await Occupancy.bulkCreate(occupancies);
-        console.log("🏨 Belegungen (Occupancies) für Events erstellt.");
-
-        // =====================================================
         // 🗺️ Routen
         // =====================================================
         const routes = await Route.bulkCreate([
-            { name: "Tirol Panorama Strecke", distance_km: 21.1, difficulty: "schwer", event_id: events[0].id },
-            { name: "Pfälzer Hügelrunde", distance_km: 10, difficulty: "mittel", event_id: events[1].id },
+            {
+                name: "Tirol Panorama Strecke",
+                distance_km: 21.1,
+                difficulty: "schwer",
+                event_id: events[0].id,
+            },
+            {
+                name: "Pfälzer Hügelrunde",
+                distance_km: 10,
+                difficulty: "mittel",
+                event_id: events[1].id,
+            },
         ]);
         console.log("🗺️ Routen erstellt.");
-
-        // =====================================================
-        // 🗓️ Lauftage (RelayTeam)
-        // =====================================================
-        // 🗓️ Lauftage (RelayTeam)
-        const relays = await RelayTeam.bulkCreate([
-            { name: "Berglauf Samstag", run_date: "2025-06-21", event_id: events[0].id, route_id: routes[0].id },
-            { name: "Pfälzer Trail Sonntag", run_date: "2025-09-14", event_id: events[1].id, route_id: routes[1].id },
-        ]);
-        console.log("🗓️ Lauftage erstellt.");
-
 
         // =====================================================
         // 🧭 Staffeln (Squadron)
@@ -179,6 +216,17 @@ module.exports = async function runSeed() {
         console.log("🧭 Staffeln erstellt.");
 
         // =====================================================
+        // 👥 Personen ↔ Staffeln
+        // =====================================================
+        await RelPersonSquadron.bulkCreate([
+            { person_id: mohammad.id, squadron_id: squadrons[0].id, note: "Teamleiter" },
+            { person_id: persons[1].id, squadron_id: squadrons[0].id, note: "Mitläufer" },
+            { person_id: persons[2].id, squadron_id: squadrons[1].id, note: "Läuferin" },
+            { person_id: persons[3].id, squadron_id: squadrons[1].id, note: "Backup" },
+        ]);
+        console.log("👥 Personen mit Staffeln verknüpft.");
+
+        // =====================================================
         // 📝 Event-Registrierungen
         // =====================================================
         const regs = await EventRegistration.bulkCreate(
@@ -186,7 +234,6 @@ module.exports = async function runSeed() {
                 {
                     person_id: persons[2].id,
                     event_id: events[0].id,
-                    relay_team_id: relays[0].id,
                     squadron_id: squadrons[0].id,
                     participation_type: "einzeln",
                     wishes: "vegetarisch",
@@ -196,7 +243,6 @@ module.exports = async function runSeed() {
                 {
                     person_id: persons[3].id,
                     event_id: events[1].id,
-                    relay_team_id: relays[1].id,
                     squadron_id: squadrons[1].id,
                     participation_type: "staffel",
                     wishes: "ohne Fleisch",
@@ -213,16 +259,22 @@ module.exports = async function runSeed() {
         // =====================================================
         await Runtime.bulkCreate([
             {
-                registration_id: regs[0].id,
+                event_registration_id: regs[0].id,
+                person_id: persons[2].id,
                 route_id: routes[0].id,
                 start_time: "2025-06-21T08:00:00",
                 end_time: "2025-06-21T09:45:00",
+                distance: 21.1,
+                position: 15,
             },
             {
-                registration_id: regs[1].id,
+                event_registration_id: regs[1].id,
+                person_id: persons[3].id,
                 route_id: routes[1].id,
                 start_time: "2025-09-14T09:00:00",
                 end_time: "2025-09-14T09:50:00",
+                distance: 10,
+                position: 8,
             },
         ]);
         console.log("⏱️ Laufzeiten hinzugefügt.");
@@ -231,8 +283,16 @@ module.exports = async function runSeed() {
         // 🛍️ Produkte
         // =====================================================
         const products = await Product.bulkCreate([
-            { name: "Startgebühr Berglauf", description: "Teilnahmegebühr Halbmarathon", price: 49.5 },
-            { name: "Trail Shirt", description: "Offizielles Laufshirt", price: 25.0 },
+            {
+                name: "Startgebühr Berglauf",
+                description: "Teilnahmegebühr Halbmarathon",
+                price: 49.5,
+            },
+            {
+                name: "Trail Shirt",
+                description: "Offizielles Laufshirt",
+                price: 25.0,
+            },
         ]);
         console.log("🛍️ Produkte erstellt.");
 

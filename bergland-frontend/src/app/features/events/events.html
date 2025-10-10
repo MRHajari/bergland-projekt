@@ -17,7 +17,6 @@
                     – {{ event.end_date }}
                     }
                 </p>
-
             </header>
 
             <p class="description">{{ event.description }}</p>
@@ -27,6 +26,11 @@
                 ⏰ Anmeldung bis: <strong>{{ event.registration_deadline }}</strong>
             </p>
             }
+
+            <div class="stats">
+                <p>🗓️ Lauftage: <strong>{{ event.relay_count }}</strong></p>
+                <p>👥 Anmeldungen: <strong>{{ event.registration_count }}</strong></p>
+            </div>
 
             <footer>
                 <button class="details-btn" [routerLink]="['/event-registration', event.id]">

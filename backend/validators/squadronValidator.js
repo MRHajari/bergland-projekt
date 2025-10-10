@@ -1,4 +1,3 @@
-// backend/validators/squadronValidator.js
 const Joi = require("joi");
 
 const squadronSchema = Joi.object({

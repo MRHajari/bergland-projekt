@@ -86,86 +86,140 @@ entwickelt mit **Angular 17**.
 
 ## 📂 Projektstruktur
 frontend/
-│
 ├── src/
 │   ├── app/
-│   │   ├── core/
+│   │   ├── core/                          # 🌐 Zentrale Services, Auth & Utilities
+│   │   │   ├── auth.service.ts            # Login, Token, User-ID, Logout
 │   │   │   ├── guards/
-│   │   │   │   ├── auth.guard.ts
-│   │   │   │   └── admin.guard.ts
-│   │   │   ├── interceptors/
-│   │   │   │   └── auth.interceptor.ts
-│   │   │   ├── services/
-│   │   │   │   ├── auth.service.ts
+│   │   │   │   └── auth.guard.ts
+│   │   │   ├── services/                  # API-Services (kommunizieren mit Backend)
 │   │   │   │   ├── api.service.ts
-│   │   │   │   ├── booking.service.ts
-│   │   │   │   ├── accommodation.service.ts
+│   │   │   │   ├── person.service.ts
+│   │   │   │   ├── user.service.ts
 │   │   │   │   ├── event.service.ts
 │   │   │   │   ├── event-registration.service.ts
-│   │   │   │   └── runtime.service.ts
-│   │   │   ├── models/
-│   │   │   │   ├── person.model.ts
-│   │   │   │   ├── booking.model.ts
-│   │   │   │   ├── event.model.ts
-│   │   │   │   ├── accommodation.model.ts
-│   │   │   │   ├── relay-team.model.ts
-│   │   │   │   └── event-registration.model.ts
+│   │   │   │   ├── relay-team.service.ts
+│   │   │   │   ├── squadron.service.ts
+│   │   │   │   ├── route.service.ts
+│   │   │   │   ├── runtime.service.ts
+│   │   │   │   ├── accommodation.service.ts
+│   │   │   │   ├── booking.service.ts
+│   │   │   │   ├── invoice.service.ts
+│   │   │   │   ├── product.service.ts
+│   │   │   │   ├── address.service.ts
+│   │   │   │   └── occupancy.service.ts
 │   │   │   └── utils/
-│   │   │       └── format-date.ts
+│   │   │       └── helpers.ts             # Kleine Hilfsfunktionen
 │   │   │
-│   │   ├── layouts/
-│   │   │   ├── main-layout/
-│   │   │   │   ├── main-layout.ts
-│   │   │   │   └── main-layout.html
-│   │   │   ├── auth-layout/
-│   │   │   │   ├── auth-layout.ts
-│   │   │   │   └── auth-layout.html
-│   │   │   └── shared/
-│   │   │       ├── navbar/
-│   │   │       └── footer/
+│   │   ├── layouts/                       # 🧭 Layout-Struktur
+│   │   │   ├── header/                    # Kopfbereich
+│   │   │   │   ├── header.ts
+│   │   │   │   ├── header.html
+│   │   │   │   └── header.css
+│   │   │   ├── navbar/                    # Navigation
+│   │   │   │   ├── navbar.ts
+│   │   │   │   ├── navbar.html
+│   │   │   │   └── navbar.css
+│   │   │   └── footer/                    # Fußzeile (optional)
+│   │   │       ├── footer.ts
+│   │   │       ├── footer.html
+│   │   │       └── footer.css
 │   │   │
-│   │   ├── features/
+│   │   ├── pages/                         # 📄 Alle Seiten (Standalone Components)
+│   │   │   ├── home/                      # Startseite
+│   │   │   │   ├── home.ts
+│   │   │   │   ├── home.html
+│   │   │   │   └── home.css
+│   │   │   ├── events/
+│   │   │   │   ├── event-list/            # Übersicht aller Events
+│   │   │   │   │   ├── event-list.ts
+│   │   │   │   │   ├── event-list.html
+│   │   │   │   │   └── event-list.css
+│   │   │   │   ├── event-registration/    # Detail + Anmeldung
+│   │   │   │   │   ├── event-registration.ts
+│   │   │   │   │   ├── event-registration.html
+│   │   │   │   │   └── event-registration.css
+│   │   │   ├── bookings/
+│   │   │   │   ├── booking-list/
+│   │   │   │   │   ├── booking-list.ts
+│   │   │   │   │   ├── booking-list.html
+│   │   │   │   │   └── booking-list.css
+│   │   │   │   ├── booking-detail/
+│   │   │   │   │   ├── booking-detail.ts
+│   │   │   │   │   ├── booking-detail.html
+│   │   │   │   │   └── booking-detail.css
+│   │   │   ├── profile/
+│   │   │   │   ├── profile.ts
+│   │   │   │   ├── profile.html
+│   │   │   │   └── profile.css
+│   │   │   ├── admin/
+│   │   │   │   ├── users-admin/
+│   │   │   │   │   ├── users-admin.ts
+│   │   │   │   │   ├── users-admin.html
+│   │   │   │   │   └── users-admin.css
+│   │   │   │   ├── events-admin/
+│   │   │   │   │   ├── events-admin.ts
+│   │   │   │   │   ├── events-admin.html
+│   │   │   │   │   └── events-admin.css
+│   │   │   │   └── products-admin/
+│   │   │   │       ├── products-admin.ts
+│   │   │   │       ├── products-admin.html
+│   │   │   │       └── products-admin.css
 │   │   │   ├── auth/
 │   │   │   │   ├── login/
+│   │   │   │   │   ├── login.ts
+│   │   │   │   │   ├── login.html
+│   │   │   │   │   └── login.css
 │   │   │   │   ├── register/
+│   │   │   │   │   ├── register.ts
+│   │   │   │   │   ├── register.html
+│   │   │   │   │   └── register.css
 │   │   │   │   └── verify-email/
-│   │   │   ├── events/
-│   │   │   │   ├── events.ts
-│   │   │   │   └── event-detail/
-│   │   │   ├── accommodations/
-│   │   │   │   ├── accommodations-list/
-│   │   │   │   └── accommodation-detail/
-│   │   │   ├── booking/
-│   │   │   │   └── booking.ts
-│   │   │   ├── profile/
-│   │   │   │   ├── overview/
-│   │   │   │   └── profile/
-│   │   │   ├── admin/
-│   │   │   │   ├── admin-dashboard/
-│   │   │   │   ├── events-admin/
-│   │   │   │   ├── products-admin/
-│   │   │   │   ├── users-admin/
-│   │   │   │   └── accommodations-admin/
-│   │   │   └── shared/
-│   │   │       └── components/
-│   │   │           └── card/
+│   │   │   │       ├── verify-email.ts
+│   │   │   │       ├── verify-email.html
+│   │   │   │       └── verify-email.css
+│   │   │   └── not-found/
+│   │   │       ├── not-found.ts
+│   │   │       ├── not-found.html
+│   │   │       └── not-found.css
 │   │   │
-│   │   ├── app.routes.ts
-│   │   ├── app.config.ts
-│   │   └── app.component.ts
+│   │   ├── shared/                         # ♻️ Wiederverwendbare UI-Elemente
+│   │   │   ├── form-field/
+│   │   │   │   ├── form-field.ts
+│   │   │   │   ├── form-field.html
+│   │   │   │   └── form-field.css
+│   │   │   ├── button/
+│   │   │   │   ├── button.ts
+│   │   │   │   ├── button.html
+│   │   │   │   └── button.css
+│   │   │   └── modal/
+│   │   │       ├── modal.ts
+│   │   │       ├── modal.html
+│   │   │       └── modal.css
+│   │   │
+│   │   ├── app.routes.ts                   # Angular Routing
+│   │   ├── app.config.ts                   # AppConfig (Provider, HttpClient, etc.)
+│   │   └── app.ts                          # Hauptkomponente der Anwendung
 │   │
 │   ├── assets/
 │   │   ├── images/
-│   │   └── icons/
+│   │   ├── icons/
+│   │   └── styles/
+│   │       ├── variables.css               # Farb- & Fontvariablen
+│   │       └── theme.css
 │   │
 │   ├── environments/
 │   │   ├── environment.ts
 │   │   └── environment.prod.ts
 │   │
-│   └── main.ts
+│   ├── main.ts                             # Einstiegspunkt
+│   └── index.html
 │
+├── angular.json
 ├── package.json
-└── angular.json
+├── tsconfig.json
+└── README.md
+
 
 
 
@@ -174,7 +228,7 @@ frontend/
 npm install
 
 
-#### Services
+#### Services 
 auth.service.ts → Login / Register / Refresh
 person.service.ts → /api/persons
 booking.service.ts → /api/bookings
@@ -189,3 +243,87 @@ product.service.ts → /api/products
 
 ###### Mailtrap
 https://mailtrap.io/
+
+
+
+###### Example: GET /api/events/:id
+{
+  "id": "a8c42e6e-3d9f-4e3d-97ff-2b9ac1452e62",
+  "name": "Pfälzer Trail Run 2025",
+  "description": "10 km Trail-Lauf durch das Pfälzer Bergland mit Start im Zentrum von Kusel.",
+  "start_date": "2025-09-14",
+  "end_date": "2025-09-14",
+  "registration_deadline": "2025-09-07",
+  "createdAt": "2025-03-01T10:00:00.000Z",
+  "updatedAt": "2025-03-01T10:00:00.000Z",
+
+  "routes": [
+    {
+      "id": "c9d82253-99d2-4f5c-aaf6-141e1f98d1c9",
+      "name": "Pfälzer Hügelrunde",
+      "distance_km": 10.0,
+      "difficulty": "mittel",
+      "description": "Wald- und Feldwege mit leichten Steigungen",
+      "event_id": "a8c42e6e-3d9f-4e3d-97ff-2b9ac1452e62"
+    }
+  ],
+
+  "relay_teams": [
+    {
+      "id": "f88b7f4c-2e8a-4e8b-b78b-2d4a1b15db3e",
+      "name": "Pfälzer Trail Sonntag",
+      "run_date": "2025-09-14",
+      "standard_start_time": "09:00",
+      "route_id": "c9d82253-99d2-4f5c-aaf6-141e1f98d1c9",
+      "event_id": "a8c42e6e-3d9f-4e3d-97ff-2b9ac1452e62"
+    }
+  ],
+
+  "squadrons": [
+    {
+      "id": "da5f531b-4714-4a44-b75c-c6bb3c244f88",
+      "name": "AlpenTeam Pfalz",
+      "start_number": "STF-2025-02",
+      "members_count": 3,
+      "description": "3er-Team auf der 10 km Route",
+      "event_id": "a8c42e6e-3d9f-4e3d-97ff-2b9ac1452e62"
+    }
+  ],
+
+  "occupancies": [
+    {
+      "id": "ea3a16c1-9db3-4e2f-8af3-8a1e51e6cde9",
+      "accommodation_id": "ac4f5c0b-22c3-4a2e-861a-972dd745e17a",
+      "event_id": "a8c42e6e-3d9f-4e3d-97ff-2b9ac1452e62",
+      "single_rooms": 5,
+      "double_rooms": 8,
+      "multi_bed_rooms": 2,
+      "available_beds": 30
+    }
+  ],
+
+  "event_registrations": [
+    {
+      "id": "9d15b0d7-0e2c-4cb3-8e56-d848f0f5f711",
+      "person_id": "d7b9e8e5-6c7f-4d92-a97b-d3b82a6c1a44",
+      "relay_team_id": "f88b7f4c-2e8a-4e8b-b78b-2d4a1b15db3e",
+      "squadron_id": "da5f531b-4714-4a44-b75c-c6bb3c244f88",
+      "participation_type": "staffel",
+      "wishes": "vegetarisch",
+      "liability_accept": true,
+      "status": "bestätigt",
+      "createdAt": "2025-06-02T09:00:00.000Z"
+    },
+    {
+      "id": "51e5cbd1-f25c-4bb0-953d-4db7e227f4a8",
+      "person_id": "aabbcc11-2233-4455-6677-8899ddeeff00",
+      "relay_team_id": null,
+      "squadron_id": null,
+      "participation_type": "einzeln",
+      "wishes": "T-Shirt Größe M",
+      "liability_accept": true,
+      "status": "in_auswahl",
+      "createdAt": "2025-06-05T12:20:00.000Z"
+    }
+  ]
+}

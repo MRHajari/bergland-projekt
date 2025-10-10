@@ -1,4 +1,3 @@
-// frontend/src/app/core/services/person.service.ts
 import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
 import { ApiService } from '../api.service';
@@ -7,23 +6,26 @@ export interface Person {
   id?: string;
   first_name: string;
   last_name: string;
-  birth_date: string;
-  email: string;
+  birth_date?: string;
+  email?: string;
+  phone?: string;
+  owner_id?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PersonService {
   private readonly endpoint = 'persons'; // → /api/persons im Backend
 
   constructor(private api: ApiService) {}
 
-  // 🔹 Alle Personen abrufen
-  getAll(): Observable<Person[]> {
-    return this.api.get<Person[]>(this.endpoint).pipe(
+  // 🔹 Alle Personen abrufen (optional: nur eigene mit owner_id)
+  getAll(ownerId?: string): Observable<Person[]> {
+    const query = ownerId ? `?owner_id=${ownerId}` : '';
+    return this.api.get<Person[]>(`${this.endpoint}${query}`).pipe(
       catchError(err => {
         console.error('❌ Fehler beim Laden der Personen:', err);
         return throwError(() => err);
@@ -42,6 +44,8 @@ export class PersonService {
   }
 
   // 🔹 Neue Person anlegen
+  // owner_id wird im Backend automatisch über Token gesetzt,
+  // kann aber manuell übergeben werden (z. B. für Admin-Funktionen)
   create(data: Person): Observable<Person> {
     return this.api.post<Person>(this.endpoint, data).pipe(
       catchError(err => {

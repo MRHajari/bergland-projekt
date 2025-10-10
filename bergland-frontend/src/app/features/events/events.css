@@ -98,6 +98,23 @@
     background: #0d3660;
     transform: translateY(-1px);
   }
+
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f7faff;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    color: #333;
+    border-left: 4px solid var(--primary-color);
+  }
+  
+  .stats p {
+    margin: 0;
+  }
   
   /* 📱 Responsive Anpassung */
   @media (max-width: 1024px) {

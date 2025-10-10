@@ -1,10 +1,10 @@
-// backend/models/eventRegistration.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 /**
- * EventRegistration
+ * 🏁 EventRegistration
  * Repräsentiert eine Anmeldung zu einem Event (Einzeln oder Staffel)
+ * Eine Person darf sich pro Event nur einmal anmelden.
  */
 const EventRegistration = sequelize.define(
     "event_registration",
@@ -19,26 +19,21 @@ const EventRegistration = sequelize.define(
         event_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            comment: "Referenz auf das Event",
         },
 
         // 🔗 Zugehörige Person
         person_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            comment: "Referenz auf die Person",
         },
 
-        // 🔗 Staffel (optional)
+        // 🔗 Zugehörige Staffel (optional)
         squadron_id: {
             type: DataTypes.UUID,
             allowNull: true,
             comment: "Referenz auf Staffel (Squadron)",
-        },
-
-        // 🔗 Lauftag / RunDate (vormals relay_team)
-        relay_team_id: {
-            type: DataTypes.UUID,
-            allowNull: true,
-            comment: "Referenz auf Lauftag (RunDate)",
         },
 
         // 📱 Teilnehmerdaten
@@ -100,7 +95,14 @@ const EventRegistration = sequelize.define(
         tableName: "event_registration",
         freezeTableName: true,
         timestamps: true,
-        comment: "Anmeldung eines Teilnehmers zu einem Event oder Staffel",
+        comment: "Anmeldung einer Person oder Staffel zu einem Event",
+        indexes: [
+            {
+                unique: true,
+                fields: ["person_id", "event_id"],
+                name: "unique_person_per_event",
+            },
+        ],
     }
 );
 

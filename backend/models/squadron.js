@@ -1,10 +1,10 @@
-// backend/models/squadron.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 /**
- * Staffel (Squadron)
- * Eine Staffel kann mehrere Anmeldungen (EventRegistrations) enthalten.
+ * 🫂 Staffel (Squadron)
+ * Eine Staffel kann mehrere Anmeldungen (EventRegistrations) enthalten
+ * und mehrere Personen über RelPersonSquadron.
  */
 const Squadron = sequelize.define(
     "squadron",
@@ -33,7 +33,7 @@ const Squadron = sequelize.define(
             allowNull: true,
         },
 
-        // 🧑‍🤝‍🧑 Anzahl Mitglieder
+        // 🧑‍🤝‍🧑 Anzahl Mitglieder (kann automatisch gezählt werden)
         members_count: {
             type: DataTypes.INTEGER,
             allowNull: true,
@@ -52,5 +52,9 @@ const Squadron = sequelize.define(
         timestamps: true,
     }
 );
+
+// Hinweis: Beziehungen werden in models/index.js definiert.
+// Squadron.belongsToMany(Person, { through: RelPersonSquadron });
+// Squadron.hasMany(EventRegistration, { foreignKey: "squadron_id" });
 
 module.exports = Squadron;

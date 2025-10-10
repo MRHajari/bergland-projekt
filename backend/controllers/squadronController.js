@@ -1,5 +1,4 @@
-// backend/controllers/squadronController.js
-const { Squadron, Event, EventRegistration } = require("../models");
+const { Squadron, Event, EventRegistration, Person } = require("../models");
 const squadronSchema = require("../validators/squadronValidator");
 
 // ➕ Neue Staffel erstellen
@@ -9,19 +8,24 @@ exports.createSquadron = async (req, res, next) => {
         if (error) return res.status(400).json({ error: error.details[0].message });
 
         const squadron = await Squadron.create(req.body);
-        res.json(squadron);
+        res.status(201).json(squadron);
     } catch (err) {
         console.error("❌ Fehler beim Erstellen der Staffel:", err);
         next(err);
     }
 };
 
-// 📋 Alle Staffeln
+// 📋 Alle Staffeln (inkl. Mitglieder)
 exports.getAllSquadrons = async (req, res, next) => {
     try {
         const squadrons = await Squadron.findAll({
             include: [
-                { model: Event, as: "event" },
+                { model: Event, as: "event", attributes: ["id", "name", "date"] },
+                {
+                    model: Person,
+                    attributes: ["id", "first_name", "last_name", "email"],
+                    through: { attributes: ["note"] }, // aus rel_person_squadron
+                },
                 { model: EventRegistration, as: "eventRegistrations" },
             ],
             order: [["createdAt", "DESC"]],
@@ -39,7 +43,13 @@ exports.getByEvent = async (req, res, next) => {
         const { eventId } = req.params;
         const squadrons = await Squadron.findAll({
             where: { event_id: eventId },
-            include: [{ model: EventRegistration, as: "eventRegistrations" }],
+            include: [
+                {
+                    model: Person,
+                    attributes: ["id", "first_name", "last_name"],
+                    through: { attributes: ["note"] },
+                },
+            ],
         });
         res.json(squadrons);
     } catch (err) {
@@ -48,13 +58,18 @@ exports.getByEvent = async (req, res, next) => {
     }
 };
 
-// 🔎 Staffel per ID
+// 🔎 Staffel per ID (inkl. Mitglieder)
 exports.getSquadronById = async (req, res, next) => {
     try {
         const squadron = await Squadron.findByPk(req.params.id, {
             include: [
                 { model: Event, as: "event" },
                 { model: EventRegistration, as: "eventRegistrations" },
+                {
+                    model: Person,
+                    attributes: ["id", "first_name", "last_name", "email"],
+                    through: { attributes: ["note"] },
+                },
             ],
         });
         if (!squadron) return res.status(404).json({ error: "Squadron not found" });
