@@ -209,6 +209,67 @@
   margin: 2rem 0;
 }
 
+.registration-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  max-width: 1000px;
+  width: 100%;
+}
+
+.left-form, .right-form {
+  background: var(--card-color);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.or-line {
+  text-align: center;
+  margin: 1rem 0;
+  color: #475569;
+  font-style: italic;
+}
+
+.person-list {
+  margin-top: 1rem;
+  padding-left: 1.2rem;
+  color: #334155;
+}
+
+@media (max-width: 768px) {
+  .registration-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.event-details-card.wide {
+  max-width: 1000px;
+}
+
+.badge {
+  background: var(--primary-color);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-left: 8px;
+}
+
+.event-details-card.wide {
+  max-width: 1000px;
+}
+
+.nested-form {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+}
+
+
 /* Responsive */
 @media (max-width: 768px) {
   .event-meta-grid {

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -10,28 +10,34 @@ import { PersonService, Person } from '../../../core/services/person.service';
 import { SquadronService } from '../../../core/services/squadron.service';
 import { AuthService } from '../../../core/auth.service';
 
+type AddedPerson = Person & { inSquadron?: boolean };
 
 @Component({
   selector: 'app-event-registration',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './event-registration.html',
-  styleUrls: ['./event-registration.css']
+  styleUrls: ['./event-registration.css'],
 })
 export class EventRegistration implements OnInit {
-
-  // --- UI/State ---
   event: any = null;
   squadrons: any[] = [];
   existingPersons: Person[] = [];
-  participants: Array<{ index: number; form: FormGroup }> = [];
+  addedPersons: AddedPerson[] = [];
 
   loading = true;
   errorMessage = '';
-  isRegistered = false;             // mind. 1 Registrierung in dieser Session
+  isRegistered = false;
   createdRegistrationIds: string[] = [];
 
-  // --- DI ---
+  showNewSquadronForm = false;
+
+  // Forms
+  registrationForm!: FormGroup;
+  personForm!: FormGroup;
+  squadronForm!: FormGroup;
+
+  // Services
   private fb = inject(FormBuilder);
   private eventService = inject(EventService);
   private registrationService = inject(EventRegistrationService);
@@ -49,102 +55,89 @@ export class EventRegistration implements OnInit {
       return;
     }
 
-    // 1) Event laden (inkl. Relationen)
+    this.initForms();
+
+    // 1️⃣ Event + Staffeln laden
     this.eventService.getById(eventId).subscribe({
       next: (evt) => {
         this.event = evt;
-        // Staffeln aus Event (falls mitgeladen)
-        this.squadrons = Array.isArray(evt?.squadrons) ? evt.squadrons : [];
-
-        // 2) Eigene Personen laden (owner_id = aktuelle Person des Users)
-        const ownerId =
-          (this.authService as any)?.currentUserValue?.person_id ||
-          (this.authService as any)?.getPersonId?.() ||
-          null;
-
-        if (ownerId) {
-          this.personService.getAll(ownerId).subscribe({
-            next: (persons) => {
-              this.existingPersons = persons || [];
-              this.loading = false;
-            },
-            error: () => {
-              // notfalls ohne vorhandene Personen weitermachen
-              this.loading = false;
-            }
-          });
-        } else {
-          // kein Owner bekannt → trotzdem UI zeigen
-          this.loading = false;
-        }
-
-        // 3) Mindestens einen Teilnehmer vorbereiten
-        this.addPerson();
+        this.squadrons = evt?.squadrons || [];
+        this.loadPersons();
       },
       error: () => {
         this.errorMessage = '❌ Event konnte nicht geladen werden.';
         this.loading = false;
-      }
+      },
     });
-
-    // Falls du Staffeln lieber separat laden willst (Backup):
-    // this.squadronService.getByEvent(eventId).subscribe({
-    //   next: (sq) => this.squadrons = sq || [],
-    //   error: () => {}
-    // });
   }
 
-  // ---------- Teilnehmer-Form erstellen ----------
-  private buildParticipantForm(): FormGroup {
-    return this.fb.group({
-      person_id: [''],                 // wenn leer -> neue Person wird angelegt
+  private loadPersons() {
+    const ownerId =
+      (this.authService as any)?.currentUserValue?.person_id ||
+      (this.authService as any)?.getPersonId?.() ||
+      null;
+
+    if (!ownerId) {
+      this.loading = false;
+      return;
+    }
+
+    this.personService.getAll(ownerId).subscribe({
+      next: (res) => {
+        this.existingPersons = res || [];
+        this.loading = false;
+      },
+      error: () => (this.loading = false),
+    });
+  }
+
+  private initForms(): void {
+    this.registrationForm = this.fb.group({
+      teilnahme_art: ['einzeln', Validators.required],
+      squadron_id: [null],
+      kfz_kennzeichen: [''],
+      startnummer: [''],
+      verpflegung_art: [''],
+      wuensche: [''],
+      geschlecht: ['m'],
+      verein: [''],
+      status: ['in_auswahl'],
+      staffel_aufnahme: [''],
+      haftungsausschluss: [false, Validators.requiredTrue],
+    });
+
+    this.personForm = this.fb.group({
+      person_id: [''],
       first_name: [''],
       last_name: [''],
       birth_date: [''],
       email: [''],
+    });
 
-      participation_type: ['einzeln', Validators.required],  // 'einzeln' | 'staffel'
-      squadron_id: [null],                                    // Staffel optional
+    this.squadronForm = this.fb.group({
+      name: ['', Validators.required],
+      description: [''],
     });
   }
 
-  // ---------- Teilnehmer verwalten ----------
-  addPerson(): void {
-    const index = this.participants.length;
-    const form = this.buildParticipantForm();
-    this.participants.push({ index, form });
+  // ✅ Bestehende Person auswählen
+  onSelectExistingPerson(e: any): void {
+    const id = e.target.value;
+    if (!id) return;
+    const person = this.existingPersons.find((p) => p.id === id);
+    if (!person) return;
+
+    this.addedPersons.push({ ...person, inSquadron: false });
+    this.existingPersons = this.existingPersons.filter((p) => p.id !== id);
+    this.personForm.reset();
   }
 
-  removePerson(idx: number): void {
-    this.participants = this.participants.filter(p => p.index !== idx)
-      .map((p, i) => ({ ...p, index: i })); // reindex
-  }
-
-  updatePerson(idx: number, value: any): void {
-    const row = this.participants.find(p => p.index === idx);
-    if (row) row.form.patchValue(value);
-  }
-
-  // ---------- Registrierung aller Teilnehmer ----------
-  async registerAll(): Promise<void> {
-    if (!this.event?.id) {
-      alert('Event fehlt.');
+  // ✅ Neue Person anlegen
+  async addPerson(): Promise<void> {
+    const v = this.personForm.value;
+    if (!v.first_name || !v.last_name) {
+      alert('Bitte Vor- und Nachname eingeben.');
       return;
-    }
-
-    // einfache Validierung pro Teilnehmer:
-    for (const p of this.participants) {
-      const val = p.form.value;
-      const hasExisting = !!val.person_id;
-      const hasNewMinimal = !!val.first_name && !!val.last_name; // Email optional
-      if (!hasExisting && !hasNewMinimal) {
-        alert(`Bitte Daten für Teilnehmer ${p.index + 1} angeben (entweder Person wählen oder Vor-/Nachname eingeben).`);
-        return;
-      }
-      if (val.participation_type === 'staffel' && !val.squadron_id) {
-        alert(`Bitte Staffel für Teilnehmer ${p.index + 1} auswählen oder Teilnahmeart auf "Einzeln" stellen.`);
-        return;
-      }
     }
 
     try {
@@ -153,82 +146,95 @@ export class EventRegistration implements OnInit {
         (this.authService as any)?.getPersonId?.() ||
         null;
 
-      for (const p of this.participants) {
-        const v = p.form.value as {
-          person_id?: string;
-          first_name?: string;
-          last_name?: string;
-          birth_date?: string;
-          email?: string;
-          participation_type: 'einzeln' | 'staffel';
-          squadron_id?: string | null;
-        };
+      const newPerson: Person = {
+        first_name: v.first_name.trim(),
+        last_name: v.last_name.trim(),
+        birth_date: v.birth_date || undefined,
+        email: v.email || undefined,
+        owner_id: ownerId,
+      };
 
-        let personId = v.person_id;
+      const created = await firstValueFrom(this.personService.create(newPerson));
+      this.addedPersons.push({ ...created, inSquadron: false });
+      this.personForm.reset();
+    } catch (err) {
+      alert('❌ Fehler beim Hinzufügen der Person.');
+      console.error(err);
+    }
+  }
 
-        // 1) ggf. neue Person anlegen
-        if (!personId) {
-          const newPerson: Person = {
-            first_name: v.first_name!.trim(),
-            last_name: v.last_name!.trim(),
-            birth_date: v.birth_date || undefined,
-            email: v.email || undefined,
-            owner_id: ownerId || null,
-          };
-          const created = await firstValueFrom(this.personService.create(newPerson));
-          personId = created.id!;
-          // Liste auffrischen (UX): neue Person den vorhandenen hinzufügen
-          this.existingPersons.push(created);
-        }
+  toggleNewSquadronForm() {
+    this.showNewSquadronForm = !this.showNewSquadronForm;
+  }
 
-        // 2) Registrierung anlegen
+  // ✅ Staffel erstellen
+  async createSquadron(): Promise<void> {
+    if (!this.squadronForm.valid || !this.event?.id)
+      return alert('Bitte Staffelname angeben.');
+
+    try {
+      const payload = {
+        name: this.squadronForm.value.name.trim(),
+        description: this.squadronForm.value.description,
+        event_id: this.event.id,
+      };
+
+      const created = await firstValueFrom(this.squadronService.create(payload));
+      this.squadrons.push(created);
+      alert(`✅ Staffel "${created.name}" wurde erstellt.`);
+      this.squadronForm.reset();
+      this.showNewSquadronForm = false;
+    } catch (err) {
+      console.error(err);
+      alert('❌ Fehler beim Erstellen der Staffel.');
+    }
+  }
+
+  // ✅ Registrierung absenden
+  async registerAll(): Promise<void> {
+    if (!this.event?.id) return alert('Event fehlt.');
+    if (this.addedPersons.length === 0) return alert('Bitte mindestens eine Person hinzufügen.');
+    if (this.registrationForm.invalid) return alert('Bitte Haftung akzeptieren.');
+
+    try {
+      for (const p of this.addedPersons) {
         const payload: EventRegistrationInterface = {
           event_id: this.event.id,
-          person_id: personId!,
-          squadron_id: v.participation_type === 'staffel' ? (v.squadron_id || null) : null,
-          participation_type: v.participation_type,
-          liability_accept: true, // Pflichtfeld im Backend
-          status: 'in_auswahl',
+          person_id: p.id!,
+          squadron_id:
+            this.registrationForm.value.teilnahme_art === 'staffel'
+              ? this.registrationForm.value.squadron_id
+              : null,
+          participation_type: this.registrationForm.value.teilnahme_art,
+          liability_accept: this.registrationForm.value.haftungsausschluss,
+          status: this.registrationForm.value.status,
+          kfz_kennzeichen: this.registrationForm.value.kfz_kennzeichen,
+          startnummer: this.registrationForm.value.startnummer,
+          verpflegung_art: this.registrationForm.value.verpflegung_art,
+          wuensche: this.registrationForm.value.wuensche,
+          geschlecht: this.registrationForm.value.geschlecht,
+          verein: this.registrationForm.value.verein,
+          staffel_aufnahme: this.registrationForm.value.staffel_aufnahme,
         };
 
-        const createdReg = await firstValueFrom(this.registrationService.create(payload));
-        if (createdReg?.id) {
-          this.createdRegistrationIds.push(createdReg.id);
-        }
+        const created = await firstValueFrom(this.registrationService.create(payload));
+        if (created?.id) this.createdRegistrationIds.push(created.id);
       }
 
       this.isRegistered = this.createdRegistrationIds.length > 0;
       alert('✅ Erfolgreich angemeldet!');
-    } catch (err: any) {
-      const msg = err?.message || err?.error?.message || 'Fehler bei der Anmeldung.';
-      alert(`❌ ${msg}`);
-      console.error('❌ Fehler bei registerAll():', err);
+    } catch (err) {
+      console.error(err);
+      alert('❌ Fehler bei der Anmeldung.');
     }
   }
 
-  // ---------- Unterkunft buchen (mit Prüfung) ----------
-  goToAccommodation(): void {
-    if (!this.isRegistered || this.createdRegistrationIds.length === 0) {
-      // Popup-Hinweis
-      alert('⚠️ Du bist für dieses Event noch nicht angemeldet. Bitte melde dich zuerst an, bevor du eine Unterkunft buchst.');
-      return;
-    }
-
-    // Zu deiner Buchungsseite gehen (Route ggf. anpassen)
-    // Variante 1: Query-Param mit eventId
+  goToAccommodation() {
+    if (!this.isRegistered) return alert('⚠️ Bitte melde dich zuerst an.');
     this.router.navigate(['/accommodations'], { queryParams: { eventId: this.event.id } });
-
-    // Variante 2 (falls du eine dedizierte Seite hast):
-    // this.router.navigate(['/accommodation-booking', this.event.id]);
   }
 
-  // ---------- Meine Anmeldungen ----------
-  goToMyRegistrations(): void {
+  goToMyRegistrations() {
     this.router.navigate(['/my-registrations']);
-  }
-
-  // ---------- Zurück (falls benötigt) ----------
-  goBack(): void {
-    this.router.navigate(['/events']);
   }
 }

@@ -9,10 +9,21 @@ export interface EventRegistrationInterface {
   squadron_id?: string | null;
   participation_type: 'einzeln' | 'staffel';
   liability_accept: boolean;
-  status?: 'in_auswahl' | 'bestätigt' | 'abgelehnt';
+  status?: string;
+
+  // 🆕 Neue Felder:
+  kfz_kennzeichen?: string;
+  startnummer?: string;
+  verpflegung_art?: string;
+  wuensche?: string;
+  geschlecht?: 'm' | 'w' | 'd';
+  verein?: string;
+  staffel_aufnahme?: string;
+
   createdAt?: string;
   updatedAt?: string;
 }
+
 
 @Injectable({
   providedIn: 'root',
