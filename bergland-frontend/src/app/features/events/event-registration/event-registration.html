@@ -53,53 +53,36 @@
             <h3>📋 Event-Anmeldung</h3>
 
             <div class="form-row">
-                <label>Teilnahme-Art</label>
-                <select formControlName="teilnahme_art">
-                    <option value="einzeln">Einzeln</option>
-                    <option value="staffel">Staffel</option>
-                </select>
+                <label>KFZ-Kennzeichen</label>
+                <input formControlName="license_plate" placeholder="KL-AB 123" />
             </div>
-
-            @if (registrationForm.value.teilnahme_art === 'staffel') {
             <div class="form-row">
-                <label>Staffel auswählen</label>
-                <select formControlName="squadron_id">
-                    <option value="">-- Bitte Staffel wählen --</option>
-                    @for (s of squadrons; track s.id) {
-                    <option [value]="s.id">{{ s.name }}</option>
-                    }
-                </select>
+                <label>Startnummer</label>
+                <input formControlName="start_number" />
+            </div>
+            <div class="form-row">
+                <label>Verpflegung</label>
+                <input formControlName="catering_type" />
             </div>
 
             <div class="form-row">
-                <button type="button" class="btn secondary" (click)="toggleNewSquadronForm()">
-                    + Neue Staffel anlegen
-                </button>
+                <label>Wünsche</label>
+                <input formControlName="wishes" />
             </div>
-
-            @if (showNewSquadronForm) {
-            <div class="nested-form" [formGroup]="squadronForm">
-                <h4>🧭 Neue Staffel</h4>
-                <div class="form-row"><label>Name</label><input formControlName="name" /></div>
-                <div class="form-row"><label>Beschreibung</label><input formControlName="description" /></div>
-                <button type="button" class="btn add-person-btn" (click)="createSquadron()">Erstellen</button>
-            </div>
-            }
-            }
-
-            <div class="form-row"><label>KFZ-Kennzeichen</label><input formControlName="kfz_kennzeichen" /></div>
-            <div class="form-row"><label>Startnummer</label><input formControlName="startnummer" /></div>
-            <div class="form-row"><label>Verpflegung</label><input formControlName="verpflegung_art" /></div>
-            <div class="form-row"><label>Wünsche</label><input formControlName="wuensche" /></div>
             <div class="form-row">
                 <label>Geschlecht</label>
-                <select formControlName="geschlecht">
+                <select formControlName="gender">
                     <option value="m">Männlich</option>
                     <option value="w">Weiblich</option>
                     <option value="d">Divers</option>
                 </select>
             </div>
-            <div class="form-row"><label>Verein</label><input formControlName="verein" /></div>
+
+            <div class="form-row">
+                <label>Verein</label>
+                <input formControlName="club" />
+            </div>
+
             <div class="form-row"><label>Status</label>
                 <select formControlName="status">
                     <option value="in_auswahl">In Auswahl</option>
@@ -109,14 +92,53 @@
             </div>
             <div class="form-row"><label>Staffel-Aufnahme</label><input formControlName="staffel_aufnahme" /></div>
             <div class="checkbox-row">
-                <input type="checkbox" formControlName="haftungsausschluss" />
+                <input type="checkbox" formControlName="liability_accept" />
                 <span>Ich akzeptiere den <strong>Haftungsausschluss</strong>.</span>
             </div>
+
         </div>
 
         <!-- 🔹 Rechte Spalte -->
         <div class="right-form">
-            <h3>👤 Teilnehmer</h3>
+
+            <div [formGroup]="registrationForm">
+                <h3>👤 Teilnehmer</h3>
+
+                <div class="form-row">
+                    <label>Teilnahme-Art</label>
+                    <select formControlName="teilnahme_art">
+                        <option value="einzeln">Einzeln</option>
+                        <option value="staffel">Staffel</option>
+                    </select>
+                </div>
+
+                @if (registrationForm.value.teilnahme_art === 'staffel') {
+                <div class="form-row">
+                    <label>Staffel auswählen</label>
+                    <select formControlName="squadron_id">
+                        <option value="">-- Bitte Staffel wählen --</option>
+                        @for (s of squadrons; track s.id) {
+                        <option [value]="s.id">{{ s.name }}</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <button type="button" class="btn secondary" (click)="toggleNewSquadronForm()">
+                        + Neue Staffel anlegen
+                    </button>
+                </div>
+
+                @if (showNewSquadronForm) {
+                <div class="nested-form" [formGroup]="squadronForm">
+                    <h4>🧭 Neue Staffel</h4>
+                    <div class="form-row"><label>Name</label><input formControlName="name" /></div>
+                    <div class="form-row"><label>Beschreibung</label><input formControlName="description" /></div>
+                    <button type="button" class="btn add-person-btn" (click)="createSquadron()">Erstellen</button>
+                </div>
+                }
+                }
+            </div>
 
             <form [formGroup]="personForm">
                 <div class="form-row">

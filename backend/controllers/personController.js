@@ -1,4 +1,5 @@
 const Person = require("../models/person");
+
 const { personSchema } = require("../validators/personValidator");
 
 /**
@@ -35,24 +36,31 @@ exports.getPersonById = async (req, res) => {
 };
 
 // ➕ Neue Person erstellen
+
 exports.createPerson = async (req, res) => {
     try {
-        const { error, value } = personSchema.validate(req.body);
-        if (error)
-            return res
-                .status(400)
-                .json({ message: error.details[0].message });
+        const data = req.body;
 
-        // Falls authentifizierter Benutzer vorhanden ist, setze owner_id automatisch
-        const userId = req.user?.id || value.owner_id || null;
+        // 🧠 SQLite akzeptiert kein "undefined" oder leeren String als FK → auf null setzen
+        if (!data.owner_id || data.owner_id === "undefined" || data.owner_id === "") {
+            data.owner_id = null;
+        }
 
-        const person = await Person.create({ ...value, owner_id: userId });
-        res.status(201).json(person);
-    } catch (err) {
-        console.error("❌ Fehler beim Erstellen der Person:", err);
-        res.status(500).json({ message: err.message });
+        // Email leer → auf null setzen
+        if (!data.email || data.email.trim() === "") {
+            data.email = null;
+        }
+
+        const newPerson = await Person.create(data);
+        return res.status(201).json(newPerson);
+    } catch (error) {
+        console.error("❌ Fehler beim Erstellen der Person:", error);
+        return res.status(500).json({
+            message: error.message || "Fehler beim Erstellen der Person.",
+        });
     }
 };
+
 
 // ✏️ Person aktualisieren
 exports.updatePerson = async (req, res) => {

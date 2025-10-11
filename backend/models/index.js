@@ -56,10 +56,10 @@ Person.hasMany(Person, {
     as: "ownedPersons",
     onDelete: "SET NULL",
 });
-Person.belongsTo(Person, {
-    foreignKey: "owner_id",
-    as: "owner",
-});
+// Person.belongsTo(Person, {
+//     foreignKey: "owner_id",
+//     as: "owner",
+// });
 
 // 🧍 Person ↔ RelPersonAddress (1:n)
 Person.hasMany(RelPersonAddress, {

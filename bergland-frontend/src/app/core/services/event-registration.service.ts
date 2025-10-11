@@ -12,12 +12,12 @@ export interface EventRegistrationInterface {
   status?: string;
 
   // 🆕 Neue Felder:
-  kfz_kennzeichen?: string;
-  startnummer?: string;
-  verpflegung_art?: string;
-  wuensche?: string;
-  geschlecht?: 'm' | 'w' | 'd';
-  verein?: string;
+  license_plate?: string;
+  start_number?: string;
+  catering_type?: string;
+  wishes?: string;
+  gender?: 'm' | 'w' | 'd';
+  club?: string;
   staffel_aufnahme?: string;
 
   createdAt?: string;

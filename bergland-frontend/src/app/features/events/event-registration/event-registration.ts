@@ -95,16 +95,17 @@ export class EventRegistration implements OnInit {
     this.registrationForm = this.fb.group({
       teilnahme_art: ['einzeln', Validators.required],
       squadron_id: [null],
-      kfz_kennzeichen: [''],
-      startnummer: [''],
-      verpflegung_art: [''],
-      wuensche: [''],
-      geschlecht: ['m'],
-      verein: [''],
+      license_plate: [''],
+      start_number: [''],          // ✅ war startnummer
+      catering_type: [''],         // ✅ war verpflegung_art
+      wishes: [''],                // ✅ war wuensche
+      gender: ['m'],               // ✅ war geschlecht
+      club: [''],                  // ✅ war verein
       status: ['in_auswahl'],
-      staffel_aufnahme: [''],
-      haftungsausschluss: [false, Validators.requiredTrue],
+      staffel_aufnahme: [''],      // ❌ dieses Feld gibt’s im Backend gar nicht – entfernen
+      liability_accept: [false, Validators.requiredTrue], // ✅ englisch & Pflicht
     });
+    
 
     this.personForm = this.fb.group({
       person_id: [''],
@@ -132,36 +133,49 @@ export class EventRegistration implements OnInit {
     this.personForm.reset();
   }
 
-  // ✅ Neue Person anlegen
-  async addPerson(): Promise<void> {
-    const v = this.personForm.value;
-    if (!v.first_name || !v.last_name) {
-      alert('Bitte Vor- und Nachname eingeben.');
-      return;
-    }
+  // ✅ Neue Person anlegen oder überspringen, falls schon vorhanden
+async addPerson(): Promise<void> {
+  const v = this.personForm.value;
 
-    try {
-      const ownerId =
-        (this.authService as any)?.currentUserValue?.person_id ||
-        (this.authService as any)?.getPersonId?.() ||
-        null;
-
-      const newPerson: Person = {
-        first_name: v.first_name.trim(),
-        last_name: v.last_name.trim(),
-        birth_date: v.birth_date || undefined,
-        email: v.email || undefined,
-        owner_id: ownerId,
-      };
-
-      const created = await firstValueFrom(this.personService.create(newPerson));
-      this.addedPersons.push({ ...created, inSquadron: false });
-      this.personForm.reset();
-    } catch (err) {
-      alert('❌ Fehler beim Hinzufügen der Person.');
-      console.error(err);
-    }
+  // 🧩 Wenn bereits Personen in der Liste sind und das Formular leer ist → nichts tun
+  const noNewPersonData = !v.first_name && !v.last_name && !v.email;
+  if (noNewPersonData && this.addedPersons.length > 0) {
+    alert('⚠️ Es sind bereits Personen hinzugefügt. Bitte "Jetzt anmelden" klicken.');
+    return;
   }
+
+  // 🧩 Wenn versucht wird, neue Person zu speichern, aber Name fehlt → Hinweis
+  if (!v.first_name || !v.last_name) {
+    alert('Bitte Vor- und Nachname eingeben (für neue Person).');
+    return;
+  }
+
+  try {
+    const ownerId =
+      (this.authService as any)?.currentUserValue?.person_id ||
+      (this.authService as any)?.getPersonId?.() ||
+      null;
+
+    const newPerson: Person = {
+      first_name: v.first_name.trim(),
+      last_name: v.last_name.trim(),
+      birth_date: v.birth_date || undefined,
+      email: v.email || undefined,
+      owner_id: ownerId || null,
+    };
+
+    const created = await firstValueFrom(this.personService.create(newPerson));
+
+    // 👇 Person sofort zur Liste hinzufügen
+    this.addedPersons.push({ ...created, inSquadron: false });
+    this.personForm.reset();
+
+  } catch (err) {
+    alert('❌ Fehler beim Hinzufügen der Person.');
+    console.error(err);
+  }
+}
+
 
   toggleNewSquadronForm() {
     this.showNewSquadronForm = !this.showNewSquadronForm;
@@ -193,8 +207,10 @@ export class EventRegistration implements OnInit {
   // ✅ Registrierung absenden
   async registerAll(): Promise<void> {
     if (!this.event?.id) return alert('Event fehlt.');
-    if (this.addedPersons.length === 0) return alert('Bitte mindestens eine Person hinzufügen.');
-    if (this.registrationForm.invalid) return alert('Bitte Haftung akzeptieren.');
+    if (this.addedPersons.length === 0) {
+      alert('Bitte mindestens eine Person hinzufügen.');
+      return;
+    }    if (this.registrationForm.invalid) return alert('Bitte Haftung akzeptieren.');
 
     try {
       for (const p of this.addedPersons) {
@@ -206,16 +222,17 @@ export class EventRegistration implements OnInit {
               ? this.registrationForm.value.squadron_id
               : null,
           participation_type: this.registrationForm.value.teilnahme_art,
-          liability_accept: this.registrationForm.value.haftungsausschluss,
+          liability_accept: this.registrationForm.value.liability_accept,
           status: this.registrationForm.value.status,
-          kfz_kennzeichen: this.registrationForm.value.kfz_kennzeichen,
-          startnummer: this.registrationForm.value.startnummer,
-          verpflegung_art: this.registrationForm.value.verpflegung_art,
-          wuensche: this.registrationForm.value.wuensche,
-          geschlecht: this.registrationForm.value.geschlecht,
-          verein: this.registrationForm.value.verein,
-          staffel_aufnahme: this.registrationForm.value.staffel_aufnahme,
+        
+          license_plate: this.registrationForm.value.license_plate || null,
+          start_number: this.registrationForm.value.start_number || null,
+          catering_type: this.registrationForm.value.catering_type || null,
+          wishes: this.registrationForm.value.wishes || null,
+          gender: this.registrationForm.value.gender || null,
+          club: this.registrationForm.value.club || null,
         };
+        
 
         const created = await firstValueFrom(this.registrationService.create(payload));
         if (created?.id) this.createdRegistrationIds.push(created.id);

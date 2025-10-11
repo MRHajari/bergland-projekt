@@ -18,8 +18,11 @@ const Squadron = sequelize.define(
         // 🔗 optional: Zugehöriges Event (wenn Staffeln eventabhängig sind)
         event_id: {
             type: DataTypes.UUID,
-            allowNull: true,
+            allowNull: false,
+            references: { model: 'event', key: 'id' },
+            onDelete: 'CASCADE'
         },
+
 
         // 🏁 Staffelname
         name: {

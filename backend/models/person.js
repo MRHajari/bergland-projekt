@@ -4,8 +4,9 @@ const sequelize = require("../config/db");
 /**
  * Person
  * Repräsentiert eine natürliche Person (Teilnehmer, Angehöriger, etc.)
- * owner_id zeigt an, welcher Benutzer (User) diese Person erstellt hat.
+ * owner_id zeigt an, welcher Benutzer (User oder Person) diese Person erstellt hat.
  */
+
 const Person = sequelize.define(
     "person",
     {
@@ -33,25 +34,41 @@ const Person = sequelize.define(
             allowNull: true,
         },
 
-        // 📧 E-Mail-Adresse (muss eindeutig sein)
+        // 📧 E-Mail-Adresse (optional, nicht eindeutig – da z. B. Kinder ohne eigene Mail)
         email: {
             type: DataTypes.STRING,
-            allowNull: false,
-            unique: true,
+            allowNull: true,
+            unique: false,
+            validate: {
+                isEmail: {
+                    msg: "Bitte gültige E-Mail-Adresse eingeben",
+                },
+            },
         },
 
-        // 🧑‍💼 Besitzer / Ersteller (User-ID)
+        // 🧑‍💼 Besitzer / Ersteller
         owner_id: {
             type: DataTypes.UUID,
             allowNull: true,
-            comment: "User-ID des Erstellers dieser Person (Accountinhaber)",
+            references: {
+                model: "person", // Self-reference (Person → Person)
+                key: "id",
+            },
+            onDelete: "SET NULL",
+            onUpdate: "CASCADE",
         },
     },
     {
         tableName: "person",
         timestamps: true,
-        comment: "Personendaten – inklusive Besitzer-Referenz auf den Benutzer (owner)",
+        comment: "Personendaten – inklusive Besitzer-Referenz auf den Ersteller (owner)",
     }
 );
+
+// =============================================
+// 🔗 Selbstreferenzielle Beziehung definieren
+// =============================================
+Person.belongsTo(Person, { as: "owner", foreignKey: "owner_id" });
+Person.hasMany(Person, { as: "createdPersons", foreignKey: "owner_id" });
 
 module.exports = Person;

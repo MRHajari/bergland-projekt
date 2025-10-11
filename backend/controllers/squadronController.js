@@ -2,16 +2,25 @@ const { Squadron, Event, EventRegistration, Person } = require("../models");
 const squadronSchema = require("../validators/squadronValidator");
 
 // ➕ Neue Staffel erstellen
-exports.createSquadron = async (req, res, next) => {
+exports.createSquadron = async (req, res) => {
     try {
-        const { error } = squadronSchema.validate(req.body);
-        if (error) return res.status(400).json({ error: error.details[0].message });
+        const data = req.body;
 
-        const squadron = await Squadron.create(req.body);
-        res.status(201).json(squadron);
-    } catch (err) {
-        console.error("❌ Fehler beim Erstellen der Staffel:", err);
-        next(err);
+        // 🧠 SQLite akzeptiert kein undefined/"" als FK → korrekt auf NULL setzen
+        if (!data.event_id || data.event_id === "undefined" || data.event_id === "") {
+            return res.status(400).json({ message: "event_id ist erforderlich und muss gültig sein." });
+        }
+
+        // Mitgliederzahl optional
+        if (!data.members_count) data.members_count = 0;
+
+        const newSquadron = await Squadron.create(data);
+        return res.status(201).json(newSquadron);
+    } catch (error) {
+        console.error("❌ Fehler beim Erstellen der Staffel:", error);
+        return res.status(500).json({
+            message: error.message || "Fehler beim Erstellen der Staffel.",
+        });
     }
 };
 
