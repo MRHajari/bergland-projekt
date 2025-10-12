@@ -243,14 +243,17 @@ exports.refreshToken = async (req, res) => {
         const newAccessToken = generateAccessToken({ user });
         const newRefreshToken = await generateRefreshToken({ user });
 
+        // Alten Refresh-Token invalidieren
         storedToken.revoked = true;
         await storedToken.save();
 
         res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
-    } catch {
-        res.status(403).json({ error: "Ungültiger Refresh-Token." });
+    } catch (err) {
+        console.error("❌ Refresh fehlgeschlagen:", err);
+        res.status(403).json({ error: "Ungültiger oder abgelaufener Refresh-Token." });
     }
 };
+
 
 // ============================================================
 // 🔹 Logout
