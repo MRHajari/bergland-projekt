@@ -11,19 +11,19 @@ export interface EventRegistrationInterface {
   liability_accept: boolean;
   status?: string;
 
-  // 🆕 Neue Felder:
-  license_plate?: string;
-  start_number?: string;
-  catering_type?: string;
-  wishes?: string;
-  gender?: 'm' | 'w' | 'd';
-  club?: string;
-  staffel_aufnahme?: string;
+  // 🆕 Zusätzliche Felder:
+  phone_number?: string | null;        // ✅ NEU hinzugefügt
+  license_plate?: string | null;
+  start_number?: string | null;
+  catering_type?: string | null;
+  wishes?: string | null;
+  gender?: 'm' | 'w' | 'd' | null;
+  club?: string | null;
+  staffel_aufnahme?: string | null;
 
   createdAt?: string;
   updatedAt?: string;
 }
-
 
 @Injectable({
   providedIn: 'root',
@@ -83,17 +83,19 @@ export class EventRegistrationService {
     );
   }
 
-  // 🆕 🔹 Registrierungen nach Benutzer abrufen
-  getByUser(userId: string): Observable<EventRegistrationInterface[]> {
-    // Der Backend-Endpunkt könnte z. B. so aussehen:
-    // GET /api/event-registrations/user/:userId
-    const url = `${this.endpoint}/user/${userId}`;
-
+  // 🔹 Registrierungen nach Person abrufen
+  getByPerson(personId: string): Observable<EventRegistrationInterface[]> {
+    const url = `${this.endpoint}/person/${personId}`;
     return this.api.get<EventRegistrationInterface[]>(url).pipe(
       catchError((err) => {
-        console.error(`❌ Fehler beim Laden der Registrierungen für Benutzer ${userId}:`, err);
+        console.error(`❌ Fehler beim Laden der Registrierungen für Person ${personId}:`, err);
         return throwError(() => err);
       })
     );
+  }
+
+  // 🔹 Registrierung einer bestimmten Person aus Event löschen
+  deleteByEventAndPerson(eventId: string, personId: string): Observable<any> {
+    return this.api.deleteCustom(`event-registrations/${eventId}/person/${personId}`);
   }
 }

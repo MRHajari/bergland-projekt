@@ -45,7 +45,7 @@ export class Overview implements OnInit {
   
     try {
       const [regs, books, invs, ] = await Promise.all([
-        firstValueFrom(this.eventRegistrationService.getByUser(this.userId)),
+        firstValueFrom(this.eventRegistrationService.getByPerson(this.userId)),
         firstValueFrom(this.bookingService.getByUser(this.userId)),
         firstValueFrom(this.invoiceService.getByUser(this.userId)),
       ]);

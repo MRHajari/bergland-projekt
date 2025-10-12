@@ -1,5 +1,4 @@
 <div class="event-registration-container">
-
     @if (loading) {
     <p class="loading">⏳ Event wird geladen...</p>
     } @else if (errorMessage) {
@@ -7,23 +6,24 @@
     } @else {
 
     <!-- ================================
-           🏔️ EVENT-DETAILS SEKTION
-           ================================ -->
+             🏔️ EVENT-DETAILS SEKTION
+             ================================ -->
     <section class="event-details-card wide">
         <header class="event-header">
             <div class="event-title-block">
                 <h1>{{ event?.name }}</h1>
                 <p class="event-dates">
-                    📅 {{ event?.start_date | date:'dd.MM.yyyy' }}
+                    📅 {{ event?.start_date | date: 'dd.MM.yyyy' }}
                     @if (event?.end_date && event?.end_date !== event?.start_date) {
-                    – {{ event?.end_date | date:'dd.MM.yyyy' }}
+                    – {{ event?.end_date | date: 'dd.MM.yyyy' }}
                     }
                 </p>
             </div>
+
             @if (event?.registration_deadline) {
             <p class="event-deadline">
                 ⏰ Anmeldung bis:
-                <strong>{{ event.registration_deadline | date:'dd.MM.yyyy' }}</strong>
+                <strong>{{ event.registration_deadline | date: 'dd.MM.yyyy' }}</strong>
             </p>
             }
         </header>
@@ -35,9 +35,13 @@
         <div class="event-meta-grid">
             <div class="meta-item">🗺️ <strong>Routen:</strong> <span>{{ event?.routes?.length || 0 }}</span></div>
             <div class="meta-item">🧭 <strong>Staffeln:</strong> <span>{{ event?.squadrons?.length || 0 }}</span></div>
-            <div class="meta-item">👥 <strong>Anmeldungen:</strong> <span>{{ event?.eventRegistrations?.length || 0
-                    }}</span></div>
-            <div class="meta-item">🏨 <strong>Unterkünfte:</strong> <span>{{ event?.occupancies?.length || 0 }}</span>
+            <div class="meta-item">
+                👥 <strong>Anmeldungen:</strong>
+                <span>{{ event?.eventRegistrations?.length || 0 }}</span>
+            </div>
+            <div class="meta-item">
+                🏨 <strong>Unterkünfte:</strong>
+                <span>{{ event?.occupancies?.length || 0 }}</span>
             </div>
         </div>
     </section>
@@ -45,21 +49,30 @@
     <hr class="section-divider" />
 
     <!-- ================================
-           📝 ANMELDUNG SEKTION
-           ================================ -->
+             📝 ANMELDUNG SEKTION
+             ================================ -->
     <section class="registration-grid">
         <!-- 🔹 Linke Spalte -->
         <div class="left-form" [formGroup]="registrationForm">
             <h3>📋 Event-Anmeldung</h3>
 
+            <div class="form-group">
+                <label for="phone_number">Handynummer</label>
+                <input id="phone_number" type="text" formControlName="phone_number"
+                    placeholder="z. B. +49 170 1234567" />
+            </div>
+
+
             <div class="form-row">
                 <label>KFZ-Kennzeichen</label>
                 <input formControlName="license_plate" placeholder="KL-AB 123" />
             </div>
+
             <div class="form-row">
                 <label>Startnummer</label>
                 <input formControlName="start_number" />
             </div>
+
             <div class="form-row">
                 <label>Verpflegung</label>
                 <input formControlName="catering_type" />
@@ -69,6 +82,7 @@
                 <label>Wünsche</label>
                 <input formControlName="wishes" />
             </div>
+
             <div class="form-row">
                 <label>Geschlecht</label>
                 <select formControlName="gender">
@@ -83,24 +97,23 @@
                 <input formControlName="club" />
             </div>
 
-            <div class="form-row"><label>Status</label>
+            <div class="form-row">
+                <label>Status</label>
                 <select formControlName="status">
                     <option value="in_auswahl">In Auswahl</option>
                     <option value="bestätigt">Bestätigt</option>
                     <option value="storniert">Storniert</option>
                 </select>
             </div>
-            <div class="form-row"><label>Staffel-Aufnahme</label><input formControlName="staffel_aufnahme" /></div>
+
             <div class="checkbox-row">
                 <input type="checkbox" formControlName="liability_accept" />
                 <span>Ich akzeptiere den <strong>Haftungsausschluss</strong>.</span>
             </div>
-
         </div>
 
         <!-- 🔹 Rechte Spalte -->
         <div class="right-form">
-
             <div [formGroup]="registrationForm">
                 <h3>👤 Teilnehmer</h3>
 
@@ -132,14 +145,21 @@
                 @if (showNewSquadronForm) {
                 <div class="nested-form" [formGroup]="squadronForm">
                     <h4>🧭 Neue Staffel</h4>
-                    <div class="form-row"><label>Name</label><input formControlName="name" /></div>
-                    <div class="form-row"><label>Beschreibung</label><input formControlName="description" /></div>
+                    <div class="form-row">
+                        <label>Name</label>
+                        <input formControlName="name" />
+                    </div>
+                    <div class="form-row">
+                        <label>Beschreibung</label>
+                        <input formControlName="description" />
+                    </div>
                     <button type="button" class="btn add-person-btn" (click)="createSquadron()">Erstellen</button>
                 </div>
                 }
                 }
             </div>
 
+            <!-- 👥 Personenformular -->
             <form [formGroup]="personForm">
                 <div class="form-row">
                     <label>Bestehende Person auswählen</label>
@@ -155,25 +175,49 @@
 
                 <div class="form-row"><label>Vorname</label><input formControlName="first_name" /></div>
                 <div class="form-row"><label>Nachname</label><input formControlName="last_name" /></div>
-                <div class="form-row"><label>Geburtsdatum</label><input type="date" formControlName="birth_date" />
+                <div class="form-row">
+                    <label>Geburtsdatum</label>
+                    <input type="date" formControlName="birth_date" />
                 </div>
-                <div class="form-row"><label>E-Mail</label><input formControlName="email" /></div>
+                <div class="form-row">
+                    <label>E-Mail</label>
+                    <input formControlName="email" />
+                </div>
 
                 <button type="button" class="btn add-person-btn" (click)="addPerson()">Person hinzufügen</button>
             </form>
 
+            <!-- 👇 Liste hinzugefügter Personen -->
             <ul class="person-list">
                 @for (p of addedPersons; track p.id) {
-                <li>✅ {{ p.first_name }} {{ p.last_name }}</li>
+                <li>
+                    ✅
+                    <span *ngIf="p.squadronName" class="squadron-label">
+                        🧭 {{ p.squadronName }} —
+                    </span>
+                    {{ p.first_name }} {{ p.last_name }}
+                    <button type="button" class="btn small danger" title="Person löschen" (click)="removePerson(p.id)">
+                        🗑️
+                    </button>
+                </li>
                 }
             </ul>
+
         </div>
     </section>
 
     <hr class="section-divider" />
 
+    <!-- ================================
+             🔘 BUTTON-LEISTE
+             ================================ -->
     <section class="button-bar">
+        @if (!isRegistered) {
         <button class="btn primary" (click)="registerAll()">Jetzt anmelden</button>
+        } @else {
+        <button class="btn primary" (click)="updateRegistration()">Anmeldung bearbeiten</button>
+        }
+
         <button class="btn secondary" (click)="goToAccommodation()">Unterkunft buchen</button>
         <button class="btn neutral" (click)="goToMyRegistrations()">Meine Anmeldungen</button>
     </section>

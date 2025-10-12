@@ -68,7 +68,6 @@ exports.createRegistration = async (req, res) => {
     } catch (err) {
         console.error("❌ Fehler beim Erstellen der Anmeldung:", err);
 
-        // Fehler durch Unique-Constraint (Fallback, falls Datenbank den Fehler wirft)
         if (err.name === "SequelizeUniqueConstraintError") {
             return res
                 .status(409)
@@ -90,7 +89,7 @@ exports.updateRegistration = async (req, res) => {
         if (error)
             return res.status(400).json({ message: error.details[0].message });
 
-        // Optional: prüfen, ob Update auf bereits verwendete Kombination führt
+        // prüfen auf doppelte Kombination
         if (
             value.person_id &&
             value.event_id &&
@@ -101,8 +100,7 @@ exports.updateRegistration = async (req, res) => {
             });
             if (duplicate) {
                 return res.status(409).json({
-                    message:
-                        "Diese Person ist für dieses Event bereits angemeldet (doppelte Kombination).",
+                    message: "Diese Person ist für dieses Event bereits angemeldet (doppelt).",
                 });
             }
         }
@@ -115,7 +113,7 @@ exports.updateRegistration = async (req, res) => {
     }
 };
 
-// ❌ Anmeldung löschen
+// ❌ Anmeldung löschen (nach ID)
 exports.deleteRegistration = async (req, res) => {
     try {
         const reg = await EventRegistration.findByPk(req.params.id);
@@ -129,3 +127,57 @@ exports.deleteRegistration = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+// 🔹 Registrierung nach Person-ID
+exports.getByPersonId = async (req, res) => {
+    try {
+        const { personId } = req.params;
+
+        const regs = await EventRegistration.findAll({
+            where: { person_id: personId },
+            include: [
+                { model: Person, as: "person", attributes: ["first_name", "last_name"] },
+                { model: Event, as: "event", attributes: ["name", "start_date"] },
+                { model: Squadron, as: "squadron", attributes: ["name", "start_number"] },
+                { model: Runtime, as: "runtimes" },
+            ],
+            order: [["createdAt", "DESC"]],
+        });
+
+        res.json(regs || []);
+    } catch (err) {
+        console.error("❌ Fehler beim Laden der Registrierungen für Person:", err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// 🗑️ Person aus Event entfernen (aber Person bleibt bestehen)
+exports.deleteByPersonAndEvent = async (req, res) => {
+    try {
+        const { event_id, person_id } = req.params;
+        console.log("🧩 DELETE Request:", { event_id, person_id });
+
+        if (!event_id || !person_id)
+            return res.status(400).json({ message: "event_id und person_id sind erforderlich" });
+
+        // 🧪 Debug: Zeige alle Registrierungen dieses Events
+        const all = await EventRegistration.findAll({ where: { event_id } });
+        console.log("🧾 Alle Registrierungen für Event:", all.map(r => r.get({ plain: true })));
+
+        const registration = await EventRegistration.findOne({
+            where: { event_id, person_id },
+        });
+
+        console.log("🔍 Gefundene Registrierung:", registration?.id);
+
+        if (!registration)
+            return res.status(404).json({ message: "Registrierung nicht gefunden" });
+
+        await registration.destroy();
+        res.json({ message: "Person wurde aus diesem Event entfernt" });
+    } catch (err) {
+        console.error("❌ Fehler beim Entfernen der Person aus dem Event:", err);
+        res.status(500).json({ message: err.message });
+    }
+};
+

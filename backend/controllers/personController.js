@@ -1,5 +1,4 @@
 const Person = require("../models/person");
-
 const { personSchema } = require("../validators/personValidator");
 
 /**
@@ -7,20 +6,24 @@ const { personSchema } = require("../validators/personValidator");
  * CRUD-Logik für Personen, inkl. Filter nach owner_id (Besitzer)
  */
 
-// 📋 Alle Personen abrufen
-exports.getAllPersons = async (req, res) => {
+// 📋 Alle Personen abrufen (eigene + optional Filter)
+exports.getAll = async (req, res) => {
     try {
-        const { owner_id } = req.query;
+        const ownerId = req.query.owner_id || req.user?.id;
+        console.log("📥 Lade Personen für owner_id:", ownerId);
 
-        const where = owner_id ? { owner_id } : {}; // optionaler Filter
-        const persons = await Person.findAll({ where });
+        const whereClause = ownerId ? { owner_id: ownerId } : undefined;
+        const persons = await Person.findAll({ where: whereClause });
 
         res.json(persons);
-    } catch (error) {
-        console.error("❌ Fehler beim Laden der Personen:", error);
-        res.status(500).json({ message: error.message });
+    } catch (err) {
+        console.error("❌ Fehler beim Laden der Personen:", err);
+        res.status(500).json({ message: "Fehler beim Laden der Personen." });
     }
 };
+
+
+
 
 // 🔍 Eine Person abrufen
 exports.getPersonById = async (req, res) => {
@@ -36,30 +39,29 @@ exports.getPersonById = async (req, res) => {
 };
 
 // ➕ Neue Person erstellen
-
-exports.createPerson = async (req, res) => {
+exports.create = async (req, res) => {
     try {
-        const data = req.body;
+        const { first_name, last_name, birth_date, email } = req.body;
+        const owner_id = req.user?.id || req.body.owner_id; // ✅ vom Token bevorzugen
 
-        // 🧠 SQLite akzeptiert kein "undefined" oder leeren String als FK → auf null setzen
-        if (!data.owner_id || data.owner_id === "undefined" || data.owner_id === "") {
-            data.owner_id = null;
-        }
+        if (!first_name || !last_name || !owner_id)
+            return res.status(400).json({ message: "Vorname, Nachname und owner_id sind erforderlich" });
 
-        // Email leer → auf null setzen
-        if (!data.email || data.email.trim() === "") {
-            data.email = null;
-        }
-
-        const newPerson = await Person.create(data);
-        return res.status(201).json(newPerson);
-    } catch (error) {
-        console.error("❌ Fehler beim Erstellen der Person:", error);
-        return res.status(500).json({
-            message: error.message || "Fehler beim Erstellen der Person.",
+        const newPerson = await Person.create({
+            first_name,
+            last_name,
+            birth_date,
+            email,
+            owner_id,
         });
+
+        res.json(newPerson);
+    } catch (err) {
+        console.error("❌ Fehler beim Erstellen einer Person:", err);
+        res.status(500).json({ message: "Serverfehler beim Erstellen der Person" });
     }
 };
+
 
 
 // ✏️ Person aktualisieren

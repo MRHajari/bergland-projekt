@@ -269,6 +269,48 @@
   box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
 }
 
+/* === 🗑️ Delete Button – Red Outline Style === */
+.btn.danger {
+  background-color: transparent !important;
+  color: #dc2626;
+  border: 1.5px solid #dc2626;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.btn.danger:hover {
+  background-color: rgba(220, 38, 38, 0.1);
+  color: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* === 🧭 Staffelname Label vor Person === */
+.squadron-label {
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* kleiner Abstand zwischen Checkbox und Text */
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkbox-row span {
+  line-height: 1.4;
+  cursor: pointer;
+}
+
 
 /* Responsive */
 @media (max-width: 768px) {

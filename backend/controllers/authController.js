@@ -80,24 +80,28 @@ async function generateRefreshToken(payload) {
 exports.register = async (req, res, next) => {
     try {
         const { error } = registerSchema.validate(req.body);
-        if (error) return res.status(400).json({ error: error.details[0].message });
+        if (error)
+            return res.status(400).json({ error: error.details[0].message });
 
         const { first_name, last_name, birth_date, email, password } = req.body;
 
         const existing = await User.findOne({ where: { email } });
         if (existing)
-            return res.status(409).json({ error: "Diese E-Mail ist bereits registriert." });
+            return res
+                .status(409)
+                .json({ error: "Diese E-Mail ist bereits registriert." });
 
         const password_hash = await bcrypt.hash(password, 10);
 
+        // 🔁 Transaktion für saubere Speicherung beider Tabellen
         const result = await sequelize.transaction(async (t) => {
-            // Person anlegen
+            // 1️⃣ Person anlegen
             const person = await Person.create(
                 { first_name, last_name, birth_date, email },
                 { transaction: t }
             );
 
-            // User mit Verknüpfung zur Person anlegen
+            // 2️⃣ User anlegen und mit Person verknüpfen
             const user = await User.create(
                 {
                     email,
@@ -109,8 +113,13 @@ exports.register = async (req, res, next) => {
                 { transaction: t }
             );
 
+            // 3️⃣ Owner-Referenz in Person aktualisieren
+            await person.update({ owner_id: user.id }, { transaction: t });
+
             return { person, user };
         });
+
+        const { person, user } = result;
 
         // 🔹 Verifikationslink erzeugen
         const emailToken = jwt.sign({ email }, EMAIL_SECRET, { expiresIn: "1d" });
@@ -133,6 +142,8 @@ exports.register = async (req, res, next) => {
         res.status(201).json({
             message:
                 "Registrierung erfolgreich. Bitte prüfe deine Mailtrap-Inbox, um dein Konto zu bestätigen.",
+            user: { id: user.id, email: user.email },
+            person: { id: person.id, first_name, last_name },
         });
     } catch (err) {
         console.error("❌ Fehler bei Registrierung:", err);
@@ -158,7 +169,9 @@ exports.verifyEmail = async (req, res) => {
 
         await user.update({ is_verified: true });
 
-        res.json({ message: "E-Mail erfolgreich bestätigt! Du kannst dich jetzt einloggen." });
+        res.json({
+            message: "E-Mail erfolgreich bestätigt! Du kannst dich jetzt einloggen.",
+        });
     } catch (err) {
         console.error("❌ Fehler bei E-Mail-Verifikation:", err);
         res.status(400).json({ error: "Ungültiger oder abgelaufener Link." });
@@ -171,7 +184,8 @@ exports.verifyEmail = async (req, res) => {
 exports.login = async (req, res, next) => {
     try {
         const { error, value } = loginSchema.validate(req.body);
-        if (error) return res.status(400).json({ error: error.details[0].message });
+        if (error)
+            return res.status(400).json({ error: error.details[0].message });
 
         const { email, password } = value;
 
@@ -183,12 +197,13 @@ exports.login = async (req, res, next) => {
         if (!user) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
 
         if (!user.is_verified)
-            return res.status(403).json({
-                error: "Bitte bestätige zuerst deine E-Mail-Adresse.",
-            });
+            return res
+                .status(403)
+                .json({ error: "Bitte bestätige zuerst deine E-Mail-Adresse." });
 
         const valid = await bcrypt.compare(password, user.password_hash);
-        if (!valid) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
+        if (!valid)
+            return res.status(401).json({ error: "Ungültige Zugangsdaten." });
 
         await user.update({ last_login_at: new Date() });
 

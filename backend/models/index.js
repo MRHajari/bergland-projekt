@@ -38,7 +38,19 @@ console.log("DEBUG MODELS:", {
 // 🔗 RELATIONEN DEFINIEREN
 // --------------------------------------------------------------
 
-// 🧍 Person ↔ User (1:1)
+// 🧑‍💼 USER ↔ PERSON (1:n)
+// Ein User kann mehrere Personen besitzen (owner_id → user.id)
+User.hasMany(Person, {
+    foreignKey: "owner_id",
+    as: "persons",
+    onDelete: "SET NULL",
+});
+Person.belongsTo(User, {
+    foreignKey: "owner_id",
+    as: "owner",
+});
+
+// 🧍 PERSON ↔ USER (1:1 – Login-Beziehung)
 Person.hasOne(User, {
     foreignKey: "person_id",
     as: "user",
@@ -48,18 +60,6 @@ User.belongsTo(Person, {
     foreignKey: "person_id",
     as: "person",
 });
-
-// 👤 Person (Owner) ↔ Person (Unterperson)
-// Ein User kann mehrere Personen (z. B. Familienmitglieder) besitzen
-Person.hasMany(Person, {
-    foreignKey: "owner_id",
-    as: "ownedPersons",
-    onDelete: "SET NULL",
-});
-// Person.belongsTo(Person, {
-//     foreignKey: "owner_id",
-//     as: "owner",
-// });
 
 // 🧍 Person ↔ RelPersonAddress (1:n)
 Person.hasMany(RelPersonAddress, {
@@ -229,7 +229,7 @@ EventRegistration.belongsTo(Squadron, {
     as: "squadron",
 });
 
-// 👥 Person ↔ Squadron (n:m) über RelPersonSquadron
+// 👥 Person ↔ Squadron (n:m)
 Person.belongsToMany(Squadron, {
     through: RelPersonSquadron,
     foreignKey: "person_id",
@@ -241,7 +241,7 @@ Squadron.belongsToMany(Person, {
     as: "persons",
 });
 
-// Damit include() funktioniert:
+// include-Unterstützung
 RelPersonSquadron.belongsTo(Person, { foreignKey: "person_id", as: "person" });
 RelPersonSquadron.belongsTo(Squadron, { foreignKey: "squadron_id", as: "squadron" });
 
