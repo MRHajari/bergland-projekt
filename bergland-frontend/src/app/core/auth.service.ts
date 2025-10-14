@@ -1,15 +1,37 @@
-// frontend/src/app/core/services/auth.service.ts
+// ============================================================
+// ✅ AuthService – mit Login, Register, Verify, Refresh, Logout
+// ============================================================
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, throwError, timer, Subscription } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
+import { Router } from '@angular/router';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class AuthService {
   private apiUrl = 'http://localhost:3000/api/auth';
-  private refreshSub?: Subscription;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
+
+  // ============================================================
+  // 🔹 Registrierung
+  // ============================================================
+  register(userData: {
+    first_name: string;
+    last_name: string;
+    birth_date: string;
+    email: string;
+    password: string;
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/register`, userData).pipe(
+      catchError((err) => {
+        console.error('❌ Registrierung fehlgeschlagen:', err);
+        return throwError(() => err);
+      })
+    );
+  }
 
   // ============================================================
   // 🔹 Login
@@ -19,9 +41,8 @@ export class AuthService {
       tap((res: any) => {
         if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
         if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
-        this.scheduleTokenRefresh(res.accessToken);
       }),
-      catchError(err => {
+      catchError((err) => {
         console.error('❌ Login fehlgeschlagen:', err);
         return throwError(() => err);
       })
@@ -29,7 +50,7 @@ export class AuthService {
   }
 
   // ============================================================
-  // 🔹 Token automatisch erneuern
+  // 🔹 Token Refresh
   // ============================================================
   refreshToken(): Observable<any> {
     const token = localStorage.getItem('refreshToken');
@@ -37,66 +58,51 @@ export class AuthService {
       tap((res: any) => {
         if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
         if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
-        this.scheduleTokenRefresh(res.accessToken);
-        console.log('🔁 Token erfolgreich aktualisiert');
       }),
-      catchError(err => {
+      catchError((err) => {
         console.error('❌ Token-Aktualisierung fehlgeschlagen:', err);
-        this.logout();
+        this.logout(); // ⛔ automatisch ausloggen
         return throwError(() => err);
       })
     );
   }
 
   // ============================================================
-  // 🔹 Automatische Erneuerung planen
-  // ============================================================
-  private scheduleTokenRefresh(accessToken: string) {
-    if (this.refreshSub) this.refreshSub.unsubscribe();
-
-    try {
-      const payload = jwtDecode<JwtPayload>(accessToken);
-      const exp = (payload.exp || 0) * 1000;
-      const delay = exp - Date.now() - 60_000; // 1 min vorher erneuern
-      if (delay > 0) {
-        this.refreshSub = timer(delay).subscribe(() => this.refreshToken().subscribe());
-        console.log(`⏰ Auto-Refresh geplant in ${Math.round(delay / 1000)}s`);
-      }
-    } catch (err) {
-      console.warn('⚠️ Konnte Token-Ablauf nicht planen:', err);
-    }
-  }
-
-  // ============================================================
   // 🔹 Logout
   // ============================================================
-  logout(): void {
+  logout(): Observable<any> {
     const token = localStorage.getItem('refreshToken');
-    this.http.post(`${this.apiUrl}/logout`, { token }).subscribe(() => {
-      console.log('👋 Abgemeldet');
-    });
+    const obs = this.http.post(`${this.apiUrl}/logout`, { token }).pipe(
+      catchError((err) => {
+        console.warn('⚠️ Logout-Fehler:', err);
+        return throwError(() => err);
+      })
+    );
+
+    // Token sofort entfernen, unabhängig vom Ergebnis
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    if (this.refreshSub) this.refreshSub.unsubscribe();
-    window.location.href = '/login';
+
+    return obs;
   }
 
   // ============================================================
-  // 🔹 Hilfsfunktionen
+  // 🔹 E-Mail-Verifikation
+  // ============================================================
+  verifyEmail(token: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/verify/${token}`).pipe(
+      catchError((err) => {
+        console.error('❌ Fehler bei E-Mail-Verifikation:', err);
+        return throwError(() => err);
+      })
+    );
+  }
+
+  // ============================================================
+  // 🔹 Hilfsmethoden
   // ============================================================
   getAccessToken(): string | null {
     return localStorage.getItem('accessToken');
-  }
-
-  isLoggedIn(): boolean {
-    const token = this.getAccessToken();
-    if (!token) return false;
-    try {
-      const payload = jwtDecode<JwtPayload>(token);
-      return (payload.exp || 0) * 1000 > Date.now();
-    } catch {
-      return false;
-    }
   }
 
   getUserId(): string | null {
@@ -107,6 +113,28 @@ export class AuthService {
       return payload.user?.id || null;
     } catch {
       return null;
+    }
+  }
+
+  getUserRole(): string | null {
+    const token = this.getAccessToken();
+    if (!token) return null;
+    try {
+      const payload = jwtDecode<{ user?: { role?: string } }>(token);
+      return payload.user?.role || null;
+    } catch {
+      return null;
+    }
+  }
+
+  isLoggedIn(): boolean {
+    const token = this.getAccessToken();
+    if (!token) return false;
+    try {
+      const payload = jwtDecode<JwtPayload>(token);
+      return !((payload.exp || 0) * 1000 < Date.now());
+    } catch {
+      return false;
     }
   }
 }
