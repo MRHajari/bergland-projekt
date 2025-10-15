@@ -3,33 +3,28 @@ const router = express.Router();
 const { authenticateToken } = require("../middlewares/authMiddleware");
 const eventRegistrationController = require("../controllers/eventRegistrationController");
 
-// 📋 Alle Event-Registrierungen abrufen
+// 📊 Anzahl der Registrierungen pro Event (muss VOR :id stehen!)
+router.get("/count-by-event", authenticateToken, eventRegistrationController.getCountByEvent);
+
+// 📋 Alle Event-Registrierungen
 router.get("/", authenticateToken, eventRegistrationController.getAllRegistrations);
 
-// 🗑️ Registrierung einer bestimmten Person aus einem Event löschen
-router.delete(
-    "/:event_id/person/:person_id",
-    authenticateToken,
-    eventRegistrationController.deleteByPersonAndEvent
-);
+// 🔍 Registrierungen nach Person-ID
+router.get("/person/:personId", authenticateToken, eventRegistrationController.getByPersonId);
 
-// 🔍 Registrierungen nach Person-ID abrufen
-router.get(
-    "/person/:personId",
-    authenticateToken,
-    eventRegistrationController.getByPersonId
-);
-
-// 🔍 Einzelne Registrierung nach ID abrufen
+// 🔍 Einzelne Registrierung
 router.get("/:id", authenticateToken, eventRegistrationController.getRegistrationById);
 
-// ➕ Neue Registrierung anlegen
+// ➕ Neue Registrierung
 router.post("/", authenticateToken, eventRegistrationController.createRegistration);
 
 // ✏️ Registrierung aktualisieren
 router.put("/:id", authenticateToken, eventRegistrationController.updateRegistration);
 
-// ❌ Registrierung löschen (nach ID)
+// 🗑️ Person aus Event entfernen
+router.delete("/:event_id/person/:person_id", authenticateToken, eventRegistrationController.deleteByPersonAndEvent);
+
+// ❌ Registrierung löschen
 router.delete("/:id", authenticateToken, eventRegistrationController.deleteRegistration);
 
 module.exports = router;

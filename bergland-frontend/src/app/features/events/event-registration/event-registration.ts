@@ -28,6 +28,7 @@ export class EventRegistration implements OnInit {
   existingRegs: EventRegistrationInterface[] = []; // ✅ neu hinzugefügt
   existingRegistration: EventRegistrationInterface | null = null;
 
+
   loading = true;
   errorMessage = '';
   isRegistered = false;
@@ -284,9 +285,12 @@ async onSelectExistingPerson(e: any): Promise<void> {
 
 
 
+
 // ✅ Wenn eine neue Person hinzugefügt wird → ebenfalls automatisch registrieren
 async addPerson(): Promise<void> {
   const v = this.personForm.value;
+
+  // 🧩 Grundvalidierung
   if (!v.first_name || !v.last_name) {
     alert('Bitte Vor- und Nachname eingeben.');
     return;
@@ -294,27 +298,68 @@ async addPerson(): Promise<void> {
 
   try {
     const ownerId = this.authService.getUserId();
-    if (!ownerId) return alert('⚠️ Kein eingeloggter Benutzer gefunden.');
+    if (!ownerId) {
+      alert('⚠️ Kein eingeloggter Benutzer gefunden.');
+      return;
+    }
 
-    const newPerson: Person = {
-      first_name: v.first_name.trim(),
-      last_name: v.last_name.trim(),
-      birth_date: v.birth_date || undefined,
-      email: v.email || undefined,
-      owner_id: ownerId,
-    };
+    const first = v.first_name.trim();
+    const last = v.last_name.trim();
 
-    const created = await firstValueFrom(this.personService.create(newPerson));
-    if (!created?.id) return alert('❌ Person konnte nicht korrekt angelegt werden.');
+    // 🧠 Schritt 1: Prüfen, ob Person bereits im Backend existiert
+    const allPersons = await firstValueFrom(this.personService.getAll(ownerId));
+    const existingPerson = allPersons.find(
+      (p) =>
+        p.first_name.toLowerCase() === first.toLowerCase() &&
+        p.last_name.toLowerCase() === last.toLowerCase()
+    );
 
+    let personId: string;
+    let usedExisting = false;
+
+    if (existingPerson) {
+      console.log('👀 Person existiert bereits:', existingPerson);
+      personId = existingPerson.id!; // ✅ garantiert vorhanden
+      usedExisting = true;
+    } else {
+      // 👤 Neue Person anlegen
+      const newPerson: Person = {
+        first_name: first,
+        last_name: last,
+        birth_date: v.birth_date || undefined,
+        email: v.email || undefined,
+        owner_id: ownerId,
+      };
+
+      const created = await firstValueFrom(this.personService.create(newPerson));
+      if (!created?.id) {
+        alert('❌ Person konnte nicht korrekt angelegt werden.');
+        return;
+      }
+      personId = created.id;
+      console.log('🆕 Neue Person angelegt:', created);
+    }
+
+    // 🧩 Staffelzuordnung
     const squadronId =
       this.registrationForm.value.teilnahme_art === 'staffel'
         ? this.registrationForm.value.squadron_id
         : null;
 
+    // 🧠 Schritt 2: Prüfen, ob Person schon für das Event registriert ist
+    const alreadyRegistered = this.existingRegs?.some(
+      (r) => r.person_id === personId && r.event_id === this.event?.id
+    );
+
+    if (alreadyRegistered) {
+      alert(`${first} ${last} ist bereits für dieses Event registriert.`);
+      return;
+    }
+
+    // 📤 Registrierung vorbereiten
     const payload: EventRegistrationInterface = {
       event_id: this.event?.id!,
-      person_id: created.id!,
+      person_id: personId,
       squadron_id: squadronId,
       participation_type: this.registrationForm.value.teilnahme_art,
       liability_accept: true,
@@ -322,23 +367,43 @@ async addPerson(): Promise<void> {
     };
 
     console.log('📤 Registrierung senden:', payload);
-    await firstValueFrom(this.registrationService.create(payload));
 
+    // 🧪 Registrierung senden
+    try {
+      await firstValueFrom(this.registrationService.create(payload));
+    } catch (err: any) {
+      if (err.status === 409) {
+        alert(`${first} ${last} ist bereits für dieses Event registriert.`);
+        return;
+      }
+      throw err;
+    }
+
+    // ✅ Erfolgreich registriert
+    const personData = existingPerson || { id: personId, first_name: first, last_name: last };
     this.addedPersons.push({
-      ...created,
+      ...personData,
       inSquadron: !!squadronId,
       squadronName: squadronId
         ? this.squadrons.find((s) => s.id === squadronId)?.name || 'Unbekannte Staffel'
         : null,
     });
 
-    console.log(`✅ ${created.first_name} erfolgreich registriert.`);
+    const message = usedExisting
+      ? `✅ ${first} ${last} wurde mit bestehendem Profil registriert.`
+      : `✅ ${first} ${last} wurde neu angelegt und registriert.`;
+
+    console.log(message);
+    alert(message);
+
     this.personForm.reset();
   } catch (err) {
     console.error('❌ Fehler beim Hinzufügen oder Registrieren:', err);
     alert('Fehler beim Hinzufügen oder Registrieren der Person.');
   }
 }
+
+
 
 
 

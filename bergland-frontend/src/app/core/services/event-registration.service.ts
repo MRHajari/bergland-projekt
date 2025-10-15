@@ -98,4 +98,10 @@ export class EventRegistrationService {
   deleteByEventAndPerson(eventId: string, personId: string): Observable<any> {
     return this.api.deleteCustom(`event-registrations/${eventId}/person/${personId}`);
   }
+
+    // 🔹 Anzahl der Anmeldungen pro Event
+    getCountByEvent(): Observable<Record<string, number>> {
+      return this.api.get<Record<string, number>>(`${this.endpoint}/count-by-event`);
+    }
+
 }

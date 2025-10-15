@@ -2,12 +2,12 @@
     <h1>🎫 Events verwalten</h1>
 
     @if (loading) {
-    <p class="loading">⏳ Events werden geladen...</p>
+    <p class="loading">⏳ Lade Events...</p>
     } @else if (errorMessage) {
     <p class="error">{{ errorMessage }}</p>
     } @else {
 
-    <!-- 🟢 Neues Event -->
+    <!-- Neues Event -->
     <section class="form-section">
         <h2>➕ Neues Event hinzufügen</h2>
 
@@ -34,7 +34,6 @@
                     <input type="date" [(ngModel)]="newEvent.end_date" name="end_date" />
                 </div>
 
-                <!-- 🟢 NEU: Anmeldeschluss -->
                 <div class="form-group">
                     <label>Anmeldeschluss:</label>
                     <input type="date" [(ngModel)]="newEvent.registration_deadline" name="registration_deadline" />
@@ -45,8 +44,7 @@
         </form>
     </section>
 
-
-    <!-- 📋 Eventliste -->
+    <!-- Event-Liste -->
     <section class="list-section">
         <h2>📅 Bestehende Events</h2>
 
@@ -60,13 +58,13 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Startdatum</th>
-                    <th>Enddatum</th>
+                    <th>Zeitraum</th>
                     <th>Anmeldeschluss</th>
                     <th>Anmeldungen</th>
                     <th>Aktionen</th>
                 </tr>
             </thead>
+
             <tbody>
                 @for (e of pagedEvents; track e.id) {
                 <tr>
@@ -74,23 +72,25 @@
                         @if (editingEvent?.id === e.id) {
                         <input [(ngModel)]="editingEvent.name" />
                         } @else {
-                        {{ e.name }}
+                        <strong>{{ e.name }}</strong><br />
+                        <small class="desc">{{ e.description }}</small>
                         }
                     </td>
 
-                    <td>{{ e.start_date | date:'dd.MM.yyyy' }}</td>
-                    <td>{{ e.end_date | date:'dd.MM.yyyy' }}</td>
-                    <td>{{ e.registration_deadline | date:'dd.MM.yyyy' }}</td>
+                    <td>
+                        {{ e.start_date | date:'dd.MM.yyyy' }} – {{ e.end_date | date:'dd.MM.yyyy' }}
+                    </td>
 
-                    <td>{{ countsMap[e.id] || 0 }}</td>
+                    <td>{{ e.registration_deadline | date:'dd.MM.yyyy' }}</td>
+                    <td class="count">{{ countsMap[e.id] || 0 }}</td>
 
                     <td class="button-group">
                         @if (editingEvent?.id === e.id) {
-                        <button class="primary" (click)="saveEvent()">Speichern</button>
-                        <button (click)="cancelEdit()">Abbrechen</button>
+                        <button class="primary" (click)="saveEvent()">💾 Speichern</button>
+                        <button (click)="cancelEdit()">✖️ Abbrechen</button>
                         } @else {
-                        <button class="secondary" (click)="editEvent(e)">Bearbeiten</button>
-                        <button class="danger" (click)="deleteEvent(e.id, e.name)">Löschen</button>
+                        <button class="secondary" (click)="editEvent(e)">✏️ Bearbeiten</button>
+                        <button class="danger" (click)="deleteEvent(e.id, e.name)">🗑️ Löschen</button>
                         <button class="details" (click)="viewRegistrations(e.id)">👥 Details</button>
                         }
                     </td>

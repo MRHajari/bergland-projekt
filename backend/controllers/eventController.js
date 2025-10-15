@@ -1,23 +1,31 @@
-const { Event, EventRegistration, Squadron, Route, Occupancy, Booking, Person } = require("../models");
-const { eventSchema } = require("../validators/eventValidator");
+// backend/controllers/eventController.js
+const {
+    Event,
+    EventRegistration,
+    Squadron,
+    Route,
+    Occupancy,
+    Booking,
+    Person,
+} = require("../models");
 
+const { validateEvent } = require("../validators/eventValidator");
 
 // ============================================================
-// 📋 Alle Events mit zugehörigen Daten abrufen
+// 📋 Alle Events abrufen (mit verknüpften Daten)
 // ============================================================
 exports.getAllEvents = async (req, res) => {
     try {
         const events = await Event.findAll({
             include: [
-                { model: Route, as: "routes" }, // ✅ richtiges Alias
-                { model: Squadron, as: "squadrons" }, // ✅ Plural (nicht "squadron")
-                { model: EventRegistration, as: "eventRegistrations" }, // ✅ korrekt
+                { model: Route, as: "routes" },
+                { model: Squadron, as: "squadrons" },
+                { model: EventRegistration, as: "eventRegistrations" },
             ],
             order: [["start_date", "ASC"]],
         });
 
-        // Option: gleich die Anzahl dazupacken
-        const result = events.map(e => ({
+        const result = events.map((e) => ({
             ...e.toJSON(),
             route_count: e.routes?.length || 0,
             squadron_count: e.squadrons?.length || 0,
@@ -34,9 +42,8 @@ exports.getAllEvents = async (req, res) => {
     }
 };
 
-
 // ============================================================
-// 🔍 Einzelnes Event mit Details abrufen
+// 🔍 Einzelnes Event mit allen Details abrufen
 // ============================================================
 exports.getEventById = async (req, res) => {
     try {
@@ -46,7 +53,9 @@ exports.getEventById = async (req, res) => {
                 {
                     model: EventRegistration,
                     as: "eventRegistrations",
-                    include: [{ model: Person, as: "person", attributes: ["first_name", "last_name"] }],
+                    include: [
+                        { model: Person, as: "person", attributes: ["first_name", "last_name"] },
+                    ],
                 },
                 { model: Route, as: "routes" },
                 { model: Occupancy, as: "occupancies" },
@@ -68,10 +77,20 @@ exports.getEventById = async (req, res) => {
 // ============================================================
 exports.createEvent = async (req, res) => {
     try {
-        const { error, value } = eventSchema.validate(req.body);
-        if (error) return res.status(400).json({ message: error.details[0].message });
+        console.log("📥 Event-Daten erhalten:", req.body);
+
+        const { error, value } = validateEvent(req.body);
+        if (error) {
+            console.warn("⚠️ Validierungsfehler:", error.details.map((d) => d.message));
+            return res.status(400).json({
+                message: "Validierungsfehler",
+                details: error.details.map((d) => d.message),
+            });
+        }
 
         const event = await Event.create(value);
+        console.log("✅ Event erfolgreich erstellt:", event.name);
+
         res.status(201).json(event);
     } catch (err) {
         console.error("❌ Fehler beim Erstellen des Events:", err);
@@ -87,11 +106,16 @@ exports.updateEvent = async (req, res) => {
         const event = await Event.findByPk(req.params.id);
         if (!event) return res.status(404).json({ message: "Event nicht gefunden." });
 
-        const { error, value } = eventSchema.validate(req.body);
-        if (error) return res.status(400).json({ message: error.details[0].message });
+        const { error, value } = validateEvent(req.body);
+        if (error) {
+            return res.status(400).json({
+                message: "Validierungsfehler",
+                details: error.details.map((d) => d.message),
+            });
+        }
 
         await event.update(value);
-        res.json(event);
+        res.json({ message: "✅ Event aktualisiert", event });
     } catch (err) {
         console.error("❌ Fehler beim Aktualisieren des Events:", err);
         res.status(500).json({ message: "Fehler beim Aktualisieren des Events." });
@@ -107,7 +131,7 @@ exports.deleteEvent = async (req, res) => {
         if (!event) return res.status(404).json({ message: "Event nicht gefunden." });
 
         await event.destroy();
-        res.json({ message: "Event erfolgreich gelöscht." });
+        res.json({ message: "🗑️ Event erfolgreich gelöscht." });
     } catch (err) {
         console.error("❌ Fehler beim Löschen des Events:", err);
         res.status(500).json({ message: "Fehler beim Löschen des Events." });

@@ -36,8 +36,5 @@ export class RegistrationService {
     return this.api.get<any[]>(`${this.endpoint}/by-event/${eventId}`);
   }
 
-  // 🔹 Anzahl der Anmeldungen pro Event
-  getCountByEvent(): Observable<Record<string, number>> {
-    return this.api.get<Record<string, number>>(`${this.endpoint}/count-by-event`);
-  }
+ 
 }

@@ -19,7 +19,6 @@ import { ProductsAdmin } from './features/admin/products-admin/products-admin';
 import { EventsAdmin } from './features/admin/events-admin/events-admin';
 import { UsersAdmin } from './features/admin/users-admin/users-admin';
 import { AccommodationsAdmin } from './features/admin/accommodations-admin/accommodations-admin';
-import { EventAnmeldungenAdmin } from './features/admin/events-admin/event-anmeldungen-admin/event-anmeldungen-admin';
 
 // 🔹 Layouts
 import { AuthLayout } from './layouts/auth-layout/auth-layout';
@@ -84,7 +83,6 @@ export const routes: Routes = [
           { path: '', component: AdminDashboard },
           { path: 'products', component: ProductsAdmin },
           { path: 'events', component: EventsAdmin },
-          { path: 'events/:id/teilnehmer', component: EventAnmeldungenAdmin },
           { path: 'users', component: UsersAdmin },
           { path: 'accommodations', component: AccommodationsAdmin },
         ],

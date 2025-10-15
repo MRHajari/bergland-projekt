@@ -2,30 +2,32 @@
   padding: 2rem;
   background: var(--background-color, #f7f7f7);
   min-height: 100vh;
+  color: #1e293b;
 }
 
 /* Titel */
 h1 {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary-color, #0d3660);
 }
 
 /* Suchfeld */
 .search-input {
   width: 100%;
   max-width: 400px;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.7rem;
   margin-bottom: 1rem;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid #cbd5e1;
 }
 
 /* Abschnitte */
 .form-section,
 .list-section {
-  background: white;
+  background: #fff;
   border-radius: 10px;
   padding: 1.5rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 2rem;
 }
 
@@ -46,7 +48,7 @@ h1 {
 .user-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: #fff;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -54,17 +56,29 @@ h1 {
 
 .user-table th,
 .user-table td {
-  border: 1px solid #ddd;
-  padding: 0.5rem 0.6rem;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
   text-align: left;
+  vertical-align: top;
 }
 
 .user-table th {
   background: var(--primary-color, #1976d2);
   color: white;
+  font-weight: 600;
 }
 
-/* Button-Gruppe */
+.user-table td .desc {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.user-table td.count {
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Buttons */
 .button-group {
   display: flex;
   flex-wrap: wrap;
@@ -75,44 +89,41 @@ button {
   border: none;
   border-radius: 6px;
   padding: 0.4rem 0.8rem;
-  min-width: 90px;
-  height: 32px;
   cursor: pointer;
   font-weight: 500;
   font-size: 0.9rem;
 }
 
-/* Farben */
 button.primary {
   background: var(--primary-color, #1976d2);
   color: white;
 }
 button.primary:hover {
-  opacity: 0.9;
+  background: #0d3660;
 }
 
 button.secondary {
-  background: #6c757d;
+  background: #64748b;
   color: white;
 }
 button.secondary:hover {
-  background: #5a6268;
+  background: #475569;
 }
 
 button.danger {
-  background: #d9534f;
+  background: #dc2626;
   color: white;
 }
 button.danger:hover {
-  background: #b52b27;
+  background: #b91c1c;
 }
 
 button.details {
-  background: #17a2b8;
+  background: #0ea5e9;
   color: white;
 }
 button.details:hover {
-  background: #138496;
+  background: #0284c7;
 }
 
 /* Pagination */
@@ -121,20 +132,20 @@ button.details:hover {
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  margin-top: 0.5rem;
+  margin-top: 1rem;
 }
 
 .pagination button {
-  padding: 0.3rem 0.8rem;
+  padding: 0.4rem 0.8rem;
 }
 
 /* Loading + Error */
 .loading {
-  color: #555;
+  color: #475569;
   font-style: italic;
 }
 .error {
-  color: #d9534f;
+  color: #dc2626;
   font-weight: bold;
 }
 
@@ -142,7 +153,6 @@ button.details:hover {
 @media (max-width: 900px) {
   .button-group {
     flex-direction: column;
-    align-items: stretch;
   }
 
   button {
