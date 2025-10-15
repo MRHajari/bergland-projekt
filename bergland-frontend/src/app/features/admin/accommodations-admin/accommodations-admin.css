@@ -111,3 +111,50 @@ button.danger:hover {
   color: #d9534f;
   font-weight: bold;
 }
+
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0.6rem 1rem;
+  align-items: center;
+}
+
+input[type='checkbox'] {
+  transform: scale(1.2);
+}
+
+input[type='number'] {
+  width: 80px;
+}
+
+
+.events-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.event-tag {
+  background: none;
+  color: inherit;
+  font-weight: 500;
+}
+
+.event-tag::after {
+  content: "•";
+  color: #888;
+  margin: 0 0.3rem;
+}
+
+.event-tag:last-child::after {
+  content: "";
+}
+
+.no-event {
+  color: #999;
+  font-style: italic;
+}

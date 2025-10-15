@@ -6,40 +6,46 @@
     } @else if (errorMessage) {
     <p class="error">{{ errorMessage }}</p>
     } @else {
-    <!-- Neue Unterkunft -->
+
+    <!-- ====================================================== -->
+    <!-- 🏡 Neue Unterkunft hinzufügen -->
+    <!-- ====================================================== -->
     <section class="form-section">
         <h2>➕ Neue Unterkunft hinzufügen</h2>
         <form (ngSubmit)="addAccommodation()">
             <div class="form-grid">
                 <label>Name:</label>
-                <input [(ngModel)]="newAccommodation.unterkunft_name" name="unterkunft_name" required />
+                <input [(ngModel)]="newAccommodation.name" name="name" required />
 
                 <label>Straße / Nr.:</label>
-                <input [(ngModel)]="newAccommodation.strasse_hausnr" name="strasse_hausnr" />
+                <input [(ngModel)]="newAccommodation.street" name="street" />
 
                 <label>PLZ:</label>
-                <input [(ngModel)]="newAccommodation.plz" name="plz" />
+                <input [(ngModel)]="newAccommodation.postal_code" name="postal_code" />
 
                 <label>Ort:</label>
-                <input [(ngModel)]="newAccommodation.ort" name="ort" />
+                <input [(ngModel)]="newAccommodation.city" name="city" />
+
+                <label>Land:</label>
+                <input [(ngModel)]="newAccommodation.country" name="country" />
 
                 <label>Einzelzimmer:</label>
-                <input type="number" [(ngModel)]="newAccommodation.anz_ez" name="anz_ez" />
+                <input type="number" [(ngModel)]="newAccommodation.single_rooms" name="single_rooms" />
 
                 <label>Doppelzimmer:</label>
-                <input type="number" [(ngModel)]="newAccommodation.anz_dz" name="anz_dz" />
+                <input type="number" [(ngModel)]="newAccommodation.double_rooms" name="double_rooms" />
 
                 <label>Mehrbettzimmer:</label>
-                <input type="number" [(ngModel)]="newAccommodation.anz_mbz" name="anz_mbz" />
-
-                <label>Betten (MBZ):</label>
-                <input type="number" [(ngModel)]="newAccommodation.anz_betten_mbz" name="anz_betten_mbz" />
+                <input type="number" [(ngModel)]="newAccommodation.multi_bed_rooms" name="multi_bed_rooms" />
             </div>
             <button type="submit" class="primary">Hinzufügen</button>
         </form>
     </section>
 
-    <!-- Liste -->
+    <!-- ====================================================== -->
+    <!-- 📋 Bestehende Unterkünfte -->
+    <!-- ====================================================== -->
+    @if (selectedAccommodation === null) {
     <section class="list-section">
         <h2>📋 Bestehende Unterkünfte</h2>
         <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Unterkünfte suchen..." class="search-input" />
@@ -55,7 +61,7 @@
                     <th>EZ</th>
                     <th>DZ</th>
                     <th>MBZ</th>
-                    <th>Betten</th>
+                    <th>Events</th>
                     <th>Aktionen</th>
                 </tr>
             </thead>
@@ -63,35 +69,45 @@
                 @for (a of pagedAccommodations; track a.id) {
                 <tr>
                     <td>
-                        @if (editingAccommodation?.id === a.id) {
-                        <input [(ngModel)]="editingAccommodation.unterkunft_name" />
+                        @if (editingAccommodation && editingAccommodation.id === a.id) {
+                        <input [(ngModel)]="editingAccommodation.name" name="edit_name_{{a.id}}" />
                         } @else {
-                        {{ a.unterkunft_name }}
+                        {{ a.name }}
                         }
                     </td>
 
                     <td>
-                        @if (editingAccommodation?.id === a.id) {
-                        <input [(ngModel)]="editingAccommodation.ort" />
+                        @if (editingAccommodation && editingAccommodation.id === a.id) {
+                        <input [(ngModel)]="editingAccommodation.city" name="edit_city_{{a.id}}" />
                         } @else {
-                        {{ a.ort }}
+                        {{ a.city }}
                         }
                     </td>
 
-                    <td>{{ a.anz_ez }}</td>
-                    <td>{{ a.anz_dz }}</td>
-                    <td>{{ a.anz_mbz }}</td>
-                    <td>{{ a.anz_betten_mbz }}</td>
+                    <td>{{ a.single_rooms }}</td>
+                    <td>{{ a.double_rooms }}</td>
+                    <td>{{ a.multi_bed_rooms }}</td>
 
                     <td>
-                        @if (editingAccommodation?.id === a.id) {
+                        <div class="events-cell">
+                            @if (a.occupancies && a.occupancies.length > 0) {
+                            @for (o of a.occupancies; track o.id) {
+                            <span class="event-tag">{{ o.event?.name }}</span>
+                            }
+                            } @else {
+                            <span class="no-event">–</span>
+                            }
+                        </div>
+                    </td>
+
+                    <td>
+                        @if (editingAccommodation && editingAccommodation.id === a.id) {
                         <button class="primary" (click)="saveAccommodation()">Speichern</button>
                         <button (click)="cancelEdit()">Abbrechen</button>
                         } @else {
                         <button class="secondary" (click)="editAccommodation(a)">Bearbeiten</button>
-                        <button class="danger" (click)="deleteAccommodation(a.id, a.unterkunft_name)">
-                            Löschen
-                        </button>
+                        <button class="primary" (click)="selectAccommodation(a)">Events zuordnen</button>
+                        <button class="danger" (click)="deleteAccommodation(a.id || '', a.name)">Löschen</button>
                         }
                     </td>
                 </tr>
@@ -106,5 +122,52 @@
         </div>
         }
     </section>
+    } @else {
+
+    <!-- ====================================================== -->
+    <!-- 🧩 Event-Zuordnungen (Occupancy) -->
+    <!-- ====================================================== -->
+    <section class="form-section">
+        <h2>🧩 Unterkunft "{{ selectedAccommodation.name }}" → Events zuordnen</h2>
+
+        @if (events.length === 0) {
+        <p>⚠️ Keine Events vorhanden.</p>
+        } @else {
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Aktiv</th>
+                    <th>EZ</th>
+                    <th>DZ</th>
+                    <th>MBZ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (e of eventAssignments; track e.event_id) {
+                <tr>
+                    <td>{{ e.event_name }}</td>
+                    <td><input type="checkbox" [(ngModel)]="e.assigned" /></td>
+                    <td>
+                        <input type="number" [(ngModel)]="e.single_beds_total" [disabled]="!e.assigned" min="0" />
+                    </td>
+                    <td>
+                        <input type="number" [(ngModel)]="e.double_beds_total" [disabled]="!e.assigned" min="0" />
+                    </td>
+                    <td>
+                        <input type="number" [(ngModel)]="e.multi_beds_total" [disabled]="!e.assigned" min="0" />
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <button class="primary" (click)="saveEventAssignments()">💾 Speichern</button>
+            <button class="secondary" (click)="cancelSelection()">Abbrechen</button>
+        </div>
+        }
+    </section>
+    }
     }
 </div>

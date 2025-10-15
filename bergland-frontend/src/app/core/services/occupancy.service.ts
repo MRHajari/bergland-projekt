@@ -2,20 +2,16 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../api.service';
 
-export interface OccupancyDto {
+export interface OccupancyInterface {
   id?: string;
-
-  // Beziehungen
-  event_id: string;            // z. B. „Berglauf 2025“
-  accommodation_id: string;    // Hotel / Unterkunft
-
-  // Verfügbarkeitsdaten
-  date_from?: string | null;   // ISO-Datum (z. B. 2025-06-21)
-  date_to?: string | null;     // ISO-Datum (z. B. 2025-06-22)
-  available_beds?: number;     // aktuelle freie Betten
-  reserved_beds?: number;      // bereits reserviert
-  notes?: string | null;       // optionale Bemerkung (z. B. „ausgebucht“)
-
+  event_id: string;
+  accommodation_id: string;
+  single_beds_total?: number;
+  double_beds_total?: number;
+  multi_beds_total?: number;
+  single_beds_booked?: number;
+  double_beds_booked?: number;
+  multi_beds_booked?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -26,37 +22,30 @@ export class OccupancyService {
 
   constructor(private api: ApiService) {}
 
-  // 📋 Alle Belegungen abrufen
-  getAll(): Observable<OccupancyDto[]> {
-    return this.api.get(this.endpoint);
+  getAll(): Observable<OccupancyInterface[]> {
+    return this.api.get<OccupancyInterface[]>(this.endpoint);
   }
 
-  // 🔍 Einzelne Belegung
-  getById(id: string): Observable<OccupancyDto> {
-    return this.api.getById(this.endpoint, id);
+  getById(id: string): Observable<OccupancyInterface> {
+    return this.api.getById<OccupancyInterface>(this.endpoint, id);
   }
 
-  // 🏨 Belegungen nach Unterkunft
-  getByAccommodation(accommodationId: string): Observable<OccupancyDto[]> {
-    return this.api.get(`${this.endpoint}/accommodation/${accommodationId}`);
+  getByAccommodation(accommodationId: string): Observable<OccupancyInterface[]> {
+    return this.api.get<OccupancyInterface[]>(`${this.endpoint}?accommodation_id=${accommodationId}`);
   }
 
-  // 🎯 Belegungen nach Event
-  getByEvent(eventId: string): Observable<OccupancyDto[]> {
-    return this.api.get(`${this.endpoint}/event/${eventId}`);
+  getByEvent(eventId: string): Observable<OccupancyInterface[]> {
+    return this.api.get<OccupancyInterface[]>(`${this.endpoint}?event_id=${eventId}`);
   }
 
-  // ➕ Neue Belegung
-  create(data: Partial<OccupancyDto>): Observable<OccupancyDto> {
-    return this.api.post(this.endpoint, data);
+  create(data: Partial<OccupancyInterface>): Observable<OccupancyInterface> {
+    return this.api.post<OccupancyInterface>(this.endpoint, data);
   }
 
-  // ✏️ Update
-  update(id: string, data: Partial<OccupancyDto>): Observable<OccupancyDto> {
-    return this.api.put(this.endpoint, id, data);
+  update(id: string, data: Partial<OccupancyInterface>): Observable<OccupancyInterface> {
+    return this.api.put<OccupancyInterface>(this.endpoint, id, data);
   }
 
-  // ❌ Löschen
   delete(id: string): Observable<any> {
     return this.api.delete(this.endpoint, id);
   }

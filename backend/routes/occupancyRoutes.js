@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middlewares/authMiddleware");
-const controller = require("../controllers/occupancyController");
+const occupancyController = require("../controllers/occupancyController");
 
-router.post("/", authenticateToken, controller.createOccupancy);
-router.get("/", authenticateToken, controller.getAll);
-router.get("/event/:eventId", authenticateToken, controller.getByEvent);
-router.put("/:id", authenticateToken, controller.update);
-router.delete("/:id", authenticateToken, controller.delete);
+router.post("/", authenticateToken, occupancyController.createOccupancy);
+router.get("/", authenticateToken, occupancyController.getAll);
+router.get("/event/:eventId", authenticateToken, occupancyController.getByEvent);
+router.put("/:id", authenticateToken, occupancyController.update);
+router.delete("/:id", authenticateToken, occupancyController.delete);
+router.post("/updateAssignments", authenticateToken, occupancyController.updateAssignments);
+
 
 module.exports = router;

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
 import { ApiService } from '../api.service';
 
-export interface Event {
+export interface EventInterface {
   id?: string;
   name: string;
   description?: string;
@@ -33,8 +33,8 @@ export class EventService {
   // ============================================================
   // 📋 Alle Events abrufen (mit Details)
   // ============================================================
-  getAll(): Observable<Event[]> {
-    return this.api.get<Event[]>(this.endpoint).pipe(
+  getAll(): Observable<EventInterface[]> {
+    return this.api.get<EventInterface[]>(this.endpoint).pipe(
       catchError((err) => {
         console.error('❌ Fehler beim Laden der Events:', err);
         return throwError(() => err);
@@ -45,8 +45,8 @@ export class EventService {
   // ============================================================
   // 🔍 Einzelnes Event mit allen zugehörigen Daten abrufen
   // ============================================================
-  getById(id: string): Observable<Event> {
-    return this.api.getById<Event>(this.endpoint, id).pipe(
+  getById(id: string): Observable<EventInterface> {
+    return this.api.getById<EventInterface>(this.endpoint, id).pipe(
       catchError((err) => {
         console.error(`❌ Fehler beim Laden des Events mit ID ${id}:`, err);
         return throwError(() => err);
@@ -57,8 +57,8 @@ export class EventService {
   // ============================================================
   // ➕ Neues Event erstellen
   // ============================================================
-  create(data: Event): Observable<Event> {
-    return this.api.post<Event>(this.endpoint, data).pipe(
+  create(data: EventInterface): Observable<EventInterface> {
+    return this.api.post<EventInterface>(this.endpoint, data).pipe(
       catchError((err) => {
         console.error('❌ Fehler beim Erstellen des Events:', err);
         return throwError(() => err);
@@ -69,8 +69,8 @@ export class EventService {
   // ============================================================
   // ✏️ Event aktualisieren
   // ============================================================
-  update(id: string, data: Partial<Event>): Observable<Event> {
-    return this.api.put<Event>(this.endpoint, id, data).pipe(
+  update(id: string, data: Partial<EventInterface>): Observable<EventInterface> {
+    return this.api.put<EventInterface>(this.endpoint, id, data).pipe(
       catchError((err) => {
         console.error(`❌ Fehler beim Aktualisieren des Events mit ID ${id}:`, err);
         return throwError(() => err);

@@ -72,3 +72,41 @@ exports.delete = async (req, res, next) => {
         next(err);
     }
 };
+
+
+exports.updateAssignments = async (req, res, next) => {
+    try {
+        const { accommodation_id, assignments } = req.body;
+
+        if (!accommodation_id) {
+            return res.status(400).json({ error: "accommodation_id ist erforderlich" });
+        }
+
+        // 🧹 Alte Zuordnungen für diese Unterkunft löschen
+        await Occupancy.destroy({ where: { accommodation_id } });
+
+        // 🆕 Neue Zuordnungen einfügen
+        if (Array.isArray(assignments) && assignments.length > 0) {
+            const created = await Promise.all(
+                assignments.map((a) =>
+                    Occupancy.create({
+                        accommodation_id,
+                        event_id: a.event_id,
+                        single_beds_total: a.single_beds_total || 0,
+                        double_beds_total: a.double_beds_total || 0,
+                        multi_beds_total: a.multi_beds_total || 0,
+                        single_beds_booked: 0,
+                        double_beds_booked: 0,
+                        multi_beds_booked: 0,
+                    })
+                )
+            );
+            return res.status(200).json({ message: "✅ Zuordnungen gespeichert", created });
+        }
+
+        return res.status(200).json({ message: "✅ Alle Zuordnungen entfernt (leer übermittelt)" });
+    } catch (err) {
+        console.error("❌ Fehler beim Aktualisieren der Zuordnungen:", err);
+        next(err);
+    }
+};
