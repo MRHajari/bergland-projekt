@@ -225,7 +225,9 @@
         <button class="btn primary" (click)="updateRegistration()">Anmeldung bearbeiten</button>
         }
 
+        @if (isRegistered) {
         <button class="btn secondary" (click)="goToAccommodation()">Unterkunft buchen</button>
+        }
         <button class="btn neutral" (click)="goToMyRegistrations()">Meine Anmeldungen</button>
     </section>
     }

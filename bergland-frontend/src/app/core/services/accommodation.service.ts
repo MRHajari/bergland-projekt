@@ -2,6 +2,37 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../api.service';
 
+export interface AccommodationInterface {
+  id?: string;
+  name: string;
+  street: string;
+  postal_code: string;
+  city: string;
+  country: string;
+  single_rooms: number;
+  double_rooms: number;
+  multi_bed_rooms: number;
+  total_beds?: number;
+  description?: string;
+  event_id?: string;
+  createdAt?: string;
+  updatedAt?: string;
+    // 🧩 neue Zeile:
+    occupancies?: {
+      id: string;
+      event_id: string;
+      single_beds_total?: number;
+      double_beds_total?: number;
+      multi_beds_total?: number;
+      event?: {
+        id: string;
+        name: string;
+        start_date?: string;
+        end_date?: string;
+      };
+    }[];
+}
+ 
 @Injectable({
   providedIn: 'root'
 })
@@ -10,23 +41,33 @@ export class AccommodationService {
 
   constructor(private api: ApiService) {}
 
-  getAll(): Observable<any[]> {
+  getAll(): Observable<AccommodationInterface[]> {
     return this.api.get(this.endpoint);
   }
 
-  getById(id: string): Observable<any> {
+  getById(id: string): Observable<AccommodationInterface> {
     return this.api.getById(this.endpoint, id);
   }
 
-  create(data: any): Observable<any> {
+  create(data: any): Observable<AccommodationInterface> {
     return this.api.post(this.endpoint, data);
   }
 
-  update(id: string, data: any): Observable<any> {
+  update(id: string, data: any): Observable<AccommodationInterface> {
     return this.api.put(this.endpoint, id, data);
   }
 
-  delete(id: string): Observable<any> {
+  delete(id: string): Observable<AccommodationInterface> {
     return this.api.delete(this.endpoint, id);
   }
+
+
+  // 🔹 Unterkünfte eines bestimmten Events laden
+  getByEvent(eventId: string, userId?: string): Observable<AccommodationInterface[]> {
+    const url = userId
+      ? `${this.endpoint}?event_id=${eventId}&user_id=${userId}`
+      : `${this.endpoint}?event_id=${eventId}`;
+    return this.api.get(url);
+  }
+  
 }

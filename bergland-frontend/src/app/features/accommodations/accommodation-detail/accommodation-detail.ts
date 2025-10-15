@@ -73,16 +73,16 @@ export class AccommodationDetail implements OnInit {
       status: 'reserviert',
     };
 
-    this.bookingService.create(payload).subscribe({
-      next: () => {
-        alert('✅ Unterkunft erfolgreich gebucht!');
-        this.router.navigate(['/profile']); // oder Buchungsübersicht
-      },
-      error: (err) => {
-        console.error('Fehler bei der Buchung:', err);
-        alert('❌ Fehler bei der Buchung.');
-      },
-    });
+    // this.bookingService.create(payload).subscribe({
+    //   next: () => {
+    //     alert('✅ Unterkunft erfolgreich gebucht!');
+    //     this.router.navigate(['/profile']); // oder Buchungsübersicht
+    //   },
+    //   error: (err) => {
+    //     console.error('Fehler bei der Buchung:', err);
+    //     alert('❌ Fehler bei der Buchung.');
+    //   },
+    // });
   }
 
   goBack(): void {

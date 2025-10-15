@@ -1,19 +1,85 @@
 .booking-container {
   padding: 2rem;
-  background: #f9f9f9;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.error {
+  color: #dc2626;
+  font-weight: 600;
+  margin: 1rem 0;
 }
 
 .booking-table {
   width: 100%;
+  max-width: 900px;
   border-collapse: collapse;
+  background: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .booking-table th,
 .booking-table td {
-  border: 1px solid #ddd;
-  padding: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.error {
-  color: #d9534f;
+.booking-table th {
+  background: var(--primary-color);
+  color: white;
+  text-align: left;
+}
+
+.accommodation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.acc-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.acc-card h3 {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  margin-bottom: 0.3rem;
+}
+
+.acc-card .desc {
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+button.primary {
+  background: var(--primary-color);
+  color: var(--text-on-primary);
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button.primary:hover {
+  background: #0d3660;
 }

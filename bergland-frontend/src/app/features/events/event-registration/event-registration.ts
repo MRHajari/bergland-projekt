@@ -404,9 +404,6 @@ async addPerson(): Promise<void> {
 }
 
 
-
-
-
   // ======================================================
   // 🔹 Person aus Event-Registrierung entfernen
   // ======================================================
@@ -556,10 +553,21 @@ async addPerson(): Promise<void> {
   // ======================================================
   // 🔹 Navigation
   // ======================================================
-  goToAccommodation() {
-    if (!this.isRegistered) return alert('⚠️ Bitte melde dich zuerst an.');
-    this.router.navigate(['/accommodations'], { queryParams: { eventId: this.event.id } });
+  goToAccommodation(): void {
+    if (!this.isRegistered) {
+      alert('⚠️ Bitte melde dich zuerst für das Event an.');
+      return;
+    }
+  
+    if (!this.event?.id) {
+      alert('❌ Event-ID fehlt – Navigation nicht möglich.');
+      return;
+    }
+  
+    // 🔹 Navigiere zur Booking-Seite mit eventId als QueryParam
+    this.router.navigate(['/booking'], { queryParams: { eventId: this.event.id } });
   }
+  
 
   goToMyRegistrations() {
     this.router.navigate(['/my-registrations']);

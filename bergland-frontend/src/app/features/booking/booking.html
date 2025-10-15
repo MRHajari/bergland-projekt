@@ -1,31 +1,70 @@
 <div class="booking-container">
-    <h1>📦 Meine Buchungen</h1>
-
     @if (loading) {
-    <p>⏳ Lade deine Buchungen...</p>
+    <p>⏳ Lade Daten...</p>
     } @else if (errorMessage) {
     <p class="error">{{ errorMessage }}</p>
-    } @else if (bookings.length === 0) {
+    } @else {
+
+    <!-- ============================
+         📦 1️⃣ Meine Buchungen
+         ============================ -->
+    @if (!eventId) {
+    <h1>📦 Meine Buchungen</h1>
+
+    @if (bookings.length === 0) {
     <p>Du hast noch keine Buchungen.</p>
     <button class="primary" (click)="goToEvents()">➡️ Jetzt Event auswählen</button>
     } @else {
     <table class="booking-table">
         <thead>
             <tr>
-                <th>Titel</th>
-                <th>Datum</th>
-                <th>Status</th>
+                <th>Unterkunft</th>
+                <th>Event</th>
+                <th>EZ</th>
+                <th>DZ</th>
+                <th>MBZ</th>
             </tr>
         </thead>
         <tbody>
             @for (b of bookings; track b.id) {
             <tr>
-                <td>{{ b.title || b.event?.name || '—' }}</td>
-                <td>{{ b.date_from | date: 'dd.MM.yyyy' }} – {{ b.date_to | date: 'dd.MM.yyyy' }}</td>
-                <td>{{ b.status || 'offen' }}</td>
+                <td>{{ b.accommodation?.name || '—' }}</td>
+                <td>{{ b.event?.name || '—' }}</td>
+                <td>{{ b.single_beds }}</td>
+                <td>{{ b.double_beds }}</td>
+                <td>{{ b.multi_beds }}</td>
             </tr>
             }
         </tbody>
     </table>
+    }
+    }
+
+    <!-- ============================
+         🏨 2️⃣ Unterkunft buchen
+         ============================ -->
+    @if (eventId) {
+    <h1>🏨 Unterkunft für Event buchen</h1>
+
+    @if (accommodations.length === 0) {
+    <p>Keine Unterkünfte für dieses Event gefunden.</p>
+    } @else {
+    <div class="accommodation-grid">
+        @for (acc of accommodations; track acc.id) {
+        <div class="acc-card">
+            <h3>{{ acc.name }}</h3>
+            <p>{{ acc.street }}, {{ acc.postal_code }} {{ acc.city }}</p>
+            <p>
+                🛏️ EZ: {{ acc.single_rooms }} |
+                DZ: {{ acc.double_rooms }} |
+                MBZ: {{ acc.multi_bed_rooms }}
+            </p>
+            <p class="desc">{{ acc.description || 'Keine Beschreibung vorhanden.' }}</p>
+            <button class="primary" (click)="bookAccommodation(acc)">Jetzt buchen</button>
+        </div>
+        }
+    </div>
+    }
+    }
     }
 </div>

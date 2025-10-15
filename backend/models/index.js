@@ -148,6 +148,7 @@ Event.hasMany(Occupancy, {
     as: "occupancies",
     onDelete: "CASCADE",
 });
+
 Occupancy.belongsTo(Event, {
     foreignKey: "event_id",
     as: "event",
@@ -217,6 +218,19 @@ EventRegistration.belongsTo(Event, {
     foreignKey: "event_id",
     as: "event",
 });
+
+// 🏕️ Event ↔ Accommodation (1:n)
+Event.hasMany(Accommodation, {
+    foreignKey: "event_id",
+    as: "accommodations",
+    onDelete: "CASCADE",
+});
+Accommodation.belongsTo(Event, {
+    foreignKey: "event_id",
+    as: "event",
+});
+
+
 
 // 🫂 Squadron ↔ EventRegistration (1:n)
 Squadron.hasMany(EventRegistration, {
