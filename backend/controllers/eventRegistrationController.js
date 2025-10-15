@@ -210,3 +210,17 @@ exports.getCountByEvent = async (req, res) => {
         res.status(500).json({ message: "Fehler beim Abrufen der Anmeldungszahlen." });
     }
 };
+
+exports.getByEventId = async (req, res) => {
+    try {
+        const regs = await EventRegistration.findAll({
+            where: { event_id: req.params.eventId },
+            include: [{ model: Person, as: 'person' }],
+        });
+        res.json(regs);
+    } catch (err) {
+        console.error('❌ Fehler beim Laden der Event-Registrierungen:', err);
+        res.status(500).json({ message: err.message });
+    }
+};
+

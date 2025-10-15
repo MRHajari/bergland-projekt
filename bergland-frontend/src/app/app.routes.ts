@@ -19,6 +19,8 @@ import { ProductsAdmin } from './features/admin/products-admin/products-admin';
 import { EventsAdmin } from './features/admin/events-admin/events-admin';
 import { UsersAdmin } from './features/admin/users-admin/users-admin';
 import { AccommodationsAdmin } from './features/admin/accommodations-admin/accommodations-admin';
+import { EventParticipants } from './features/admin/events-admin/event-participants/event-participants';
+
 
 // 🔹 Layouts
 import { AuthLayout } from './layouts/auth-layout/auth-layout';
@@ -83,6 +85,7 @@ export const routes: Routes = [
           { path: '', component: AdminDashboard },
           { path: 'products', component: ProductsAdmin },
           { path: 'events', component: EventsAdmin },
+          { path: 'events/:id/participants', component: EventParticipants },
           { path: 'users', component: UsersAdmin },
           { path: 'accommodations', component: AccommodationsAdmin },
         ],

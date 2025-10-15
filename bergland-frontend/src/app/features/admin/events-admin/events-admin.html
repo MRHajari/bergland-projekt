@@ -86,14 +86,16 @@
 
                     <td class="button-group">
                         @if (editingEvent?.id === e.id) {
-                        <button class="primary" (click)="saveEvent()">💾 Speichern</button>
-                        <button (click)="cancelEdit()">✖️ Abbrechen</button>
+                        <button class="primary" (click)="saveEvent()">Speichern</button>
+                        <button (click)="cancelEdit()">Abbrechen</button>
                         } @else {
-                        <button class="secondary" (click)="editEvent(e)">✏️ Bearbeiten</button>
-                        <button class="danger" (click)="deleteEvent(e.id, e.name)">🗑️ Löschen</button>
-                        <button class="details" (click)="viewRegistrations(e.id)">👥 Details</button>
-                        }
+                        <button class="secondary" (click)="editEvent(e)">Bearbeiten</button>
+                        <button class="danger" (click)="deleteEvent(e.id, e.name)">Löschen</button>
+                        <button class="details" [routerLink]="['/admin/events', e.id, 'participants']">
+                            👥 Teilnehmer
+                        </button> }
                     </td>
+
                 </tr>
                 }
             </tbody>

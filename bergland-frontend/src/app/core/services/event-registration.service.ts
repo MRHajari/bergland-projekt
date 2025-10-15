@@ -104,4 +104,9 @@ export class EventRegistrationService {
       return this.api.get<Record<string, number>>(`${this.endpoint}/count-by-event`);
     }
 
+    getByEventId(eventId: string) {
+      return this.api.get<EventRegistrationInterface[]>(`event-registrations/event/${eventId}`);
+    }
+    
+
 }

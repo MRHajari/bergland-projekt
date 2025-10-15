@@ -394,7 +394,7 @@ async addPerson(): Promise<void> {
       : `✅ ${first} ${last} wurde neu angelegt und registriert.`;
 
     console.log(message);
-    alert(message);
+ 
 
     this.personForm.reset();
   } catch (err) {

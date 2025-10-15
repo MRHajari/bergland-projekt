@@ -27,4 +27,7 @@ router.delete("/:event_id/person/:person_id", authenticateToken, eventRegistrati
 // ❌ Registrierung löschen
 router.delete("/:id", authenticateToken, eventRegistrationController.deleteRegistration);
 
+router.get('/event/:eventId', authenticateToken, eventRegistrationController.getByEventId);
+
+
 module.exports = router;

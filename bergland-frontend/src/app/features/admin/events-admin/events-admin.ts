@@ -5,12 +5,14 @@ import { Router } from '@angular/router';
 import { EventService } from '../../../core/services/event.service';
 import { RegistrationService } from '../../../core/services/user.registration.service';
 import { EventRegistrationService } from '../../../core/services/event-registration.service.js';
+import { RouterModule } from '@angular/router';
+
 
 
 @Component({
   selector: 'app-events-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule], 
   templateUrl: './events-admin.html',
   styleUrls: ['./events-admin.css']
 })
