@@ -13,34 +13,58 @@
     <section class="form-section">
         <h2>➕ Neue Unterkunft hinzufügen</h2>
         <form (ngSubmit)="addAccommodation()">
-            <div class="form-grid">
-                <label>Name:</label>
-                <input [(ngModel)]="newAccommodation.name" name="name" required />
+            <div class="form-grid two-columns">
+                <div class="form-item">
+                    <label>Name:</label>
+                    <input [(ngModel)]="newAccommodation.name" name="name" required />
+                </div>
 
-                <label>Straße / Nr.:</label>
-                <input [(ngModel)]="newAccommodation.street" name="street" />
+                <div class="form-item">
+                    <label>Straße / Nr.:</label>
+                    <input [(ngModel)]="newAccommodation.street" name="street" />
+                </div>
 
-                <label>PLZ:</label>
-                <input [(ngModel)]="newAccommodation.postal_code" name="postal_code" />
+                <div class="form-item">
+                    <label>PLZ:</label>
+                    <input [(ngModel)]="newAccommodation.postal_code" name="postal_code" />
+                </div>
 
-                <label>Ort:</label>
-                <input [(ngModel)]="newAccommodation.city" name="city" />
+                <div class="form-item">
+                    <label>Ort:</label>
+                    <input [(ngModel)]="newAccommodation.city" name="city" />
+                </div>
 
-                <label>Land:</label>
-                <input [(ngModel)]="newAccommodation.country" name="country" />
+                <div class="form-item">
+                    <label>Land:</label>
+                    <input [(ngModel)]="newAccommodation.country" name="country" />
+                </div>
 
-                <label>Einzelzimmer:</label>
-                <input type="number" [(ngModel)]="newAccommodation.single_rooms" name="single_rooms" />
+                <div class="form-item">
+                    <label>Einzelzimmer:</label>
+                    <input type="number" [(ngModel)]="newAccommodation.single_rooms" name="single_rooms" />
+                </div>
 
-                <label>Doppelzimmer:</label>
-                <input type="number" [(ngModel)]="newAccommodation.double_rooms" name="double_rooms" />
+                <div class="form-item">
+                    <label>Doppelzimmer:</label>
+                    <input type="number" [(ngModel)]="newAccommodation.double_rooms" name="double_rooms" />
+                </div>
 
-                <label>Mehrbettzimmer:</label>
-                <input type="number" [(ngModel)]="newAccommodation.multi_bed_rooms" name="multi_bed_rooms" />
+                <div class="form-item">
+                    <label>Mehrbettzimmer:</label>
+                    <input type="number" [(ngModel)]="newAccommodation.multi_bed_rooms" name="multi_bed_rooms" />
+                </div>
+
+                <div class="form-actions">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="primary">Hinzufügen</button>
+                </div>
             </div>
-            <button type="submit" class="primary">Hinzufügen</button>
+
+
         </form>
     </section>
+
 
     <!-- ====================================================== -->
     <!-- 📋 Bestehende Unterkünfte -->

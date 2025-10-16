@@ -10,6 +10,10 @@ exports.personSchema = Joi.object({
     birth_date: Joi.date().optional(),
     email: Joi.string().email().optional(),
     phone: Joi.string().optional(),
+    street: Joi.string().max(255).optional(),
+    postal_code: Joi.string().max(20).optional(),
+    city: Joi.string().max(100).optional(),
+    country: Joi.string().max(100).optional(),
     owner_id: Joi.string()
         .guid({ version: "uuidv4" })
         .optional()

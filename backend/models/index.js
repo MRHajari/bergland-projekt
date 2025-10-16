@@ -5,8 +5,6 @@ const sequelize = require("../config/db");
 // --------------------------------------------------------------
 const Person = require("./person");
 const User = require("./user");
-const Address = require("./address");
-const RelPersonAddress = require("./rel_person_address");
 const Accommodation = require("./accommodation");
 const Booking = require("./booking");
 const Event = require("./event");
@@ -61,27 +59,6 @@ User.belongsTo(Person, {
     as: "person",
 });
 
-// 🧍 Person ↔ RelPersonAddress (1:n)
-Person.hasMany(RelPersonAddress, {
-    foreignKey: "person_id",
-    as: "personAddresses",
-    onDelete: "CASCADE",
-});
-RelPersonAddress.belongsTo(Person, {
-    foreignKey: "person_id",
-    as: "person",
-});
-
-// 🏠 Address ↔ RelPersonAddress (1:n)
-Address.hasMany(RelPersonAddress, {
-    foreignKey: "address_id",
-    as: "personAddresses",
-    onDelete: "CASCADE",
-});
-RelPersonAddress.belongsTo(Address, {
-    foreignKey: "address_id",
-    as: "address",
-});
 
 // 💻 UserRegistration (App-Registrierung)
 User.hasMany(UserRegistration, {
@@ -280,8 +257,6 @@ module.exports = {
     sequelize,
     Person,
     User,
-    Address,
-    RelPersonAddress,
     Accommodation,
     Booking,
     Event,

@@ -224,19 +224,14 @@ private async loadExistingRegistration(eventId: string) {
   }
 
 // ======================================================
-// 🔹 Personenverwaltung (hinzufügen / auswählen / löschen)
+// 🔹 Wenn eine vorhandene Person ausgewählt wird → nur lokal hinzufügen
 // ======================================================
-
-// ✅ Wenn eine vorhandene Person ausgewählt wird → automatisch registrieren
 async onSelectExistingPerson(e: any): Promise<void> {
   const id = e.target.value;
   if (!id) return;
 
   const person = this.existingPersons.find((p) => p.id === id);
   if (!person) return;
-
-  const eventId = this.event?.id;
-  if (!eventId) return;
 
   const participationType = this.registrationForm.value.teilnahme_art;
   const squadronId =
@@ -249,44 +244,31 @@ async onSelectExistingPerson(e: any): Promise<void> {
     return;
   }
 
-  try {
-    const payload: EventRegistrationInterface = {
-      event_id: eventId,
-      person_id: person.id!,
-      squadron_id: squadronId,
-      participation_type: participationType,
-      liability_accept: true,
-      status: 'in_auswahl',
-    };
+  // 🔹 Staffelname ermitteln
+  const squadronName = squadronId
+    ? this.squadrons.find((s) => s.id === squadronId)?.name || 'Unbekannte Staffel'
+    : null;
 
-    const created = await firstValueFrom(this.registrationService.create(payload));
+  // 🔹 Nur lokal hinzufügen – noch keine API-Registrierung!
+  this.addedPersons.push({
+    ...person,
+    inSquadron: !!squadronId,
+    squadronName,
+  });
 
-    // 🔹 Lokale UI-Liste sofort aktualisieren
-    const squadronName = squadronId
-      ? this.squadrons.find((s) => s.id === squadronId)?.name || 'Unbekannte Staffel'
-      : null;
+  // 🔹 Person aus Auswahl entfernen
+  this.existingPersons = this.existingPersons.filter((p) => p.id !== id);
 
-    this.addedPersons.push({
-      ...person,
-      inSquadron: !!squadronId,
-      squadronName,
-    });
+  // 🔹 Formular zurücksetzen
+  this.personForm.reset();
 
-    this.existingPersons = this.existingPersons.filter((p) => p.id !== id);
-    this.personForm.reset();
-
-    console.log(`✅ ${person.first_name} erfolgreich als ${participationType} registriert.`);
-  } catch (err) {
-    console.error('❌ Fehler beim Registrieren der bestehenden Person:', err);
-    alert('Fehler beim Registrieren der bestehenden Person.');
-  }
+  console.log(`👤 ${person.first_name} wurde lokal für die Anmeldung vorgemerkt.`);
 }
 
 
-
-
-
-// ✅ Wenn eine neue Person hinzugefügt wird → ebenfalls automatisch registrieren
+// ======================================================
+// 🔹 Neue Person hinzufügen (nur lokal vormerken, keine Registrierung)
+// ======================================================
 async addPerson(): Promise<void> {
   const v = this.personForm.value;
 
@@ -314,15 +296,13 @@ async addPerson(): Promise<void> {
         p.last_name.toLowerCase() === last.toLowerCase()
     );
 
-    let personId: string;
-    let usedExisting = false;
+    let person: Person;
 
     if (existingPerson) {
       console.log('👀 Person existiert bereits:', existingPerson);
-      personId = existingPerson.id!; // ✅ garantiert vorhanden
-      usedExisting = true;
+      person = existingPerson;
     } else {
-      // 👤 Neue Person anlegen
+      // 👤 Neue Person anlegen (nur speichern, keine Event-Registrierung)
       const newPerson: Person = {
         first_name: first,
         last_name: last,
@@ -336,7 +316,7 @@ async addPerson(): Promise<void> {
         alert('❌ Person konnte nicht korrekt angelegt werden.');
         return;
       }
-      personId = created.id;
+      person = created;
       console.log('🆕 Neue Person angelegt:', created);
     }
 
@@ -346,60 +326,32 @@ async addPerson(): Promise<void> {
         ? this.registrationForm.value.squadron_id
         : null;
 
-    // 🧠 Schritt 2: Prüfen, ob Person schon für das Event registriert ist
-    const alreadyRegistered = this.existingRegs?.some(
-      (r) => r.person_id === personId && r.event_id === this.event?.id
-    );
+    const squadronName = squadronId
+      ? this.squadrons.find((s) => s.id === squadronId)?.name || 'Unbekannte Staffel'
+      : null;
 
-    if (alreadyRegistered) {
-      alert(`${first} ${last} ist bereits für dieses Event registriert.`);
+    // 🔹 Prüfen, ob Person schon in der UI hinzugefügt ist
+    const alreadyAdded = this.addedPersons.some((p) => p.id === person.id);
+    if (alreadyAdded) {
+      alert(`${first} ${last} wurde bereits zur Liste hinzugefügt.`);
       return;
     }
 
-    // 📤 Registrierung vorbereiten
-    const payload: EventRegistrationInterface = {
-      event_id: this.event?.id!,
-      person_id: personId,
-      squadron_id: squadronId,
-      participation_type: this.registrationForm.value.teilnahme_art,
-      liability_accept: true,
-      status: 'in_auswahl',
-    };
-
-    console.log('📤 Registrierung senden:', payload);
-
-    // 🧪 Registrierung senden
-    try {
-      await firstValueFrom(this.registrationService.create(payload));
-    } catch (err: any) {
-      if (err.status === 409) {
-        alert(`${first} ${last} ist bereits für dieses Event registriert.`);
-        return;
-      }
-      throw err;
-    }
-
-    // ✅ Erfolgreich registriert
-    const personData = existingPerson || { id: personId, first_name: first, last_name: last };
+    // 🔹 Person lokal vormerken (nicht im Backend registrieren)
     this.addedPersons.push({
-      ...personData,
+      ...person,
       inSquadron: !!squadronId,
-      squadronName: squadronId
-        ? this.squadrons.find((s) => s.id === squadronId)?.name || 'Unbekannte Staffel'
-        : null,
+      squadronName,
     });
 
-    const message = usedExisting
-      ? `✅ ${first} ${last} wurde mit bestehendem Profil registriert.`
-      : `✅ ${first} ${last} wurde neu angelegt und registriert.`;
+    // 🔹 Person aus Auswahl entfernen (falls vorhanden)
+    this.existingPersons = this.existingPersons.filter((p) => p.id !== person.id);
 
-    console.log(message);
- 
-
+    console.log(`✅ ${first} ${last} wurde lokal zur Anmeldung hinzugefügt.`);
     this.personForm.reset();
   } catch (err) {
-    console.error('❌ Fehler beim Hinzufügen oder Registrieren:', err);
-    alert('Fehler beim Hinzufügen oder Registrieren der Person.');
+    console.error('❌ Fehler beim Hinzufügen der Person:', err);
+    alert('Fehler beim Hinzufügen der Person.');
   }
 }
 

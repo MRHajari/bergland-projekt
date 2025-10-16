@@ -1,12 +1,22 @@
+// backend/validators/accommodationValidator.js
 const Joi = require("joi");
 
 module.exports = Joi.object({
-    unterkunft_name: Joi.string().required(),
-    strasse_hausnr: Joi.string().allow(null, ""),
-    plz: Joi.string().allow(null, ""),
-    ort: Joi.string().allow(null, ""),
-    anz_ez: Joi.number().integer().min(0).default(0),
-    anz_dz: Joi.number().integer().min(0).default(0),
-    anz_mbz: Joi.number().integer().min(0).default(0),
-    anz_betten_mbz: Joi.number().integer().min(0).default(0),
+    name: Joi.string().required().messages({
+        "string.empty": `"Name" darf nicht leer sein.`,
+        "any.required": `"Name" ist erforderlich.`,
+    }),
+    street: Joi.string().allow("", null).messages({
+        "string.base": `"Straße" muss ein Text sein.`,
+    }),
+    postal_code: Joi.string().allow("", null),
+    city: Joi.string().allow("", null),
+    country: Joi.string().allow("", null).default("Deutschland"),
+
+    single_rooms: Joi.number().integer().min(0).default(0),
+    double_rooms: Joi.number().integer().min(0).default(0),
+    multi_bed_rooms: Joi.number().integer().min(0).default(0),
+    total_beds: Joi.number().integer().min(0).default(0),
+
+    description: Joi.string().allow("", null),
 });

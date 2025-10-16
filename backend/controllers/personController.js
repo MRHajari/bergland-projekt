@@ -22,9 +22,6 @@ exports.getAll = async (req, res) => {
     }
 };
 
-
-
-
 // 🔍 Eine Person abrufen
 exports.getPersonById = async (req, res) => {
     try {
@@ -41,45 +38,50 @@ exports.getPersonById = async (req, res) => {
 // ➕ Neue Person erstellen
 exports.create = async (req, res) => {
     try {
-        const { first_name, last_name, birth_date, email } = req.body;
+        const { error, value } = personSchema.validate(req.body);
+        if (error)
+            return res
+                .status(400)
+                .json({ message: error.details[0].message });
+
+        const { first_name, last_name, email } = value;
         const owner_id = req.user?.id || req.body.owner_id;
 
         if (!first_name || !last_name || !owner_id)
-            return res.status(400).json({ message: "Vorname, Nachname und owner_id sind erforderlich" });
+            return res
+                .status(400)
+                .json({ message: "Vorname, Nachname und owner_id sind erforderlich" });
 
         // 🔎 Doppelprüfung: existiert bereits eine Person mit gleichem Namen + Owner?
         const existing = await Person.findOne({
             where: {
                 first_name: first_name.trim(),
                 last_name: last_name.trim(),
-                owner_id
-            }
+                owner_id,
+            },
         });
 
         if (existing) {
             return res.status(409).json({
                 message: `Die Person "${first_name} ${last_name}" ist bereits registriert.`,
-                person: existing
+                person: existing,
             });
         }
 
-        // ✳️ Optional zusätzlich prüfen: Email eindeutig?
+        // ✳️ Optional: Email eindeutig?
         if (email) {
             const existingEmail = await Person.findOne({ where: { email } });
             if (existingEmail) {
                 return res.status(409).json({
                     message: `Die E-Mail "${email}" wird bereits verwendet.`,
-                    person: existingEmail
+                    person: existingEmail,
                 });
             }
         }
 
         // ✅ Person anlegen
         const newPerson = await Person.create({
-            first_name: first_name.trim(),
-            last_name: last_name.trim(),
-            birth_date,
-            email,
+            ...value,
             owner_id,
         });
 
@@ -89,8 +91,6 @@ exports.create = async (req, res) => {
         res.status(500).json({ message: "Serverfehler beim Erstellen der Person" });
     }
 };
-
-
 
 // ✏️ Person aktualisieren
 exports.updatePerson = async (req, res) => {

@@ -46,12 +46,42 @@ const Person = sequelize.define(
             },
         },
 
+        // ☎️ Telefonnummer (optional)
+        phone: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+
+        // 🏠 Straße und Hausnummer
+        street: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+
+        // 🏙️ PLZ
+        postal_code: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+
+        // 📍 Ort
+        city: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+
+        // 🌍 Land
+        country: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+
         // 🧑‍💼 Besitzer / Ersteller (User)
         owner_id: {
             type: DataTypes.UUID,
             allowNull: true,
             references: {
-                model: "user", // 👉 verweist jetzt korrekt auf die Tabelle "user"
+                model: "user", // verweist auf Tabelle "user"
                 key: "id",
             },
             onDelete: "SET NULL",
@@ -62,7 +92,7 @@ const Person = sequelize.define(
         tableName: "person",
         timestamps: true,
         comment:
-            "Personendaten – inklusive Besitzer-Referenz auf den Ersteller (owner_id → user.id)",
+            "Personendaten – inkl. Adress- und Besitzer-Informationen (owner_id → user.id)",
     }
 );
 
