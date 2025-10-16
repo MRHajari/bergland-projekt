@@ -190,39 +190,97 @@ private async loadExistingRegistration(eventId: string) {
 }
 
 
+toggleSelfRegistration(e: any) {
+  const checked = e.target.checked;
+  const userId = this.authService.getUserId();
+  console.log('🔄 Toggle eigene Person:', checked, ' (user_id:', userId, ')');
+
+  // 🔐 Benutzerinformationen robust laden
+  const user =
+    (this.authService as any)?.currentUserValue ||
+    JSON.parse(localStorage.getItem('currentUser') || 'null');
+ 
+
+  const personId = user?.person_id;
+
+  if (!personId) {
+    console.warn('⚠️ Keine Person-ID für eingeloggten Benutzer gefunden.');
+    alert('❌ Dein Benutzer ist keiner Person zugeordnet.');
+    return;
+  }
+
+  if (checked) {
+    console.log('🧍 Versuche eigene Person hinzuzufügen:', personId);
+    this.personService.getById(personId).subscribe({
+      next: (p) => {
+        if (!p) {
+          alert('❌ Personendaten konnten nicht geladen werden.');
+          return;
+        }
+
+        // ✅ Prüfen, ob schon vorhanden
+        const alreadyAdded = this.addedPersons.some((ap) => ap.id === p.id);
+        if (alreadyAdded) {
+          alert('Du bist bereits als Teilnehmer hinzugefügt.');
+          return;
+        }
+
+        this.addedPersons.push({ ...p, inSquadron: false, squadronName: null });
+        console.log('🧍 Benutzer selbst als Teilnehmer hinzugefügt:', p);
+      },
+      error: (err) => {
+        console.error('❌ Fehler beim Laden der eigenen Person:', err);
+        alert('Fehler beim Hinzufügen deiner Person.');
+      },
+    });
+  } else {
+    // Entfernen
+    this.addedPersons = this.addedPersons.filter((p) => p.id !== personId);
+    console.log('🚫 Benutzer selbst wieder entfernt.');
+  }
+}
+
+
 
   // ======================================================
   // 🔹 Formulare initialisieren
   // ======================================================
-  private initForms(): void {
-    this.registrationForm = this.fb.group({
-      teilnahme_art: ['einzeln', Validators.required],
-      squadron_id: [null],
-      license_plate: [''],
-      phone_number: [''], // ✅ neu
-      start_number: [''],
-      catering_type: [''],
-      wishes: [''],
-      gender: ['m'],
-      club: [''],
-      status: ['in_auswahl'],
-      liability_accept: [false, Validators.requiredTrue],
-    });
+private initForms(): void {
+  this.registrationForm = this.fb.group({
+    teilnahme_art: ['einzeln', Validators.required],
+    squadron_id: [null],
+    license_plate: [''],
+    phone_number: [''], // ✅ neu
+    start_number: [''],
+    catering_type: [''],
+    wishes: [''],
+    gender: ['m'],
+    club: [''],
+    status: ['in_auswahl'],
+    liability_accept: [false, Validators.requiredTrue],
+  });
 
-    this.personForm = this.fb.group({
-      person_id: [''],
-      first_name: [''],
-      last_name: [''],
-      birth_date: [''],
-      email: [''],
-    });
+  // 🧍 Personenerfassungsformular – jetzt mit Adresse
+  this.personForm = this.fb.group({
+    person_id: [''],
+    first_name: [''],
+    last_name: [''],
+    birth_date: [''],
+    email: [''],
+    phone: [''],          // ✅ neu
+    street: [''],         // ✅ neu
+    postal_code: [''],    // ✅ neu
+    city: [''],           // ✅ neu
+    country: ['Deutschland'], // ✅ Standardwert
+  });
 
-    this.squadronForm = this.fb.group({
-      name: ['', Validators.required],
-      description: [''],
-    });
-  }
+  this.squadronForm = this.fb.group({
+    name: ['', Validators.required],
+    description: [''],
+  });
+}
 
+  
 // ======================================================
 // 🔹 Wenn eine vorhandene Person ausgewählt wird → nur lokal hinzufügen
 // ======================================================

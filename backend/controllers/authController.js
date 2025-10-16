@@ -75,7 +75,7 @@ async function generateRefreshToken(payload) {
 }
 
 // ============================================================
-// 🔹 Registrierung mit E-Mail-Verifikation
+// 🔹 Registrierung – legt automatisch Person + User an
 // ============================================================
 exports.register = async (req, res, next) => {
     try {
@@ -85,6 +85,7 @@ exports.register = async (req, res, next) => {
 
         const { first_name, last_name, birth_date, email, password } = req.body;
 
+        // 🧩 E-Mail schon vorhanden?
         const existing = await User.findOne({ where: { email } });
         if (existing)
             return res
@@ -93,15 +94,15 @@ exports.register = async (req, res, next) => {
 
         const password_hash = await bcrypt.hash(password, 10);
 
-        // 🔁 Transaktion für saubere Speicherung beider Tabellen
+        // ✅ Transaktion: Person & User gemeinsam anlegen
         const result = await sequelize.transaction(async (t) => {
-            // 1️⃣ Person anlegen
+            // 1️⃣ Person erstellen
             const person = await Person.create(
                 { first_name, last_name, birth_date, email },
                 { transaction: t }
             );
 
-            // 2️⃣ User anlegen und mit Person verknüpfen
+            // 2️⃣ User erstellen (verweist auf Person)
             const user = await User.create(
                 {
                     email,
@@ -113,7 +114,7 @@ exports.register = async (req, res, next) => {
                 { transaction: t }
             );
 
-            // 3️⃣ Owner-Referenz in Person aktualisieren
+            // 3️⃣ Owner-ID der Person = eigener User
             await person.update({ owner_id: user.id }, { transaction: t });
 
             return { person, user };
@@ -121,29 +122,43 @@ exports.register = async (req, res, next) => {
 
         const { person, user } = result;
 
-        // 🔹 Verifikationslink erzeugen
+        // =====================================================
+        // 📧 Verifikationslink erzeugen und senden
+        // =====================================================
         const emailToken = jwt.sign({ email }, EMAIL_SECRET, { expiresIn: "1d" });
         const verifyUrl = `http://localhost:4200/verify/${emailToken}`;
 
-        // 🔹 Mail senden via Mailtrap SMTP
         await transporter.sendMail({
             from: '"Pfälzer Bergland" <no-reply@bergland.de>',
             to: email,
             subject: "Bitte bestätige deine E-Mail-Adresse",
             html: `
         <p>Hallo ${first_name},</p>
-        <p>Bitte bestätige deine Registrierung durch Klick auf den folgenden Link:</p>
+        <p>Bitte bestätige deine Registrierung durch Klick auf folgenden Link:</p>
         <p><a href="${verifyUrl}" target="_blank">${verifyUrl}</a></p>
         <p>Dieser Link ist 24 Stunden gültig.</p>
         <p>Viele Grüße<br/>Pfälzer Bergland Team</p>
       `,
         });
 
+        // =====================================================
+        // ✅ Erfolgsmeldung
+        // =====================================================
         res.status(201).json({
             message:
-                "Registrierung erfolgreich. Bitte prüfe deine Mailtrap-Inbox, um dein Konto zu bestätigen.",
-            user: { id: user.id, email: user.email },
-            person: { id: person.id, first_name, last_name },
+                "Registrierung erfolgreich. Bitte prüfe deine E-Mail zur Verifizierung.",
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                person_id: person.id, // 🔥 wichtig fürs Frontend
+            },
+            person: {
+                id: person.id,
+                first_name: person.first_name,
+                last_name: person.last_name,
+                email: person.email,
+            },
         });
     } catch (err) {
         console.error("❌ Fehler bei Registrierung:", err);
@@ -162,7 +177,8 @@ exports.verifyEmail = async (req, res) => {
         const { email } = decoded;
 
         const user = await User.findOne({ where: { email } });
-        if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden." });
+        if (!user)
+            return res.status(404).json({ error: "Benutzer nicht gefunden." });
 
         if (user.is_verified)
             return res.json({ message: "E-Mail wurde bereits bestätigt." });
@@ -179,7 +195,7 @@ exports.verifyEmail = async (req, res) => {
 };
 
 // ============================================================
-// 🔹 Login (nur wenn verifiziert)
+// 🔹 Login (mit person_id im Response)
 // ============================================================
 exports.login = async (req, res, next) => {
     try {
@@ -194,7 +210,8 @@ exports.login = async (req, res, next) => {
             include: [{ model: Person, as: "person" }],
         });
 
-        if (!user) return res.status(401).json({ error: "Ungültige Zugangsdaten." });
+        if (!user)
+            return res.status(401).json({ error: "Ungültige Zugangsdaten." });
 
         if (!user.is_verified)
             return res
@@ -207,6 +224,7 @@ exports.login = async (req, res, next) => {
 
         await user.update({ last_login_at: new Date() });
 
+        // ✅ Payload enthält person_id
         const payload = {
             user: {
                 id: user.id,
@@ -214,13 +232,22 @@ exports.login = async (req, res, next) => {
                 first_name: user.person?.first_name,
                 last_name: user.person?.last_name,
                 role: user.role,
+                person_id: user.person?.id || user.person_id, // ✅ wichtig!
             },
         };
 
         const accessToken = generateAccessToken(payload);
         const refreshToken = await generateRefreshToken(payload);
 
-        res.json({ accessToken, refreshToken, user: payload.user });
+        // ✅ Vollständiges Response inkl. person_id
+        res.json({
+            accessToken,
+            refreshToken,
+            user: {
+                ...payload.user,
+                person_id: user.person?.id || user.person_id, // 🔥 doppelte Sicherheit
+            },
+        });
     } catch (err) {
         console.error("❌ Fehler beim Login:", err);
         next(err);
@@ -240,14 +267,50 @@ exports.refreshToken = async (req, res) => {
 
     try {
         const { user } = jwt.verify(token, JWT_REFRESH_SECRET);
-        const newAccessToken = generateAccessToken({ user });
-        const newRefreshToken = await generateRefreshToken({ user });
 
-        // Alten Refresh-Token invalidieren
+        // ✅ echten User aus DB holen
+        const dbUser = await User.findByPk(user.id, { include: [{ model: Person, as: "person" }] });
+        if (!dbUser) return res.status(404).json({ error: "Benutzer nicht gefunden." });
+
+        // 🧩 Falls person_id im DB-Eintrag fehlt → nachziehen
+        if (!dbUser.person_id) {
+            const p = await Person.findOne({ where: { email: dbUser.email } });
+            if (p) {
+                await dbUser.update({ person_id: p.id });
+            } else {
+                const created = await Person.create({
+                    first_name: dbUser.person?.first_name || "Vorname",
+                    last_name: dbUser.person?.last_name || "Nachname",
+                    email: dbUser.email,
+                    owner_id: dbUser.id,
+                });
+                await dbUser.update({ person_id: created.id });
+            }
+            await dbUser.reload({ include: [{ model: Person, as: "person" }] });
+        }
+
+        const newPayload = {
+            user: {
+                id: dbUser.id,
+                email: dbUser.email,
+                role: dbUser.role,
+                person_id: dbUser.person_id,
+                first_name: dbUser.person?.first_name,
+                last_name: dbUser.person?.last_name,
+            },
+        };
+
+        const newAccessToken = generateAccessToken(newPayload);
+        const newRefreshToken = await generateRefreshToken(newPayload);
+
         storedToken.revoked = true;
         await storedToken.save();
 
-        res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+        res.json({
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+            user: newPayload.user,
+        });
     } catch (err) {
         console.error("❌ Refresh fehlgeschlagen:", err);
         res.status(403).json({ error: "Ungültiger oder abgelaufener Refresh-Token." });

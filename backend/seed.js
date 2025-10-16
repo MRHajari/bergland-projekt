@@ -24,167 +24,135 @@ module.exports = async function runSeed() {
     try {
         await sequelize.sync({ force: true });
         console.log("✅ Tabellen neu erstellt.");
-
         // =====================================================
-        // 🔐 BENUTZER
+        // 🔐 BENUTZER + PERSONEN (in Transaktion)
         // =====================================================
         const hashedAdmin = await bcrypt.hash("Admin123!", 10);
         const hashedUser = await bcrypt.hash("User123!", 10);
 
-        const users = await Promise.all([
-            User.create({
-                email: "mohammad@test.com",
-                password_hash: hashedAdmin,
-                role: "admin",
-                is_verified: true,
-            }),
-            User.create({
-                email: "clara@test.com",
-                password_hash: hashedAdmin,
-                role: "admin",
-                is_verified: true,
-            }),
-            User.create({
-                email: "anna@test.com",
-                password_hash: hashedUser,
-                role: "user",
-                is_verified: true,
-            }),
-            User.create({
-                email: "markus@test.com",
-                password_hash: hashedUser,
-                role: "user",
-                is_verified: true,
-            }),
-            User.create({
-                email: "sojin@test.com",
-                password_hash: hashedUser,
-                role: "user",
-                is_verified: true,
-            }),
-            User.create({
-                email: "hanassa@test.com",
-                password_hash: hashedUser,
-                role: "user",
-                is_verified: true,
-            }),
-        ]);
-        console.log("🔐 Benutzer erstellt.");
-
-        // =====================================================
-        // 👤 PERSONEN (mit Adresse)
-        // =====================================================
-        const persons = await Promise.all([
-            Person.create({
+        const userData = [
+            {
                 first_name: "Mohammad",
                 last_name: "Hajari",
                 email: "mohammad@test.com",
                 birth_date: "1990-06-12",
+                role: "admin",
+                password_hash: hashedAdmin,
                 phone: "+49 157 1234567",
                 street: "Spinozastraße 18",
                 postal_code: "67663",
                 city: "Kaiserslautern",
                 country: "Deutschland",
-                owner_id: users[0].id,
-            }),
-            Person.create({
+            },
+            {
                 first_name: "Clara",
                 last_name: "Fischer",
                 email: "clara@test.com",
                 birth_date: "1985-09-22",
+                role: "admin",
+                password_hash: hashedAdmin,
                 phone: "+49 151 9876543",
                 street: "Bahnhofstraße 12",
                 postal_code: "80335",
                 city: "München",
                 country: "Deutschland",
-                owner_id: users[0].id,
-            }),
-            Person.create({
+            },
+            {
                 first_name: "Anna",
                 last_name: "Schmidt",
                 email: "anna@test.com",
                 birth_date: "1994-03-10",
+                role: "user",
+                password_hash: hashedUser,
                 phone: "+49 170 5566778",
                 street: "Rosenweg 3",
                 postal_code: "50667",
                 city: "Köln",
                 country: "Deutschland",
-                owner_id: users[1].id,
-            }),
-            Person.create({
+            },
+            {
                 first_name: "Markus",
                 last_name: "Weber",
                 email: "markus@test.com",
                 birth_date: "1988-07-19",
+                role: "user",
+                password_hash: hashedUser,
                 phone: "+49 162 9988776",
                 street: "Hauptstraße 45",
                 postal_code: "70173",
                 city: "Stuttgart",
                 country: "Deutschland",
-                owner_id: users[1].id,
-            }),
-            Person.create({
+            },
+            {
                 first_name: "Sojin",
                 last_name: "Hajari",
                 email: "sojin@test.com",
                 birth_date: "2013-05-14",
-                phone: null,
+                role: "user",
+                password_hash: hashedUser,
                 street: "Spinozastraße 18",
                 postal_code: "67663",
                 city: "Kaiserslautern",
                 country: "Deutschland",
-                owner_id: users[0].id,
-            }),
-            Person.create({
+            },
+            {
                 first_name: "Hanassa",
                 last_name: "Hajari",
                 email: "hanassa@test.com",
                 birth_date: "2016-02-21",
-                phone: null,
+                role: "user",
+                password_hash: hashedUser,
                 street: "Spinozastraße 18",
                 postal_code: "67663",
                 city: "Kaiserslautern",
                 country: "Deutschland",
-                owner_id: users[0].id,
-            }),
-            Person.create({
-                first_name: "Lukas",
-                last_name: "Bauer",
-                email: "lukas@test.com",
-                birth_date: "1991-09-05",
-                phone: "+49 171 2345678",
-                street: "Talweg 9",
-                postal_code: "82467",
-                city: "Garmisch-Partenkirchen",
-                country: "Deutschland",
-                owner_id: users[2].id,
-            }),
-            Person.create({
-                first_name: "Julia",
-                last_name: "Keller",
-                email: "julia@test.com",
-                birth_date: "1997-11-12",
-                phone: "+49 176 9988775",
-                street: "Am Hang 4",
-                postal_code: "6020",
-                city: "Innsbruck",
-                country: "Österreich",
-                owner_id: users[2].id,
-            }),
-        ]);
-        console.log("👤 Personen mit Adressen erstellt.");
+            },
+        ];
 
-        // Benutzer ↔ Personen (1:1)
-        await Promise.all([
-            users[0].update({ person_id: persons[0].id }),
-            users[1].update({ person_id: persons[1].id }),
-            users[2].update({ person_id: persons[2].id }),
-            users[3].update({ person_id: persons[3].id }),
-            users[4].update({ person_id: persons[4].id }),
-            users[5].update({ person_id: persons[5].id }),
-        ]);
-        console.log("🔗 User-Person-Beziehungen gesetzt.");
+        const users = [];
+        const persons = [];
 
+        for (const data of userData) {
+            const result = await sequelize.transaction(async (t) => {
+                // 1️⃣ Person anlegen
+                const person = await Person.create(
+                    {
+                        first_name: data.first_name,
+                        last_name: data.last_name,
+                        birth_date: data.birth_date,
+                        email: data.email,
+                        phone: data.phone || null,
+                        street: data.street,
+                        postal_code: data.postal_code,
+                        city: data.city,
+                        country: data.country,
+                    },
+                    { transaction: t }
+                );
+
+                // 2️⃣ User mit person_id verknüpfen
+                const user = await User.create(
+                    {
+                        email: data.email,
+                        password_hash: data.password_hash,
+                        role: data.role,
+                        is_verified: true,
+                        person_id: person.id,
+                    },
+                    { transaction: t }
+                );
+
+                // 3️⃣ Person.owner_id auf User.id setzen
+                await person.update({ owner_id: user.id }, { transaction: t });
+
+                return { user, person };
+            });
+
+            users.push(result.user);
+            persons.push(result.person);
+        }
+
+        console.log("🔗 Benutzer & Personen erstellt und verknüpft.");
         // =====================================================
         // 🏨 UNTERKÜNFTE
         // =====================================================

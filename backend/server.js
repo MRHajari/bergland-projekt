@@ -29,40 +29,23 @@ app.get("/", (req, res) => res.send("Backend is running 🚀"));
 // ============================================================
 // ✅ 3. Import aller Routen
 // ============================================================
-
-// 🧍 Personen & Benutzer
 app.use("/api/persons", require("./routes/personRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
-
-// 🏠 Adressen
-app.use("/api/addresses", require("./routes/addressRoutes"));
-app.use("/api/person-address", require("./routes/relPersonAddressRoutes"));
-
-// 📦 Unterkunft & Buchung
 app.use("/api/accommodations", require("./routes/accommodationRoutes"));
-app.use("/api/occupancies", require("./routes/occupancyRoutes"));
 app.use("/api/bookings", require("./routes/bookingRoutes"));
-
-// 🏔️ Events & verbundene Module
 app.use("/api/events", require("./routes/eventRoutes"));
-// ❌ Relay-Team entfernen (nicht mehr genutzt)
-// app.use("/api/relay-teams", require("./routes/relayTeamRoutes"));
 app.use("/api/routes", require("./routes/routeRoutes"));
 app.use("/api/runtimes", require("./routes/runtimeRoutes"));
 app.use("/api/squadrons", require("./routes/squadronRoutes"));
-app.use("/api/rel-person-squadron", require("./routes/relPersonSquadronRoutes")); // 🆕 n:m Person ↔ Staffel
+app.use("/api/rel-person-squadron", require("./routes/relPersonSquadronRoutes"));
 app.use("/api/event-registrations", require("./routes/eventRegistrationRoutes"));
-
-// 👤 Benutzer-Registrierung & Auth
-app.use("/api/user-registrations", require("./routes/userRegistrationRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
-
-// 💰 Rechnungen & Produkte
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 
+
 // ============================================================
-// ✅ 4. Admin-Setup-Funktion
+// ✅ 4. Admin-Setup-Funktion (robust, verknüpft User ⇄ Person)
 // ============================================================
 async function ensureAdminUser() {
     try {
@@ -78,11 +61,30 @@ async function ensureAdminUser() {
                 role: "admin",
                 is_verified: true,
             });
-            console.log(`🔑 Admin ${adminEmail} aktualisiert.`);
+
+            // 🔄 Sicherstellen, dass Person existiert
+            let person = await Person.findOne({ where: { email: adminEmail } });
+            if (!person) {
+                person = await Person.create({
+                    first_name: "System",
+                    last_name: "Administrator",
+                    email: adminEmail,
+                    birth_date: "2000-01-01",
+                    owner_id: existingUser.id,
+                });
+            }
+
+            // ✅ Beziehung wiederherstellen
+            if (!existingUser.person_id) {
+                await existingUser.update({ person_id: person.id });
+            }
+
+            console.log(`🔑 Admin ${adminEmail} aktualisiert und verknüpft.`);
             return;
         }
 
-        // 🧍 Admin-Person + User anlegen
+        // 🔹 Wenn kein User existiert → komplett neu anlegen
+        const hashed = await bcrypt.hash(adminPassword, 10);
         const person = await Person.create({
             first_name: "System",
             last_name: "Administrator",
@@ -90,13 +92,16 @@ async function ensureAdminUser() {
             birth_date: "2000-01-01",
         });
 
-        await User.create({
+        const user = await User.create({
             email: adminEmail,
-            password_hash: hashedPassword,
+            password_hash: hashed,
             role: "admin",
             is_verified: true,
-            person_id: person.id,
+            person_id: person.id, // 🧩 hier wichtig
         });
+
+        // Person-Owner setzen
+        await person.update({ owner_id: user.id });
 
         console.log("✅ Default Admin erstellt:");
         console.log(`   Email: ${adminEmail}`);
@@ -105,6 +110,8 @@ async function ensureAdminUser() {
         console.error("❌ Fehler beim Anlegen des Admins:", err);
     }
 }
+
+
 
 // ============================================================
 // ✅ 5. DB-Sync + Serverstart
@@ -127,7 +134,9 @@ async function startServer() {
         console.log("✅ Database connected.");
 
         // 🔑 Admin anlegen
+        console.log("🚀 Starte ensureAdminUser()...");
         await ensureAdminUser();
+        console.log("✅ ensureAdminUser() beendet.");
 
         // 🚀 Server starten
         app.listen(PORT, "0.0.0.0", () => {
@@ -139,6 +148,7 @@ async function startServer() {
 }
 
 startServer();
+
 
 // ============================================================
 // ✅ 6. Token-Cleanup (1x täglich)

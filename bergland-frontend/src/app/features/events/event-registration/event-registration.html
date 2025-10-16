@@ -54,9 +54,9 @@
     <section class="registration-grid">
         <!-- 🔹 Linke Spalte -->
         <div class="left-form" [formGroup]="registrationForm">
-            <h3>📋 Event-Anmeldung</h3>
+            <h3 class="form-row">📋 Event-Anmeldung</h3>
 
-            <div class="form-group">
+            <div class="form-group form-row">
                 <label for="phone_number">Handynummer</label>
                 <input id="phone_number" type="text" formControlName="phone_number"
                     placeholder="z. B. +49 170 1234567" />
@@ -117,7 +117,8 @@
             <div [formGroup]="registrationForm">
                 <h3>👤 Teilnehmer</h3>
 
-                <div class="form-row">
+                <div class="form-row ">
+                    <div class="lbl-margin-top "></div>
                     <label>Teilnahme-Art</label>
                     <select formControlName="teilnahme_art">
                         <option value="einzeln">Einzeln</option>
@@ -159,9 +160,10 @@
                 }
             </div>
 
+
             <!-- 👥 Personenformular -->
             <form [formGroup]="personForm">
-                <div class="form-row">
+                <div class="form-row lbl-margin-top">
                     <label>Bestehende Person auswählen</label>
                     <select (change)="onSelectExistingPerson($event)">
                         <option value="">-- Bitte wählen --</option>
@@ -173,6 +175,7 @@
 
                 <p class="or-line">ODER neue Person erfassen</p>
 
+                <!-- 👤 Basisdaten -->
                 <div class="form-row"><label>Vorname</label><input formControlName="first_name" /></div>
                 <div class="form-row"><label>Nachname</label><input formControlName="last_name" /></div>
                 <div class="form-row">
@@ -181,14 +184,40 @@
                 </div>
                 <div class="form-row">
                     <label>E-Mail</label>
-                    <input formControlName="email" />
+                    <input formControlName="email" type="email" placeholder="beispiel@mail.de" />
+                </div>
+                <div class="form-row">
+                    <label>Telefonnummer</label>
+                    <input formControlName="phone" type="tel" placeholder="+49 170 1234567" />
+                </div>
+
+                <!-- 🏠 Adressdaten -->
+                <h4 class="address-heading">🏠 Adresse</h4>
+                <div class="form-row">
+                    <label>Straße / Hausnummer</label>
+                    <input formControlName="street" placeholder="z. B. Spinozastraße 18" />
+                </div>
+                <div class="form-row">
+                    <label>PLZ</label>
+                    <input formControlName="postal_code" placeholder="z. B. 67663" />
+                </div>
+                <div class="form-row">
+                    <label>Ort</label>
+                    <input formControlName="city" placeholder="z. B. Kaiserslautern" />
+                </div>
+                <div class="form-row">
+                    <label>Land</label>
+                    <input formControlName="country" placeholder="z. B. Deutschland" />
+                </div>
+
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="includeSelf" (change)="toggleSelfRegistration($event)">
+                    <label for="includeSelf">Mich selbst als Teilnehmer hinzufügen</label>
                 </div>
 
                 <button type="button" class="btn add-person-btn" (click)="addPerson()">Person hinzufügen</button>
             </form>
-
-
-
 
 
         </div>

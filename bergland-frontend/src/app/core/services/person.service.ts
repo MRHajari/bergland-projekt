@@ -1,15 +1,29 @@
 import { Injectable } from '@angular/core';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, throwError, map } from 'rxjs';
 import { ApiService } from '../api.service';
 
 export interface Person {
   id?: string;
+
+  // 🧑‍💼 Basisdaten
   first_name: string;
   last_name: string;
   birth_date?: string;
+
+  // 📧 Kontakt
   email?: string;
   phone?: string;
+
+  // 🏠 Adresse
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
+
+  // 👤 Beziehung zum User
   owner_id?: string | null;
+
+  // 📅 Systemdaten
   createdAt?: string;
   updatedAt?: string;
 }
@@ -22,10 +36,11 @@ export class PersonService {
 
   constructor(private api: ApiService) {}
 
-  // 🔹 Alle Personen abrufen (optional: nur eigene mit owner_id)
+  // 🔹 Alle Personen abrufen (optional gefiltert nach owner_id)
   getAll(ownerId?: string): Observable<Person[]> {
     const query = ownerId ? `?owner_id=${ownerId}` : '';
     return this.api.get<Person[]>(`${this.endpoint}${query}`).pipe(
+      map(persons => persons.sort((a, b) => a.last_name.localeCompare(b.last_name))),
       catchError(err => {
         console.error('❌ Fehler beim Laden der Personen:', err);
         return throwError(() => err);
@@ -33,7 +48,7 @@ export class PersonService {
     );
   }
 
-  // 🔹 Person nach ID abrufen
+  // 🔹 Eine Person nach ID abrufen
   getById(id: string): Observable<Person> {
     return this.api.getById<Person>(this.endpoint, id).pipe(
       catchError(err => {
@@ -44,8 +59,6 @@ export class PersonService {
   }
 
   // 🔹 Neue Person anlegen
-  // owner_id wird im Backend automatisch über Token gesetzt,
-  // kann aber manuell übergeben werden (z. B. für Admin-Funktionen)
   create(data: Person): Observable<Person> {
     return this.api.post<Person>(this.endpoint, data).pipe(
       catchError(err => {
@@ -73,5 +86,23 @@ export class PersonService {
         return throwError(() => err);
       })
     );
+  }
+
+  // 🔍 Suche nach Name oder Email (clientseitig)
+  search(persons: Person[], term: string): Person[] {
+    const lower = term.toLowerCase();
+    return persons.filter(
+      p =>
+        p.first_name?.toLowerCase().includes(lower) ||
+        p.last_name?.toLowerCase().includes(lower) ||
+        p.email?.toLowerCase().includes(lower) ||
+        p.city?.toLowerCase().includes(lower)
+    );
+  }
+
+  // 🧩 Hilfsfunktion: Vollständige Adresse anzeigen
+  formatAddress(person: Person): string {
+    const parts = [person.street, person.postal_code, person.city, person.country].filter(Boolean);
+    return parts.join(', ');
   }
 }

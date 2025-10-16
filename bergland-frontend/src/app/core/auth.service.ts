@@ -7,8 +7,17 @@ import { Observable, tap, catchError, throwError } from 'rxjs';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
 import { Router } from '@angular/router';
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+  person_id?: string | null;
+  first_name?: string;
+  last_name?: string;
+}
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private apiUrl = 'http://localhost:3000/api/auth';
@@ -34,13 +43,16 @@ export class AuthService {
   }
 
   // ============================================================
-  // 🔹 Login
+  // 🔹 Login (inkl. Speicherung des Benutzers)
   // ============================================================
   login(credentials: { email: string; password: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
       tap((res: any) => {
         if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
         if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
+
+        // 🧠 Benutzerobjekt (mit person_id!) speichern
+        if (res.user) localStorage.setItem('currentUser', JSON.stringify(res.user));
       }),
       catchError((err) => {
         console.error('❌ Login fehlgeschlagen:', err);
@@ -50,7 +62,7 @@ export class AuthService {
   }
 
   // ============================================================
-  // 🔹 Token Refresh
+  // 🔹 Token Refresh (auch hier currentUser aktualisieren)
   // ============================================================
   refreshToken(): Observable<any> {
     const token = localStorage.getItem('refreshToken');
@@ -58,10 +70,11 @@ export class AuthService {
       tap((res: any) => {
         if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
         if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
+        if (res.user) localStorage.setItem('currentUser', JSON.stringify(res.user));
       }),
       catchError((err) => {
         console.error('❌ Token-Aktualisierung fehlgeschlagen:', err);
-        this.logout(); // ⛔ automatisch ausloggen
+        this.clearSession();
         return throwError(() => err);
       })
     );
@@ -79,11 +92,14 @@ export class AuthService {
       })
     );
 
-    // Token sofort entfernen, unabhängig vom Ergebnis
+    this.clearSession();
+    return obs;
+  }
+
+  private clearSession() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-
-    return obs;
+    localStorage.removeItem('currentUser');
   }
 
   // ============================================================
@@ -105,26 +121,21 @@ export class AuthService {
     return localStorage.getItem('accessToken');
   }
 
+  getCurrentUser(): AuthUser | null {
+    const stored = localStorage.getItem('currentUser');
+    return stored ? JSON.parse(stored) : null;
+  }
+
   getUserId(): string | null {
-    const token = this.getAccessToken();
-    if (!token) return null;
-    try {
-      const payload = jwtDecode<{ user?: { id?: string } }>(token);
-      return payload.user?.id || null;
-    } catch {
-      return null;
-    }
+    return this.getCurrentUser()?.id || null;
+  }
+
+  getPersonId(): string | null {
+    return this.getCurrentUser()?.person_id || null;
   }
 
   getUserRole(): string | null {
-    const token = this.getAccessToken();
-    if (!token) return null;
-    try {
-      const payload = jwtDecode<{ user?: { role?: string } }>(token);
-      return payload.user?.role || null;
-    } catch {
-      return null;
-    }
+    return this.getCurrentUser()?.role || null;
   }
 
   isLoggedIn(): boolean {
