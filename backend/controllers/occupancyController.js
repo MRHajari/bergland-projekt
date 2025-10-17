@@ -1,3 +1,4 @@
+// backend/controllers/occupancyController.js
 const { Occupancy, Event, Accommodation } = require("../models");
 const occupancySchema = require("../validators/occupancyValidator");
 
@@ -7,11 +8,21 @@ exports.createOccupancy = async (req, res, next) => {
         const { error } = occupancySchema.validate(req.body);
         if (error) return res.status(400).json({ error: error.details[0].message });
 
-        const occupancy = await Occupancy.create(req.body);
-        res.json(occupancy);
+        const payload = {
+            ...req.body,
+            single_beds_total: req.body.single_beds_total || 0,
+            double_beds_total: req.body.double_beds_total || 0,
+            multi_beds_total: req.body.multi_beds_total || 0,
+            single_beds_booked: 0,
+            double_beds_booked: 0,
+            multi_beds_booked: 0,
+        };
+
+        const occupancy = await Occupancy.create(payload);
+        res.status(201).json(occupancy);
     } catch (err) {
         console.error("❌ Fehler beim Erstellen der Belegung:", err);
-        next(err);
+        return next(err);
     }
 };
 
@@ -27,11 +38,11 @@ exports.getAll = async (req, res, next) => {
         res.json(data);
     } catch (err) {
         console.error("❌ Fehler beim Laden:", err);
-        next(err);
+        return next(err);
     }
 };
 
-// 🔍 Nach Event
+// 🔍 Belegung nach Event
 exports.getByEvent = async (req, res, next) => {
     try {
         const data = await Occupancy.findAll({
@@ -41,7 +52,7 @@ exports.getByEvent = async (req, res, next) => {
         res.json(data);
     } catch (err) {
         console.error("❌ Fehler beim Laden der Event-Belegung:", err);
-        next(err);
+        return next(err);
     }
 };
 
@@ -55,7 +66,7 @@ exports.update = async (req, res, next) => {
         res.json(occupancy);
     } catch (err) {
         console.error("❌ Fehler beim Aktualisieren:", err);
-        next(err);
+        return next(err);
     }
 };
 
@@ -69,29 +80,29 @@ exports.delete = async (req, res, next) => {
         res.json({ message: "Occupancy deleted" });
     } catch (err) {
         console.error("❌ Fehler beim Löschen:", err);
-        next(err);
+        return next(err);
     }
 };
 
-
+// 🔄 Event ↔ Accommodation Zuordnungen aktualisieren
 exports.updateAssignments = async (req, res, next) => {
     try {
-        const { accommodation_id, assignments } = req.body;
+        const { event_id, assignments } = req.body;
 
-        if (!accommodation_id) {
-            return res.status(400).json({ error: "accommodation_id ist erforderlich" });
+        if (!event_id) {
+            return res.status(400).json({ error: "event_id ist erforderlich" });
         }
 
-        // 🧹 Alte Zuordnungen für diese Unterkunft löschen
-        await Occupancy.destroy({ where: { accommodation_id } });
+        // 🧹 Alte Zuordnungen für dieses Event löschen
+        await Occupancy.destroy({ where: { event_id } });
 
         // 🆕 Neue Zuordnungen einfügen
         if (Array.isArray(assignments) && assignments.length > 0) {
             const created = await Promise.all(
                 assignments.map((a) =>
                     Occupancy.create({
-                        accommodation_id,
-                        event_id: a.event_id,
+                        event_id,
+                        accommodation_id: a.accommodation_id,
                         single_beds_total: a.single_beds_total || 0,
                         double_beds_total: a.double_beds_total || 0,
                         multi_beds_total: a.multi_beds_total || 0,
@@ -107,6 +118,6 @@ exports.updateAssignments = async (req, res, next) => {
         return res.status(200).json({ message: "✅ Alle Zuordnungen entfernt (leer übermittelt)" });
     } catch (err) {
         console.error("❌ Fehler beim Aktualisieren der Zuordnungen:", err);
-        next(err);
+        return next(err);
     }
 };

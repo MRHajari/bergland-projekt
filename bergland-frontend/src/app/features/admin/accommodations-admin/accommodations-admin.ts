@@ -182,37 +182,37 @@ export class AccommodationsAdmin implements OnInit {
   // =====================================================
   // 🏨 Unterkunft auswählen (zum Verknüpfen mit Events)
   // =====================================================
-  selectAccommodation(acc: AccommodationInterface): void {
-    this.selectedAccommodation = acc;
-    this.loadOccupancies(acc.id!);
-  }
+  // selectAccommodation(acc: AccommodationInterface): void {
+  //   this.selectedAccommodation = acc;
+  //   this.loadOccupancies(acc.id!);
+  // }
 
   // =====================================================
   // 🧮 Belegungen laden + Events zuordnen
   // =====================================================
-  private loadOccupancies(accommodationId: string): void {
-    this.occupancyService.getByAccommodation(accommodationId).subscribe({
-      next: (data) => {
-        this.occupancies = data || [];
+  // private loadOccupancies(accommodationId: string): void {
+  //   this.occupancyService.getByAccommodation(accommodationId).subscribe({
+  //     next: (data) => {
+  //       this.occupancies = data || [];
 
-        // Alle Events durchlaufen → prüfen, ob schon zugeordnet
-        this.eventAssignments = this.events.map((e: EventInterface) => {
-          const match = this.occupancies.find((o) => o.event_id === e.id);
-          return {
-            event_id: e.id ?? '',
-            event_name: e.name,
-            single_beds_total: match?.single_beds_total ?? 0,
-            double_beds_total: match?.double_beds_total ?? 0,
-            multi_beds_total: match?.multi_beds_total ?? 0,
-            assigned: !!match,
-          };
-        });
-      },
-      error: (err) => {
-        console.error('Fehler beim Laden der Belegungen:', err);
-      },
-    });
-  }
+  //       // Alle Events durchlaufen → prüfen, ob schon zugeordnet
+  //       this.eventAssignments = this.events.map((e: EventInterface) => {
+  //         const match = this.occupancies.find((o) => o.event_id === e.id);
+  //         return {
+  //           event_id: e.id ?? '',
+  //           event_name: e.name,
+  //           single_beds_total: match?.single_beds_total ?? 0,
+  //           double_beds_total: match?.double_beds_total ?? 0,
+  //           multi_beds_total: match?.multi_beds_total ?? 0,
+  //           assigned: !!match,
+  //         };
+  //       });
+  //     },
+  //     error: (err) => {
+  //       console.error('Fehler beim Laden der Belegungen:', err);
+  //     },
+  //   });
+  // }
 
   // =====================================================
   // 💾 Zuordnungen speichern

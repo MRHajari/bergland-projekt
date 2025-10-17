@@ -1,18 +1,17 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { EventService } from '../../../core/services/event.service';
 import { RegistrationService } from '../../../core/services/user.registration.service';
-import { EventRegistrationService } from '../../../core/services/event-registration.service.js';
-import { RouterModule } from '@angular/router';
-
-
+import { EventRegistrationService } from '../../../core/services/event-registration.service';
+import { AccommodationService } from '../../../core/services/accommodation.service';
+import { OccupancyService } from '../../../core/services/occupancy.service';
 
 @Component({
   selector: 'app-events-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], 
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './events-admin.html',
   styleUrls: ['./events-admin.css']
 })
@@ -21,6 +20,8 @@ export class EventsAdmin implements OnInit {
   private registrationService = inject(RegistrationService);
   private eventRegistrationService = inject(EventRegistrationService);
   private router = inject(Router);
+  private accommodationService = inject(AccommodationService);
+private occupancyService = inject(OccupancyService);
 
   events: any[] = [];
   countsMap: Record<string, number> = {};
@@ -77,7 +78,6 @@ export class EventsAdmin implements OnInit {
     this.eventRegistrationService.getCountByEvent().subscribe({
       next: (map: Record<string, number>) => {
         this.countsMap = map || {};
-        console.log('📊 Event-Anmeldungen geladen:', this.countsMap);
       },
       error: (err) => {
         console.warn('⚠️ Konnte Anmeldungszahlen nicht laden:', err);
@@ -85,10 +85,9 @@ export class EventsAdmin implements OnInit {
       }
     });
   }
-  
 
   // =====================================================
-  // 🔹 Neues Event anlegen
+  // ➕ Neues Event anlegen
   // =====================================================
   addEvent(): void {
     if (!this.newEvent.name.trim()) {
@@ -112,7 +111,7 @@ export class EventsAdmin implements OnInit {
   }
 
   // =====================================================
-  // 🔹 Event bearbeiten / speichern / löschen
+  // ✏️ Event bearbeiten / speichern / löschen
   // =====================================================
   editEvent(e: any) {
     this.editingEvent = { ...e };
@@ -154,11 +153,95 @@ export class EventsAdmin implements OnInit {
   }
 
   // =====================================================
-  // 🔹 Details öffnen (Teilnehmerliste)
+  // 🔹 Teilnehmerliste öffnen
   // =====================================================
   viewRegistrations(eventId: string) {
-    this.router.navigate(['/admin/events', eventId, 'teilnehmer']);
+    this.router.navigate(['/admin/events', eventId, 'participants']);
   }
+
+// =====================================================
+// 🏨 Unterkunftszuordnung (Modal)
+// =====================================================
+showAccommodationModal = false;
+accommodations: any[] = [];
+eventOccupancies: Record<string, boolean> = {}; // { accommodationId: true|false }
+selectedEventId: string | null = null;
+
+
+// Modal öffnen
+openAccommodationModal(event: any) {
+  this.selectedEventId = event.id;
+  this.showAccommodationModal = true;
+
+  // Alle Unterkünfte laden
+  this.accommodationService.getAll().subscribe({
+    next: (data) => {
+      // Kein Filter – alle anzeigen
+      this.accommodations = data || [];
+      this.loadEventOccupancies(event.id);
+    },
+    error: (err) => {
+      console.error('Fehler beim Laden der Unterkünfte:', err);
+    },
+  });
+}
+
+// Bestehende Zuordnungen für Event laden
+loadEventOccupancies(eventId: string) {
+  this.occupancyService.getByEvent(eventId).subscribe({
+    next: (data) => {
+      this.eventOccupancies = {};
+      data.forEach((o) => (this.eventOccupancies[o.accommodation_id] = true));
+    },
+    error: (err) => {
+      console.error('Fehler beim Laden der Belegungen:', err);
+    },
+  });
+}
+
+// Auswahl ändern (Checkbox)
+toggleAccommodation(accId: string, checked: boolean) {
+  this.eventOccupancies[accId] = checked;
+}
+
+// Änderungen speichern
+saveAccommodationAssignments() {
+  if (!this.selectedEventId) return;
+
+  const assignments = Object.entries(this.eventOccupancies)
+    .filter(([_, assigned]) => assigned)
+    .map(([accommodation_id]) => ({
+      accommodation_id,
+      event_id: this.selectedEventId!,
+    }));
+
+  this.occupancyService.updateAssignments(this.selectedEventId!, assignments).subscribe({
+    next: () => {
+      this.showAccommodationModal = false;
+      this.selectedEventId = null;
+      this.loadEvents(); // aktualisiere Anzeige
+    },
+    error: (err) => {
+      console.error('Fehler beim Speichern der Zuordnungen:', err);
+      alert('❌ Fehler beim Speichern.');
+    },
+  });
+}
+
+// Modal schließen
+closeAccommodationModal() {
+  this.showAccommodationModal = false;
+  this.selectedEventId = null;
+}
+
+/** 🏨 Gibt die Unterkünfte als kommagetrennte Liste zurück */
+getAccommodationNames(event: any): string {
+  if (!event.accommodations || event.accommodations.length === 0) {
+    return '–';
+  }
+  return event.accommodations.map((a: any) => a.name).join(', ');
+}
+
 
   // =====================================================
   // 🔹 Helferfunktionen

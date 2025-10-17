@@ -1,4 +1,3 @@
-// backend/routes/eventRoutes.js
 const express = require("express");
 const router = express.Router();
 const eventController = require("../controllers/eventController");
@@ -26,5 +25,11 @@ router.put("/:id", authenticateToken, authorizeAdmin, eventController.updateEven
 
 // 🗑️ Event löschen
 router.delete("/:id", authenticateToken, authorizeAdmin, eventController.deleteEvent);
+
+// ============================================================
+// 🏨 Unterkünfte (Occupancies) für ein Event abrufen
+// ============================================================
+const { getByEvent } = require("../controllers/occupancyController");
+router.get("/:eventId/occupancies", authenticateToken, getByEvent);
 
 module.exports = router;

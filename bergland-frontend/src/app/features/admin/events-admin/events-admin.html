@@ -57,20 +57,27 @@
         <table class="user-table">
             <thead>
                 <tr>
-                    <th>Name</th>
+                    <th>Name / Beschreibung</th>
                     <th>Zeitraum</th>
                     <th>Anmeldeschluss</th>
                     <th>Anmeldungen</th>
+                    <th>Unterkünfte</th> <!-- 🏨 Neue Spalte -->
                     <th>Aktionen</th>
                 </tr>
             </thead>
+
 
             <tbody>
                 @for (e of pagedEvents; track e.id) {
                 <tr>
                     <td>
                         @if (editingEvent?.id === e.id) {
-                        <input [(ngModel)]="editingEvent.name" />
+                        <div class="edit-grid">
+                            <label>Name:</label>
+                            <input [(ngModel)]="editingEvent.name" />
+                            <label>Beschreibung:</label>
+                            <textarea [(ngModel)]="editingEvent.description" rows="1"></textarea>
+                        </div>
                         } @else {
                         <strong>{{ e.name }}</strong><br />
                         <small class="desc">{{ e.description }}</small>
@@ -78,11 +85,34 @@
                     </td>
 
                     <td>
-                        {{ e.start_date | date:'dd.MM.yyyy' }} – {{ e.end_date | date:'dd.MM.yyyy' }}
+                        @if (editingEvent?.id === e.id) {
+                        <div class="edit-grid">
+                            <input type="date" [(ngModel)]="editingEvent.start_date" />
+                            <input type="date" [(ngModel)]="editingEvent.end_date" />
+                        </div>
+                        } @else {
+                        {{ e.start_date | date: 'dd.MM.yyyy' }} – {{ e.end_date | date: 'dd.MM.yyyy' }}
+                        }
                     </td>
 
-                    <td>{{ e.registration_deadline | date:'dd.MM.yyyy' }}</td>
+                    <td>
+                        @if (editingEvent?.id === e.id) {
+                        <input type="date" [(ngModel)]="editingEvent.registration_deadline" />
+                        } @else {
+                        {{ e.registration_deadline | date: 'dd.MM.yyyy' }}
+                        }
+                    </td>
+
                     <td class="count">{{ countsMap[e.id] || 0 }}</td>
+                    <td>
+                        @if (e.accommodations?.length) {
+                        <small>{{ getAccommodationNames(e) }}</small>
+                        }
+                        @if (!e.accommodations?.length) {
+                        <small>–</small>
+
+                        }
+                    </td>
 
                     <td class="button-group">
                         @if (editingEvent?.id === e.id) {
@@ -91,11 +121,10 @@
                         } @else {
                         <button class="secondary" (click)="editEvent(e)">Bearbeiten</button>
                         <button class="danger" (click)="deleteEvent(e.id, e.name)">Löschen</button>
-                        <button class="details" [routerLink]="['/admin/events', e.id, 'participants']">
-                            👥 Teilnehmer
-                        </button> }
+                        <button class="details" (click)="viewRegistrations(e.id)">👥 Teilnehmer</button>
+                        <button class="secondary" (click)="openAccommodationModal(e)">🏨 Unterkünfte</button>
+                        }
                     </td>
-
                 </tr>
                 }
             </tbody>
@@ -109,4 +138,36 @@
         }
     </section>
     }
-</div>
+
+    <!-- ===================================================== -->
+    <!-- 🏨 Unterkunftszuordnung Modal -->
+    <!-- ===================================================== -->
+    @if (showAccommodationModal) {
+    <div class="modal-backdrop" (click)="closeAccommodationModal()"></div>
+
+    <div class="modal">
+        <h2>🏨 Unterkünfte zuordnen</h2>
+        <p>Wähle die Unterkünfte aus, die diesem Event zugeordnet werden sollen.</p>
+
+        <div class="modal-list">
+            @for (acc of accommodations; track acc.id) {
+            <div class="modal-item">
+                <input type="checkbox" [checked]="eventOccupancies[acc.id]"
+                    (change)="toggleAccommodation(acc.id, $event.target.checked)" />
+                <div class="accommodation-info">
+                    <strong>{{ acc.name }}</strong>
+                    <span class="city">– {{ acc.city }}</span>
+                    <span class="details">
+                        (EZ: {{ acc.single_rooms }}, DZ: {{ acc.double_rooms }}, MBZ: {{ acc.multi_bed_rooms }})
+                    </span>
+                </div>
+            </div>
+            }
+        </div>
+
+        <div class="modal-actions">
+            <button class="primary" (click)="saveAccommodationAssignments()">💾 Speichern</button>
+            <button class="secondary" (click)="closeAccommodationModal()">Abbrechen</button>
+        </div>
+    </div>
+    }

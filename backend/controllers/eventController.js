@@ -7,12 +7,15 @@ const {
     Occupancy,
     Booking,
     Person,
+    Accommodation,
 } = require("../models");
 
 const { validateEvent } = require("../validators/eventValidator");
 
+
+
 // ============================================================
-// 📋 Alle Events abrufen (mit verknüpften Daten)
+// 📋 Alle Events abrufen (mit Unterkünften)
 // ============================================================
 exports.getAllEvents = async (req, res) => {
     try {
@@ -21,15 +24,28 @@ exports.getAllEvents = async (req, res) => {
                 { model: Route, as: "routes" },
                 { model: Squadron, as: "squadrons" },
                 { model: EventRegistration, as: "eventRegistrations" },
+                {
+                    model: Occupancy,
+                    as: "occupancies",
+                    include: [
+                        {
+                            model: Accommodation,
+                            as: "accommodation",
+                            attributes: ["id", "name", "city", "street", "postal_code"],
+                        },
+                    ],
+                },
             ],
             order: [["start_date", "ASC"]],
         });
 
+        // 🔄 Wir mappen alle Unterkünfte flach in ein `accommodations`-Array
         const result = events.map((e) => ({
             ...e.toJSON(),
             route_count: e.routes?.length || 0,
             squadron_count: e.squadrons?.length || 0,
             registration_count: e.eventRegistrations?.length || 0,
+            accommodations: e.occupancies?.map((o) => o.accommodation).filter(Boolean) || [],
         }));
 
         res.json(result);

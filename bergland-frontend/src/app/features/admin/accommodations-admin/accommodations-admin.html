@@ -56,6 +56,8 @@
 
                 <div class="form-actions">
                 </div>
+
+
                 <div class="form-actions">
                     <button type="submit" class="primary">Hinzufügen</button>
                 </div>
@@ -130,7 +132,7 @@
                         <button (click)="cancelEdit()">Abbrechen</button>
                         } @else {
                         <button class="secondary" (click)="editAccommodation(a)">Bearbeiten</button>
-                        <button class="primary" (click)="selectAccommodation(a)">Events zuordnen</button>
+                        <!-- <button class="primary" (click)="selectAccommodation(a)">Events zuordnen</button> -->
                         <button class="danger" (click)="deleteAccommodation(a.id || '', a.name)">Löschen</button>
                         }
                     </td>

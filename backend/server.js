@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
 const { sequelize, Person, User, Token } = require("./models");
+const occupancyRoutes = require("./routes/occupancyRoutes");
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +28,7 @@ app.use(bodyParser.json());
 // ============================================================
 app.get("/", (req, res) => res.send("Backend is running 🚀"));
 
+
 // ============================================================
 // ✅ 3. Import aller Routen
 // ============================================================
@@ -42,6 +45,7 @@ app.use("/api/event-registrations", require("./routes/eventRegistrationRoutes"))
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/invoices", require("./routes/invoiceRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
+app.use("/api/occupancies", occupancyRoutes);
 
 
 // ============================================================

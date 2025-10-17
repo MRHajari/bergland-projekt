@@ -28,11 +28,12 @@ exports.getAllAccommodations = async (req, res, next) => {
             include: [
                 {
                     model: Occupancy,
-                    as: "occupancies", // 👈 wichtig: gleicher Alias wie in associations
+                    as: "occupancies",
+                    required: false, // ✅ auch Unterkünfte ohne Belegung laden
                     include: [
                         {
                             model: Event,
-                            as: "event", // 👈 ebenfalls identisch mit dem Alias im Occupancy-Modell
+                            as: "event",
                             attributes: ["id", "name", "start_date", "end_date"],
                         },
                     ],
