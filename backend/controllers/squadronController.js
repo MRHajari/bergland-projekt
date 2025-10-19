@@ -46,26 +46,37 @@ exports.getAllSquadrons = async (req, res, next) => {
     }
 };
 
-// 🔍 Staffeln eines bestimmten Events
+// 🔍 Staffeln eines bestimmten Events (inkl. Mitglieder)
 exports.getByEvent = async (req, res, next) => {
     try {
         const { eventId } = req.params;
+        if (!eventId) {
+            return res.status(400).json({ error: "Event-ID fehlt" });
+        }
+
         const squadrons = await Squadron.findAll({
             where: { event_id: eventId },
             include: [
                 {
                     model: Person,
-                    attributes: ["id", "first_name", "last_name"],
+                    as: "persons", // ✅ wichtig!
+                    attributes: ["id", "first_name", "last_name", "email"],
                     through: { attributes: ["note"] },
                 },
             ],
+            order: [["createdAt", "DESC"]],
         });
+
         res.json(squadrons);
     } catch (err) {
         console.error("❌ Fehler beim Laden der Staffeln für Event:", err);
-        next(err);
+        res
+            .status(500)
+            .json({ error: "Fehler beim Laden der Staffeln.", details: err.message });
     }
 };
+
+
 
 // 🔎 Staffel per ID (inkl. Mitglieder)
 exports.getSquadronById = async (req, res, next) => {

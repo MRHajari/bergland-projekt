@@ -211,10 +211,14 @@
                 </div>
 
 
+                @if (!isSelfAlreadyAdded) {
                 <div class="checkbox-row">
                     <input type="checkbox" id="includeSelf" (change)="toggleSelfRegistration($event)">
                     <label for="includeSelf">Mich selbst als Teilnehmer hinzufügen</label>
                 </div>
+                }
+
+
 
                 <button type="button" class="btn add-person-btn" (click)="addPerson()">Person hinzufügen</button>
             </form>
@@ -231,7 +235,7 @@
             <li>
                 ✅
                 <span *ngIf="p.squadronName" class="squadron-label">
-                    🧭 {{ p.squadronName }} —
+                    🧭 {{ p.squadronName }}
                 </span>
                 {{ p.first_name }} {{ p.last_name }}
                 <button type="button" class="btn small danger" title="Person löschen" (click)="removePerson(p.id)">
@@ -251,13 +255,16 @@
         @if (!isRegistered) {
         <button class="btn primary" (click)="registerAll()">Jetzt anmelden</button>
         } @else {
-        <button class="btn primary" (click)="updateRegistration()">Anmeldung bearbeiten</button>
+        <button class="btn primary" (click)="updateRegistration()">Speichern</button>
         }
 
         @if (isRegistered) {
         <button class="btn secondary" (click)="goToAccommodation()">Unterkunft buchen</button>
+        <button class="btn danger" (click)="cancelRegistration()">❌ Anmeldung stornieren</button>
         }
+
         <button class="btn neutral" (click)="goToMyRegistrations()">Meine Anmeldungen</button>
     </section>
+
     }
 </div>

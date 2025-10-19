@@ -1,0 +1,55 @@
+<div class="my-registrations-container">
+    @if (loading) {
+    <p class="loading">⏳ Lade deine Anmeldungen...</p>
+    } @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    } @else if (registrations.length === 0) {
+    <p class="empty">Du hast bisher keine Anmeldungen.</p>
+    } @else {
+    <h2>📋 Meine Event-Anmeldungen</h2>
+
+    <ul class="registration-list">
+        @for (reg of registrations; track reg.eventId) {
+        <li class="registration-card">
+            <!-- HEADER -->
+            <header class="reg-header">
+                <h3>{{ reg.eventName }}</h3>
+                <span class="date">
+                    📅 {{ reg.eventStart | date: 'dd.MM.yyyy' }}
+                    @if (reg.eventEnd && reg.eventEnd !== reg.eventStart) {
+                    – {{ reg.eventEnd | date: 'dd.MM.yyyy' }}
+                    }
+                </span>
+            </header>
+
+            <!-- BODY -->
+            <div class="reg-body">
+                <div class="reg-column">
+                    <p>👥 <strong>Angemeldete Personen:</strong> {{ reg.participantCount }}</p>
+                    <p>🧭 <strong>Staffeln:</strong> {{ reg.squadronCount }}</p>
+                    <p>📞 <strong>Telefonnummer:</strong> {{ reg.phone_number || '-' }}</p>
+                    <p>🚗 <strong>Kennzeichen:</strong> {{ reg.license_plate || '-' }}</p>
+                </div>
+
+                <div class="reg-column">
+                    <p>🎽 <strong>Startnummer:</strong> {{ reg.start_number || '-' }}</p>
+                    <p>🍴 <strong>Verpflegung:</strong> {{ reg.catering_type || '-' }}</p>
+                    <p>💬 <strong>Wünsche:</strong> {{ reg.wishes || '-' }}</p>
+                    <p>📋 <strong>Status:</strong>
+                        <span [class]="reg.status === 'bestätigt' ? 'status ok' : 'status pending'">
+                            {{ reg.status }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="actions">
+                <button class="btn primary" (click)="goToEvent(reg.eventId)">📝 Bearbeiten</button>
+                <button class="btn danger" (click)="cancelRegistration(reg.eventId)">❌ Stornieren</button>
+            </div>
+        </li>
+        }
+    </ul>
+    }
+</div>
