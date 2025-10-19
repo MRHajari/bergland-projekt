@@ -34,8 +34,8 @@ export class Booking implements OnInit {
   // ==============================================================
   ngOnInit(): void {
     this.eventId = this.route.snapshot.queryParamMap.get('eventId');
-
     const userId = this.authService.getUserId();
+
     if (!userId) {
       this.errorMessage = 'Bitte logge dich ein, um deine Buchungen zu sehen.';
       this.loading = false;
@@ -44,7 +44,7 @@ export class Booking implements OnInit {
 
     if (this.eventId) {
       // Wenn von Event-Seite mit eventId gekommen → Unterkünfte laden
-      this.loadAccommodations(this.eventId, userId);
+      this.loadAccommodations(this.eventId);
     } else {
       // Wenn kein Event → persönliche Buchungen anzeigen
       this.loadBookings(userId);
@@ -71,11 +71,11 @@ export class Booking implements OnInit {
   // ==============================================================
   // 🔹 Unterkünfte für das aktuelle Event laden
   // ==============================================================
-  private loadAccommodations(eventId: string, userId: string): void {
+  private loadAccommodations(eventId: string): void {
     this.loading = true;
     this.errorMessage = '';
 
-    this.accommodationService.getByEvent(eventId, userId).subscribe({
+    this.accommodationService.getByEvent(eventId).subscribe({
       next: (data) => {
         this.accommodations = data || [];
         this.loading = false;
@@ -83,9 +83,9 @@ export class Booking implements OnInit {
       error: (err) => {
         console.error('❌ Fehler beim Laden der Unterkünfte:', err);
 
-        // Wenn 403 → Benutzer nicht registriert
         if (err.status === 403) {
-          this.errorMessage = '⚠️ Du bist für dieses Event nicht registriert und kannst keine Unterkünfte sehen.';
+          this.errorMessage =
+            '⚠️ Du bist für dieses Event nicht registriert und kannst keine Unterkünfte sehen.';
         } else {
           this.errorMessage = '❌ Unterkünfte konnten nicht geladen werden.';
         }
@@ -100,9 +100,8 @@ export class Booking implements OnInit {
   // ==============================================================
   async bookAccommodation(acc: AccommodationInterface): Promise<void> {
     const userId = this.authService.getUserId();
-    const personId = (this.authService as any)?.currentUserValue?.person_id;
 
-    if (!userId || !personId) {
+    if (!userId) {
       alert('⚠️ Kein gültiger Benutzer gefunden.');
       return;
     }
@@ -113,8 +112,8 @@ export class Booking implements OnInit {
     }
 
     const payload: BookingInterface = {
+      user_id: userId,              // ✅ statt person_id
       event_id: this.eventId,
-      person_id: personId,
       accommodation_id: acc.id!,
       single_beds: 1,
       double_beds: 0,

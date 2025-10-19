@@ -63,11 +63,8 @@ export class AccommodationService {
 
 
   // 🔹 Unterkünfte eines bestimmten Events laden
-  getByEvent(eventId: string, userId?: string): Observable<AccommodationInterface[]> {
-    const url = userId
-      ? `${this.endpoint}?event_id=${eventId}&user_id=${userId}`
-      : `${this.endpoint}?event_id=${eventId}`;
-    return this.api.get(url);
+  getByEvent(eventId: string): Observable<AccommodationInterface[]> {
+    return this.api.get<AccommodationInterface[]>(`occupancies/events/${eventId}/accommodations`);
   }
   
 }

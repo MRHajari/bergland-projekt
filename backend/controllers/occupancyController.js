@@ -121,3 +121,42 @@ exports.updateAssignments = async (req, res, next) => {
         return next(err);
     }
 };
+
+// backend/controllers/occupancyController.js
+exports.getAccommodationsByEvent = async (req, res, next) => {
+    try {
+        const eventId = req.params.eventId;
+
+        const occupancies = await Occupancy.findAll({
+            where: { event_id: eventId },
+            include: [
+                {
+                    model: Accommodation,
+                    as: "accommodation",
+                    attributes: [
+                        "id",
+                        "name",
+                        "street",
+                        "postal_code",
+                        "city",
+                        "country",
+                        "single_rooms",
+                        "double_rooms",
+                        "multi_bed_rooms",
+                        "description",
+                    ],
+                },
+            ],
+        });
+
+        // 🔹 Nur die Unterkünfte extrahieren
+        const accommodations = occupancies
+            .map((occ) => occ.accommodation)
+            .filter((acc) => !!acc);
+
+        res.json(accommodations);
+    } catch (err) {
+        console.error("❌ Fehler beim Laden der Unterkünfte für Event:", err);
+        return next(err);
+    }
+};

@@ -82,21 +82,43 @@ Invoice.belongsTo(Person, {
     as: "person",
 });
 
-// 🏡 BOOKING ↔ EVENT ↔ PERSON ↔ ACCOMMODATION
-Booking.belongsTo(Event, { foreignKey: "event_id", as: "event" });
-Event.hasMany(Booking, { foreignKey: "event_id", as: "bookings" });
+// 🏡 BOOKING ↔ EVENT ↔ USER ↔ ACCOMMODATION
+// --------------------------------------------------------------
+// Eine Buchung gehört zu einem Event, wird vom User erstellt
+// und ist einer Unterkunft zugeordnet.
+Booking.belongsTo(Event, {
+    foreignKey: "event_id",
+    as: "event",
+    onDelete: "CASCADE",
+});
+Event.hasMany(Booking, {
+    foreignKey: "event_id",
+    as: "bookings",
+    onDelete: "CASCADE",
+});
 
-Booking.belongsTo(Person, { foreignKey: "person_id", as: "person" });
-Person.hasMany(Booking, { foreignKey: "person_id", as: "bookings" });
+Booking.belongsTo(User, {
+    foreignKey: "user_id",
+    as: "user",
+    onDelete: "CASCADE",
+});
+User.hasMany(Booking, {
+    foreignKey: "user_id",
+    as: "bookings",
+    onDelete: "CASCADE",
+});
 
 Booking.belongsTo(Accommodation, {
     foreignKey: "accommodation_id",
     as: "accommodation",
+    onDelete: "CASCADE",
 });
 Accommodation.hasMany(Booking, {
     foreignKey: "accommodation_id",
     as: "bookings",
+    onDelete: "CASCADE",
 });
+
 
 // 🪪 EVENT ↔ SQUADRON (1:n)
 Event.hasMany(Squadron, {

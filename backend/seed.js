@@ -24,8 +24,9 @@ module.exports = async function runSeed() {
     try {
         await sequelize.sync({ force: true });
         console.log("✅ Tabellen neu erstellt.");
+
         // =====================================================
-        // 🔐 BENUTZER + PERSONEN (in Transaktion)
+        // 🔐 BENUTZER + PERSONEN
         // =====================================================
         const hashedAdmin = await bcrypt.hash("Admin123!", 10);
         const hashedUser = await bcrypt.hash("User123!", 10);
@@ -114,7 +115,6 @@ module.exports = async function runSeed() {
 
         for (const data of userData) {
             const result = await sequelize.transaction(async (t) => {
-                // 1️⃣ Person anlegen
                 const person = await Person.create(
                     {
                         first_name: data.first_name,
@@ -130,7 +130,6 @@ module.exports = async function runSeed() {
                     { transaction: t }
                 );
 
-                // 2️⃣ User mit person_id verknüpfen
                 const user = await User.create(
                     {
                         email: data.email,
@@ -142,7 +141,6 @@ module.exports = async function runSeed() {
                     { transaction: t }
                 );
 
-                // 3️⃣ Person.owner_id auf User.id setzen
                 await person.update({ owner_id: user.id }, { transaction: t });
 
                 return { user, person };
@@ -153,6 +151,7 @@ module.exports = async function runSeed() {
         }
 
         console.log("🔗 Benutzer & Personen erstellt und verknüpft.");
+
         // =====================================================
         // 🏨 UNTERKÜNFTE
         // =====================================================
@@ -231,7 +230,7 @@ module.exports = async function runSeed() {
         // =====================================================
         // 🗺️ ROUTEN
         // =====================================================
-        const routes = await Route.bulkCreate([
+        await Route.bulkCreate([
             { name: "Tirol Panorama Strecke", distance_km: 21.1, difficulty: "schwer", event_id: events[0].id },
             { name: "Pfälzer Hügelrunde", distance_km: 10, difficulty: "mittel", event_id: events[1].id },
             { name: "Isar Parkrunde", distance_km: 5, difficulty: "leicht", event_id: events[2].id },
@@ -240,7 +239,7 @@ module.exports = async function runSeed() {
         console.log("🗺️ Routen erstellt.");
 
         // =====================================================
-        // 🧭 STAFFELN (Squadrons)
+        // 🧭 STAFFELN
         // =====================================================
         const squadrons = await Squadron.bulkCreate([
             { name: "TrailRunners Pfalz", start_number: "STF-2025-01", members_count: 4, description: "4er-Staffel Halbmarathon", event_id: events[0].id },
@@ -248,19 +247,6 @@ module.exports = async function runSeed() {
             { name: "Kaiserslautern Power", start_number: "STF-2025-03", members_count: 5, description: "5er-Team Winterlauf", event_id: events[3].id },
         ]);
         console.log("🧭 Staffeln erstellt.");
-
-        // =====================================================
-        // 👥 PERSON ↔ STAFFEL (n:m)
-        // =====================================================
-        await RelPersonSquadron.bulkCreate([
-            { person_id: persons[0].id, squadron_id: squadrons[0].id, note: "Teamleiter" },
-            { person_id: persons[1].id, squadron_id: squadrons[0].id, note: "Mitläuferin" },
-            { person_id: persons[2].id, squadron_id: squadrons[1].id, note: "Läuferin" },
-            { person_id: persons[3].id, squadron_id: squadrons[1].id, note: "Backup" },
-            { person_id: persons[4].id, squadron_id: squadrons[2].id, note: "Jugendlauf" },
-            { person_id: persons[5].id, squadron_id: squadrons[2].id, note: "Jugendlauf" },
-        ]);
-        console.log("👥 Personen mit Staffeln verknüpft.");
 
         // =====================================================
         // 📝 EVENT-REGISTRIERUNGEN
@@ -284,56 +270,56 @@ module.exports = async function runSeed() {
                 liability_accept: true,
                 status: "in_auswahl",
             },
-            {
-                person_id: persons[4].id,
-                event_id: events[2].id,
-                squadron_id: null,
-                participation_type: "familie",
-                wishes: "mit Kind",
-                liability_accept: true,
-                status: "bestätigt",
-            },
-            {
-                person_id: persons[5].id,
-                event_id: events[3].id,
-                squadron_id: squadrons[2].id,
-                participation_type: "staffel",
-                wishes: "vegetarisch",
-                liability_accept: true,
-                status: "offen",
-            },
         ]);
         console.log("📝 Event-Registrierungen erstellt.");
 
         // =====================================================
         // 💰 PRODUKTE & RECHNUNGEN
         // =====================================================
-        const products = await Product.bulkCreate([
+        await Product.bulkCreate([
             { name: "Startgebühr Berglauf", price: 39.5, vat: 19 },
             { name: "T-Shirt Lauf 2025", price: 15, vat: 19 },
             { name: "Medaille Gravur", price: 9.9, vat: 19 },
         ]);
         console.log("💰 Produkte erstellt.");
 
-        const invoices = await Invoice.bulkCreate([
+        await Invoice.bulkCreate([
             { person_id: persons[0].id, total_amount: 64.4, status: "bezahlt", issued_date: "2025-06-15" },
             { person_id: persons[2].id, total_amount: 54.5, status: "offen", issued_date: "2025-09-10" },
         ]);
         console.log("🧾 Rechnungen erstellt.");
 
         // =====================================================
-        // 🛏️ BUCHUNGEN
+        // 🛏️ BUCHUNGEN (neu mit user_id)
         // =====================================================
         await Booking.bulkCreate([
-            { person_id: persons[0].id, accommodation_id: accommodations[0].id, event_id: events[0].id, nights: 2, total_price: 150 },
-            { person_id: persons[1].id, accommodation_id: accommodations[1].id, event_id: events[1].id, nights: 1, total_price: 90 },
-            { person_id: persons[2].id, accommodation_id: accommodations[2].id, event_id: events[2].id, nights: 2, total_price: 120 },
+            {
+                user_id: users[0].id,
+                accommodation_id: accommodations[0].id,
+                event_id: events[0].id,
+                single_beds: 1,
+                double_beds: 0,
+                multi_beds: 0,
+            },
+            {
+                user_id: users[1].id,
+                accommodation_id: accommodations[1].id,
+                event_id: events[1].id,
+                single_beds: 1,
+                double_beds: 1,
+                multi_beds: 0,
+            },
+            {
+                user_id: users[2].id,
+                accommodation_id: accommodations[2].id,
+                event_id: events[2].id,
+                single_beds: 2,
+                double_beds: 0,
+                multi_beds: 1,
+            },
         ]);
         console.log("🛏️ Buchungen erstellt.");
 
-        // =====================================================
-        // ✅ FERTIG
-        // =====================================================
         console.log("✅ Seeding erfolgreich abgeschlossen!");
     } catch (err) {
         console.error("❌ Fehler beim Seeding:", err);

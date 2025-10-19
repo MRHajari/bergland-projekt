@@ -101,7 +101,6 @@ export class EventRegistration implements OnInit {
 private async loadExistingRegistration(eventId: string) {
   try {
     const userId = this.authService.getUserId();
-    console.log('🔍 Lade bestehende Registrierung: user_id =', userId);
 
     if (!userId) {
       console.warn('⚠️ Kein eingeloggter Benutzer gefunden.');
@@ -114,7 +113,6 @@ private async loadExistingRegistration(eventId: string) {
       console.warn('⚠️ Keine Personen gefunden, die diesem Benutzer gehören.');
       return;
     }
-    console.log('🧩 Personen dieses Users:', persons.map((p) => p.id));
 
     // 2️⃣ Registrierungen für jede Person laden
     const allRegs = await Promise.all(
@@ -124,11 +122,9 @@ private async loadExistingRegistration(eventId: string) {
     );
 
     const flatRegs = allRegs.flat() as EventRegistrationInterface[];
-    console.log('🔍 Gefundene Registrierungen (gesamt):', flatRegs);
 
     // 3️⃣ Filtere nur Registrierungen für dieses Event
     this.existingRegs = flatRegs.filter((r) => r.event_id === eventId);
-    console.log('📦 Registrierungen für aktuelles Event:', this.existingRegs);
 
     // 4️⃣ Staffel-Infos vorbereiten
     const squadronMap: Record<string, string> = {};
@@ -181,8 +177,6 @@ private async loadExistingRegistration(eventId: string) {
       this.addedPersons = [];
       this.existingPersons = persons;
 
-
-      console.log('ℹ️ Keine Registrierung für dieses Event, zeige alle Personen als auswählbar.');
     }
   } catch (err) {
     console.warn('❌ Fehler beim Laden bestehender Registrierungen:', err);

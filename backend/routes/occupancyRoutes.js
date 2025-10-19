@@ -26,4 +26,12 @@ router.post(
     occupancyController.updateAssignments
 );
 
+// backend/routes/occupancy.routes.js
+router.get(
+    "/events/:eventId/accommodations",
+    authenticateToken,
+    occupancyController.getAccommodationsByEvent
+);
+
+
 module.exports = router;
