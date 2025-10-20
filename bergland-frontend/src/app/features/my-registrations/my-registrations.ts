@@ -46,63 +46,42 @@ export class MyRegistrations implements OnInit {
     try {
       const userId = this.authService.getUserId();
       if (!userId) throw new Error('Kein Benutzer eingeloggt.');
+  
+      // 🔹 Registrierungen direkt per User laden
+      const regs = await firstValueFrom(this.registrationService.getByUser(userId));
+  
+      console.log('Registrierungen des Benutzers:', regs);
 
-      // 1️⃣ Personen des eingeloggten Users laden
-      const persons = await firstValueFrom(this.personService.getAll(userId));
-      if (!persons || persons.length === 0) {
-        this.errorMessage = '⚠️ Keine Personen gefunden.';
+      if (!regs || regs.length === 0) {
         this.loading = false;
         return;
       }
-
-      // 2️⃣ Alle Registrierungen dieser Personen abrufen
-      const allRegsNested = await Promise.all(
-        persons.map((p) => firstValueFrom(this.registrationService.getByPerson(p.id!)))
-      );
-      const flatRegs = allRegsNested.flat() as EventRegistrationInterface[];
-
-      if (flatRegs.length === 0) {
-        this.loading = false;
-        return;
-      }
-
-      // 3️⃣ Alle zugehörigen Events und Staffeln laden
-      const eventIds = [...new Set(flatRegs.map((r) => r.event_id))];
-      const events = await Promise.all(
-        eventIds.map((id) => firstValueFrom(this.eventService.getById(id)))
-      );
-      const allSquadrons = (
-        await Promise.all(
-          eventIds.map((id) =>
-            firstValueFrom(this.squadronService.getByEvent(id))
-          )
-        )
-      ).flat();
-
-      // 4️⃣ Gruppiere Registrierungen pro Event (eine Zeile pro Event)
-      this.registrations = eventIds.map((eventId) => {
-        const eventRegs = flatRegs.filter((r) => r.event_id === eventId);
-        const evt = events.find((e) => e.id === eventId);
-        const squads = allSquadrons.filter((s) => s.event_id === eventId);
-
-        const ref = eventRegs[0]; // repräsentative Registrierung
-
+  
+      // 🔹 Events holen
+      const eventIds = [...new Set(regs.map((r) => r.event_id))];
+      const events = await Promise.all(eventIds.map((id) => firstValueFrom(this.eventService.getById(id))));
+  
+      // 🔹 Registrierungen zusammenfassen
+      this.registrations = regs.map((r) => {
+        const evt = events.find((e) => e.id === r.event_id);
+        const participants = r.participants?.length || 0;
+  
         return {
-          eventId,
+          eventId: r.event_id,
           eventName: evt?.name || 'Unbekanntes Event',
           eventStart: evt?.start_date || '',
           eventEnd: evt?.end_date || '',
-          participantCount: eventRegs.length,
-          squadronCount: squads.length,
-          status: ref.status || 'in_auswahl',
-          wishes: ref.wishes || null,
-          catering_type: ref.catering_type || null,
-          license_plate: ref.license_plate || null,
-          start_number: ref.start_number || null,
-          phone_number: ref.phone_number || null,
+          participantCount: participants,
+          squadronCount: r.participants?.filter((p) => p.squadron_id)?.length || 0,
+          status: r.status || 'in_auswahl',
+          wishes: r.wishes || null,
+          catering_type: r.catering_type || null,
+          license_plate: r.license_plate || null,
+          start_number: r.start_number || null,
+          phone_number: r.phone_number || null,
         };
       });
-
+  
       this.loading = false;
     } catch (err) {
       console.error(err);
@@ -110,6 +89,7 @@ export class MyRegistrations implements OnInit {
       this.loading = false;
     }
   }
+  
 
   // ======================================================
   // 🔹 Bearbeiten (geht zur Event-Registrierungsseite)
@@ -126,40 +106,24 @@ export class MyRegistrations implements OnInit {
   // 🔹 Stornieren (löscht ALLE Registrierungen des Users für das Event)
   // ======================================================
   async cancelRegistration(eventId: string | null) {
-    if (!eventId) {
-      alert('❌ Ungültige Event-ID.');
-      return;
-    }
-
-    if (
-      !confirm(
-        '⚠️ Willst du alle deine Anmeldungen für dieses Event wirklich stornieren?'
-      )
-    )
-      return;
-
+    if (!eventId) return alert('❌ Ungültige Event-ID.');
+    if (!confirm('⚠️ Willst du deine Anmeldung wirklich stornieren?')) return;
+  
     try {
       const userId = this.authService.getUserId();
-      const persons = await firstValueFrom(this.personService.getAll(userId!));
-      const validPersonIds = persons
-        .map((p) => p.id)
-        .filter((id): id is string => !!id);
-
-      // 🔁 Alle Registrierungen für dieses Event löschen
-      for (const pid of validPersonIds) {
-        await firstValueFrom(
-          this.registrationService.deleteByEventAndPerson(eventId, pid)
-        );
-      }
-
-      // UI aktualisieren
-      this.registrations = this.registrations.filter(
-        (r) => r.eventId !== eventId
-      );
-      alert('✅ Deine Anmeldung für dieses Event wurde storniert.');
+      const regs = await firstValueFrom(this.registrationService.getByUser(userId!));
+      const reg = regs.find((r) => r.event_id === eventId);
+      if (!reg?.id) return alert('⚠️ Keine Registrierung gefunden.');
+  
+      await firstValueFrom(this.registrationService.delete(reg.id));
+  
+      this.registrations = this.registrations.filter((r) => r.eventId !== eventId);
+      alert('✅ Deine Anmeldung wurde storniert.');
     } catch (err) {
       console.error('❌ Fehler beim Stornieren:', err);
       alert('❌ Fehler beim Stornieren der Anmeldung.');
     }
   }
+  
+
 }

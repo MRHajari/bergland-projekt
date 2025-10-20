@@ -9,6 +9,7 @@ const {
     Booking,
     Route,
     EventRegistration,
+    EventRegistrationParticipant,
     Runtime,
     Squadron,
     RelPersonSquadron,
@@ -142,7 +143,6 @@ module.exports = async function runSeed() {
                 );
 
                 await person.update({ owner_id: user.id }, { transaction: t });
-
                 return { user, person };
             });
 
@@ -249,29 +249,71 @@ module.exports = async function runSeed() {
         console.log("🧭 Staffeln erstellt.");
 
         // =====================================================
-        // 📝 EVENT-REGISTRIERUNGEN
+        // 📝 NEUE EVENT-REGISTRIERUNGEN (Gruppenstruktur)
         // =====================================================
-        await EventRegistration.bulkCreate([
+        console.log("📝 Erstelle Gruppen-Registrierungen ...");
+
+        // 🔹 Mohammad meldet sich als User (bzw. seine Person) für Berglauf an
+        const group1 = await EventRegistration.create({
+            event_id: events[0].id,
+            registered_by_person_id: persons[0].id, // ✅ Statt user_id
+            phone_number: "+49 157 1234567",
+            license_plate: "KL-MH-123",
+            catering_type: "vegetarisch",
+            wishes: "Zimmer mit Balkon",
+            club: "LAC Kaiserslautern",
+            start_number: "B2025-01",
+            gender: "m",
+            status: "bestätigt",
+        });
+
+        // 🔹 Teilnehmer dieser Registrierung
+        await EventRegistrationParticipant.bulkCreate([
             {
-                person_id: persons[0].id,
-                event_id: events[0].id,
-                squadron_id: squadrons[0].id,
-                participation_type: "einzeln",
-                wishes: "vegetarisch",
+                registration_id: group1.id,
+                person_id: persons[0].id, // Mohammad selbst
+                participation_type: "staffel",
                 liability_accept: true,
-                status: "bestätigt",
             },
             {
-                person_id: persons[2].id,
-                event_id: events[1].id,
-                squadron_id: squadrons[1].id,
+                registration_id: group1.id,
+                person_id: persons[4].id, // Sojin
                 participation_type: "staffel",
-                wishes: "ohne Fleisch",
                 liability_accept: true,
-                status: "in_auswahl",
+            },
+            {
+                registration_id: group1.id,
+                person_id: persons[5].id, // Hanassa
+                squadron_id: squadrons[0].id,
+                participation_type: "staffel",
+                liability_accept: true,
             },
         ]);
-        console.log("📝 Event-Registrierungen erstellt.");
+
+        // 🔹 Anna meldet sich als User (bzw. ihre Person) für Pfälzer Trail Run an
+        const group2 = await EventRegistration.create({
+            event_id: events[1].id,
+            registered_by_person_id: persons[2].id, // ✅ statt user_id
+            phone_number: "+49 170 5566778",
+            catering_type: "Standard",
+            wishes: null,
+            club: "TV Köln",
+            start_number: "P2025-02",
+            gender: "w",
+            status: "in_auswahl",
+        });
+
+        await EventRegistrationParticipant.bulkCreate([
+            {
+                registration_id: group2.id,
+                person_id: persons[2].id, // Anna selbst
+                participation_type: "einzeln",
+                liability_accept: true,
+            },
+        ]);
+
+        console.log("✅ Gruppen-Registrierungen inkl. Teilnehmer erstellt.");
+
 
         // =====================================================
         // 💰 PRODUKTE & RECHNUNGEN
@@ -290,7 +332,7 @@ module.exports = async function runSeed() {
         console.log("🧾 Rechnungen erstellt.");
 
         // =====================================================
-        // 🛏️ BUCHUNGEN (neu mit user_id)
+        // 🛏️ BUCHUNGEN
         // =====================================================
         await Booking.bulkCreate([
             {

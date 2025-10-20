@@ -10,7 +10,6 @@ import { Events } from './features/events/events';
 import { EventRegistration } from './features/events/event-registration/event-registration';
 import { Booking } from './features/booking/booking';
 import { Profile } from './features/profile/profile/profile';
-import { Overview } from './features/profile/overview/overview';
 import { Products } from './features/products/products';
 import { AccommodationsList } from './features/accommodations/accommodations-list/accommodations-list';
 import { AccommodationDetail } from './features/accommodations/accommodation-detail/accommodation-detail';
@@ -20,7 +19,6 @@ import { MyRegistrations } from './features/my-registrations/my-registrations';
 import { AdminDashboard } from './features/admin/admin-dashboard/admin-dashboard';
 import { ProductsAdmin } from './features/admin/products-admin/products-admin';
 import { EventsAdmin } from './features/admin/events-admin/events-admin';
-import { EventParticipants } from './features/admin/events-admin/event-participants/event-participants';
 import { UsersAdmin } from './features/admin/users-admin/users-admin';
 import { AccommodationsAdmin } from './features/admin/accommodations-admin/accommodations-admin';
 
@@ -58,7 +56,6 @@ export const routes: Routes = [
       { path: 'products', component: Products },
       { path: 'booking', component: Booking, canActivate: [authGuard] },
       { path: 'profile', component: Profile, canActivate: [authGuard] },
-      { path: 'overview', component: Overview, canActivate: [authGuard] },
 
       // 🧾 Meine Anmeldungen
       { path: 'my-registrations', component: MyRegistrations, canActivate: [authGuard] },
@@ -75,7 +72,7 @@ export const routes: Routes = [
           { path: '', component: AdminDashboard },
           { path: 'products', component: ProductsAdmin },
           { path: 'events', component: EventsAdmin },
-          { path: 'events/:id/participants', component: EventParticipants },
+          { path: 'events/:id/registrations', loadComponent: () => import('./features/admin/events-admin/event-registrations-admin/event-registrations-admin.js').then(m => m.EventRegistrationsAdmin) },
           { path: 'users', component: UsersAdmin },
           { path: 'accommodations', component: AccommodationsAdmin },
         ],

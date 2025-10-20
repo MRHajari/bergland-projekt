@@ -1,5 +1,7 @@
 // backend/models/index.js
 const sequelize = require("../config/db");
+const EventRegistrationParticipant = require("./eventRegistrationParticipant");
+
 
 // --------------------------------------------------------------
 // 🔹 Importiere alle Models
@@ -228,10 +230,9 @@ Event.hasMany(EventRegistration, {
     as: "eventRegistrations",
     onDelete: "CASCADE",
 });
-EventRegistration.belongsTo(Event, {
-    foreignKey: "event_id",
-    as: "event",
-});
+EventRegistration.belongsTo(Event, { foreignKey: "event_id", as: "event" });
+EventRegistration.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
 
 // 🫂 SQUADRON ↔ EVENTREGISTRATION (1:n)
 Squadron.hasMany(EventRegistration, {
@@ -274,6 +275,53 @@ Product.belongsToMany(Invoice, {
     as: "invoices",
 });
 
+
+// ======================================================
+// 🔗 Neue Relationen für EventRegistration (Gruppenstruktur)
+// ======================================================
+
+// 🧍 Wer hat die Anmeldung erstellt
+Person.hasMany(EventRegistration, {
+    foreignKey: "registered_by_person_id",
+    as: "createdEventRegistrations",
+});
+EventRegistration.belongsTo(Person, {
+    foreignKey: "registered_by_person_id",
+    as: "registered_by_person",
+});
+
+// 👥 Teilnehmer (n:m über event_registration_participant)
+EventRegistration.hasMany(EventRegistrationParticipant, {
+    foreignKey: "registration_id",
+    as: "participants",
+});
+
+EventRegistrationParticipant.belongsTo(EventRegistration, {
+    foreignKey: "registration_id",
+});
+
+Person.hasMany(EventRegistrationParticipant, {
+    foreignKey: "person_id",
+    as: "registrationParticipations",
+});
+EventRegistrationParticipant.belongsTo(Person, {
+    foreignKey: "person_id",
+    as: "person",
+});
+
+// Staffel optional
+Squadron.hasMany(EventRegistrationParticipant, {
+    foreignKey: "squadron_id",
+    as: "registrationParticipants",
+});
+EventRegistrationParticipant.belongsTo(Squadron, {
+    foreignKey: "squadron_id",
+    as: "squadron",
+});
+
+module.exports.EventRegistrationParticipant = EventRegistrationParticipant;
+
+
 // --------------------------------------------------------------
 // ✅ EXPORTIEREN
 // --------------------------------------------------------------
@@ -285,6 +333,7 @@ module.exports = {
     Booking,
     Event,
     EventRegistration,
+    EventRegistrationParticipant,
     UserRegistration,
     Runtime,
     Route,

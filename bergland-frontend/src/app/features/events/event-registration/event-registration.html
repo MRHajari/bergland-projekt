@@ -99,11 +99,7 @@
 
             <div class="form-row">
                 <label>Status</label>
-                <select formControlName="status">
-                    <option value="in_auswahl">In Auswahl</option>
-                    <option value="bestätigt">Bestätigt</option>
-                    <option value="storniert">Storniert</option>
-                </select>
+                <input formControlName="status" readonly class="readonly-input" />
             </div>
 
             <div class="checkbox-row">
@@ -211,12 +207,12 @@
                 </div>
 
 
-                @if (!isSelfAlreadyAdded) {
                 <div class="checkbox-row">
-                    <input type="checkbox" id="includeSelf" (change)="toggleSelfRegistration($event)">
+                    <input type="checkbox" id="includeSelf" (change)="toggleSelfRegistration($event)"
+                        [checked]="isSelfAlreadyAdded" />
                     <label for="includeSelf">Mich selbst als Teilnehmer hinzufügen</label>
                 </div>
-                }
+
 
 
 

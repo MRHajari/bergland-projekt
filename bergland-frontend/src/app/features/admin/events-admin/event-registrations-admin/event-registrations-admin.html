@@ -1,0 +1,110 @@
+<!-- ================================
+     🏔️ EVENT-DETAILS
+     ================================ -->
+<section class="event-details-card wide" *ngIf="event">
+    <header class="event-header">
+        <div class="event-title-block">
+            <h1>{{ event?.name }}</h1>
+            <p class="event-dates">
+                📅 {{ event?.start_date | date: 'dd.MM.yyyy' }}
+                <ng-container *ngIf="event?.end_date && event?.end_date !== event?.start_date">
+                    – {{ event?.end_date | date: 'dd.MM.yyyy' }}
+                </ng-container>
+            </p>
+        </div>
+
+        <p class="event-deadline" *ngIf="event?.registration_deadline">
+            ⏰ Anmeldung bis:
+            <strong>{{ event.registration_deadline | date: 'dd.MM.yyyy' }}</strong>
+        </p>
+    </header>
+
+    <p class="event-description">{{ event?.description }}</p>
+</section>
+
+<!-- ================================
+           👥 REGISTRIERUNGEN (pro User)
+           ================================ -->
+<section class="event-details-card wide">
+    <header class="event-header">
+        <div class="event-title-block">
+            <h2>👥 Registrierungen (nach Benutzer)</h2>
+            <p class="event-dates">Alle Benutzer, die sich für dieses Event angemeldet haben.</p>
+        </div>
+
+        <div class="event-search">
+            <input type="text" class="search-input" placeholder="🔍 Benutzer suchen (Name oder E-Mail)..."
+                [(ngModel)]="searchTerm" />
+        </div>
+    </header>
+
+    <hr class="section-divider" />
+
+    <ng-container *ngIf="filteredRegistrations.length > 0; else noRegs">
+        <div *ngFor="let reg of filteredRegistrations; index as i" class="registration-card">
+            <!-- HEADER-Bereich -->
+            <header class="registration-header">
+                <div class="user-info">
+                    <h3>👤 {{ reg.user?.person?.first_name }} {{ reg.user?.person?.last_name }}</h3>
+                    <p class="email">{{ reg.user?.email }}</p>
+                </div>
+
+                <div class="registration-meta">
+                    <p><strong>📞</strong> {{ reg.phone_number || '–' }}</p>
+                    <p><strong>🚗</strong> {{ reg.license_plate || '–' }}</p>
+                    <p><strong>🏁</strong> Startnr. {{ reg.start_number || '–' }}</p>
+                    <p><strong>🥗</strong> {{ reg.catering_type || '–' }}</p>
+                    <p><strong>💬</strong> {{ reg.wishes || '–' }}</p>
+                    <p><strong>🏃‍♂️ Verein:</strong> {{ reg.club || '–' }}</p>
+                </div>
+
+                <!-- STATUS -->
+                <div class="status-controls">
+                    <label class="status-radio yellow">
+                        <input type="radio" name="status-{{ reg.id }}" value="in_auswahl"
+                            [checked]="reg.status === 'in_auswahl'" (change)="updateStatus(reg, 'in_auswahl')" />
+                        In Auswahl
+                    </label>
+
+                    <label class="status-radio green">
+                        <input type="radio" name="status-{{ reg.id }}" value="bestätigt"
+                            [checked]="reg.status === 'bestätigt'" (change)="updateStatus(reg, 'bestätigt')" />
+                        Bestätigt
+                    </label>
+
+                    <label class="status-radio red">
+                        <input type="radio" name="status-{{ reg.id }}" value="abgelehnt"
+                            [checked]="reg.status === 'abgelehnt'" (change)="updateStatus(reg, 'abgelehnt')" />
+                        Abgelehnt
+                    </label>
+                </div>
+            </header>
+
+            <!-- TEILNEHMER-LISTE -->
+            <div class="participants" *ngIf="reg.participants?.length > 0">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Vorname</th>
+                            <th>Nachname</th>
+                            <th>Staffel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let p of reg.participants; index as j">
+                            <td>{{ j + 1 }}</td>
+                            <td>{{ p.person?.first_name }}</td>
+                            <td>{{ p.person?.last_name }}</td>
+                            <td>{{ p.squadron?.name || '–' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-template #noRegs>
+        <p class="no-participants">Keine Registrierungen gefunden.</p>
+    </ng-template>
+</section>

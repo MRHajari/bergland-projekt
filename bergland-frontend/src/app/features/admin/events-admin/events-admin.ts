@@ -75,16 +75,22 @@ private occupancyService = inject(OccupancyService);
   // 🔹 Teilnehmerzahlen laden
   // =====================================================
   loadCounts(): void {
-    this.eventRegistrationService.getCountByEvent().subscribe({
-      next: (map: Record<string, number>) => {
-        this.countsMap = map || {};
-      },
-      error: (err) => {
-        console.warn('⚠️ Konnte Anmeldungszahlen nicht laden:', err);
-        this.countsMap = {};
-      }
-    });
+    this.countsMap = {};
+  
+    for (const evt of this.events) {
+      this.eventRegistrationService.getCountByEvent(evt.id).subscribe({
+        next: (res) => {
+          // res = { event_id: 'uuid', count: 5 }
+          this.countsMap[res.event_id] = res.count;
+        },
+        error: (err: any) => {
+          console.warn(`⚠️ Konnte Anmeldungszahl für ${evt.name} nicht laden:`, err);
+          this.countsMap[evt.id] = 0;
+        },
+      });
+    }
   }
+  
 
   // =====================================================
   // ➕ Neues Event anlegen
@@ -156,7 +162,7 @@ private occupancyService = inject(OccupancyService);
   // 🔹 Teilnehmerliste öffnen
   // =====================================================
   viewRegistrations(eventId: string) {
-    this.router.navigate(['/admin/events', eventId, 'participants']);
+    this.router.navigate(['/admin/events', eventId, 'registrations']);
   }
 
 // =====================================================
@@ -269,4 +275,6 @@ getAccommodationNames(event: any): string {
   get totalPages() {
     return Math.ceil(this.filteredEvents.length / this.pageSize);
   }
+
+  
 }
