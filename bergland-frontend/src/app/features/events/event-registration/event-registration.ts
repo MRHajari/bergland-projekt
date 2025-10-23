@@ -744,7 +744,7 @@ async updateRegistration(): Promise<void> {
 // 🔹 Anmeldung stornieren
 // ======================================================
 async cancelRegistration(): Promise<void> {
-  if (!this.existingRegs || this.existingRegs.length === 0) {
+  if (!this.existingRegistration) {
     alert('❌ Es wurde keine bestehende Anmeldung gefunden.');
     return;
   }
@@ -752,14 +752,11 @@ async cancelRegistration(): Promise<void> {
   if (!confirm('⚠️ Willst du deine Anmeldung wirklich stornieren?')) return;
 
   try {
-    for (const reg of this.existingRegs) {
-      await firstValueFrom(this.registrationService.delete(reg.id!));
-      console.log(`🗑️ Registrierung gelöscht: ${reg.id}`);
-    }
+    await firstValueFrom(this.registrationService.delete(this.existingRegistration.id!));
+    console.log(`🗑️ Registrierung gelöscht: ${this.existingRegistration.id}`);
 
     // UI zurücksetzen
     this.isRegistered = false;
-    this.existingRegs = [];
     this.existingRegistration = null;
     this.addedPersons = [];
     this.createdRegistrationIds = [];

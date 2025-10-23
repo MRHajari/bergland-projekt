@@ -8,7 +8,7 @@ import { VerifyEmail } from './features/auth/verify-email/verify-email';
 // 🔹 Benutzer-Bereich
 import { Events } from './features/events/events';
 import { EventRegistration } from './features/events/event-registration/event-registration';
-import { Booking } from './features/booking/booking';
+import { BookingAccommodation } from './features/booking/booking-accommodation';
 import { Profile } from './features/profile/profile/profile';
 import { Products } from './features/products/products';
 import { AccommodationsList } from './features/accommodations/accommodations-list/accommodations-list';
@@ -54,7 +54,7 @@ export const routes: Routes = [
       { path: 'events', component: Events },
       { path: 'event-registration/:id', component: EventRegistration },
       { path: 'products', component: Products },
-      { path: 'booking', component: Booking, canActivate: [authGuard] },
+      { path: 'booking-accommodation', component: BookingAccommodation, canActivate: [authGuard] },
       { path: 'profile', component: Profile, canActivate: [authGuard] },
 
       // 🧾 Meine Anmeldungen

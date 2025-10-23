@@ -9,10 +9,10 @@ import { AccommodationService, AccommodationInterface } from '../../core/service
   selector: 'app-booking',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './booking.html',
-  styleUrls: ['./booking.css'],
+  templateUrl: './booking-accommodation.html',
+  styleUrls: ['./booking-accommodation.css'],
 })
-export class Booking implements OnInit {
+export class BookingAccommodation implements OnInit {
   // === Daten ===
   bookings: BookingInterface[] = [];
   accommodations: AccommodationInterface[] = [];
