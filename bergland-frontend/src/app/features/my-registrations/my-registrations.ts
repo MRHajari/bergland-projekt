@@ -1,8 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-
 import { EventRegistrationService, EventRegistrationInterface } from '../../core/services/event-registration.service';
 import { EventService } from '../../core/services/event.service';
 import { PersonService } from '../../core/services/person.service';
@@ -42,57 +40,62 @@ export class MyRegistrations implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  async ngOnInit() {
-    try {
-      const userId = this.authService.getUserId();
-      if (!userId) throw new Error('Kein Benutzer eingeloggt.');
-  
-      // 🔹 Registrierungen direkt per User laden
-      const regs = await firstValueFrom(this.registrationService.getByUser(userId));
-  
-      console.log('Registrierungen des Benutzers:', regs);
-
-      if (!regs || regs.length === 0) {
-        this.loading = false;
-        return;
-      }
-  
-      // 🔹 Events holen
-      const eventIds = [...new Set(regs.map((r) => r.event_id))];
-      const events = await Promise.all(eventIds.map((id) => firstValueFrom(this.eventService.getById(id))));
-  
-      // 🔹 Registrierungen zusammenfassen
-      this.registrations = regs.map((r) => {
-        const evt = events.find((e) => e.id === r.event_id);
-        const participants = r.participants?.length || 0;
-  
-        return {
-          eventId: r.event_id,
-          eventName: evt?.name || 'Unbekanntes Event',
-          eventStart: evt?.start_date || '',
-          eventEnd: evt?.end_date || '',
-          participantCount: participants,
-          squadronCount: r.participants?.filter((p) => p.squadron_id)?.length || 0,
-          status: r.status || 'in_auswahl',
-          wishes: r.wishes || null,
-          catering_type: r.catering_type || null,
-          license_plate: r.license_plate || null,
-          start_number: r.start_number || null,
-          phone_number: r.phone_number || null,
-        };
-      });
-  
+  ngOnInit(): void {
+    const userId = this.authService.getUserId();
+    if (!userId) {
+      this.errorMessage = '❌ Kein Benutzer eingeloggt.';
       this.loading = false;
-    } catch (err) {
-      console.error(err);
-      this.errorMessage = '❌ Fehler beim Laden deiner Anmeldungen.';
-      this.loading = false;
+      return;
     }
+
+    console.log('👤 Benutzer-ID:', userId);
+
+    this.registrationService.getByUser(userId).subscribe({
+      next: async (regs) => {
+        console.log('📋 Registrierungen geladen:', regs);
+
+        if (!regs || regs.length === 0) {
+          this.loading = false;
+          return;
+        }
+
+        // 🔹 Event-IDs extrahieren
+        const eventIds = [...new Set(regs.map((r) => r.event_id))];
+        const events = await Promise.all(
+          eventIds.map((id) => this.eventService.getById(id).toPromise())
+        );
+
+        // 🔹 Zusammenführen
+        this.registrations = regs.map((r) => {
+          const evt = events.find((e) => e?.id === r.event_id);
+          return {
+            eventId: r.event_id,
+            eventName: evt?.name || 'Unbekanntes Event',
+            eventStart: evt?.start_date || '',
+            eventEnd: evt?.end_date || '',
+            participantCount: r.participants?.length || 0,
+            squadronCount: r.participants?.filter((p) => p.squadron_id)?.length || 0,
+            status: r.status || 'in_auswahl',
+            wishes: r.wishes || null,
+            catering_type: r.catering_type || null,
+            license_plate: r.license_plate || null,
+            start_number: r.start_number || null,
+            phone_number: r.phone_number || null,
+          };
+        });
+
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('❌ Fehler beim Laden:', err);
+        this.errorMessage = '❌ Fehler beim Laden deiner Anmeldungen.';
+        this.loading = false;
+      },
+    });
   }
-  
 
   // ======================================================
-  // 🔹 Bearbeiten (geht zur Event-Registrierungsseite)
+  // 🔹 Bearbeiten
   // ======================================================
   goToEvent(eventId: string | null) {
     if (!eventId) {
@@ -103,27 +106,40 @@ export class MyRegistrations implements OnInit {
   }
 
   // ======================================================
-  // 🔹 Stornieren (löscht ALLE Registrierungen des Users für das Event)
+  // 🔹 Stornieren
   // ======================================================
-  async cancelRegistration(eventId: string | null) {
-    if (!eventId) return alert('❌ Ungültige Event-ID.');
-    if (!confirm('⚠️ Willst du deine Anmeldung wirklich stornieren?')) return;
-  
-    try {
-      const userId = this.authService.getUserId();
-      const regs = await firstValueFrom(this.registrationService.getByUser(userId!));
-      const reg = regs.find((r) => r.event_id === eventId);
-      if (!reg?.id) return alert('⚠️ Keine Registrierung gefunden.');
-  
-      await firstValueFrom(this.registrationService.delete(reg.id));
-  
-      this.registrations = this.registrations.filter((r) => r.eventId !== eventId);
-      alert('✅ Deine Anmeldung wurde storniert.');
-    } catch (err) {
-      console.error('❌ Fehler beim Stornieren:', err);
-      alert('❌ Fehler beim Stornieren der Anmeldung.');
+  cancelRegistration(eventId: string | null): void {
+    if (!eventId) {
+      alert('❌ Ungültige Event-ID.');
+      return;
     }
-  }
-  
+    if (!confirm('⚠️ Willst du deine Anmeldung wirklich stornieren?')) return;
 
+    const userId = this.authService.getUserId();
+    if (!userId) return;
+
+    this.registrationService.getByUser(userId).subscribe({
+      next: (regs) => {
+        const reg = regs.find((r) => r.event_id === eventId);
+        if (!reg?.id) {
+          alert('⚠️ Keine Registrierung gefunden.');
+          return;
+        }
+
+        this.registrationService.delete(reg.id!).subscribe({
+          next: () => {
+            this.registrations = this.registrations.filter(
+              (r) => r.eventId !== eventId
+            );
+            alert('✅ Deine Anmeldung wurde storniert.');
+          },
+          error: (err) => {
+            console.error('❌ Fehler beim Stornieren:', err);
+            alert('❌ Fehler beim Stornieren der Anmeldung.');
+          },
+        });
+      },
+      error: (err) => console.error('❌ Fehler beim Laden der Registrierungen:', err),
+    });
+  }
 }

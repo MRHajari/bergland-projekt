@@ -22,6 +22,12 @@ const EventRegistration = sequelize.define(
             allowNull: false,
         },
 
+        // 🪪 Optionale Staffel-Zuordnung
+        squadron_id: {
+            type: DataTypes.UUID,
+            allowNull: true,
+        },
+
         // 📞 Kopf-Felder der Registrierung
         phone_number: {
             type: DataTypes.STRING,
@@ -61,5 +67,35 @@ const EventRegistration = sequelize.define(
         timestamps: true,
     }
 );
+
+// ============================================================
+// 🔗 Beziehungen (Associations)
+// ============================================================
+EventRegistration.associate = (models) => {
+    // 👤 Person, die die Registrierung angelegt hat
+    EventRegistration.belongsTo(models.Person, {
+        as: "registered_by_person",
+        foreignKey: "registered_by_person_id",
+    });
+
+    // 🏔️ Zugehöriges Event
+    EventRegistration.belongsTo(models.Event, {
+        as: "event",
+        foreignKey: "event_id",
+    });
+
+    // 🪪 Zugehörige Staffel (optional)
+    EventRegistration.belongsTo(models.Squadron, {
+        as: "squadron",
+        foreignKey: "squadron_id",
+    });
+
+    // 👥 Teilnehmer dieser Gruppen-Registrierung
+    EventRegistration.hasMany(models.EventRegistrationParticipant, {
+        as: "participants",
+        foreignKey: "registration_id",
+        onDelete: "CASCADE",
+    });
+};
 
 module.exports = EventRegistration;

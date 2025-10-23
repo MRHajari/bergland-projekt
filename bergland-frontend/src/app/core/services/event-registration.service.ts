@@ -181,19 +181,17 @@ export class EventRegistrationService {
     );
   }
 
-  // =====================================================
-  // 🧩 Zusätzliche (von alten Komponenten genutzte) Methoden
-  // =====================================================
 
-  /** 🧮 Anzahl Registrierungen für ein Event abrufen */
-  getCountByEvent(eventId: string): Observable<{ event_id: string; count: number }> {
-    return this.api.get<{ event_id: string; count: number }>(`${this.endpoint}/count/${eventId}`).pipe(
-      catchError((err) => {
-        console.error(`❌ Fehler beim Zählen der Registrierungen für Event ${eventId}:`, err);
-        return throwError(() => err);
-      })
-    );
-  }
+/** 🧮 Alle Registrierungszahlen für alle Events abrufen */
+getCountByEvent(): Observable<{ event_id: string; count: number }[]> {
+  return this.api.get<{ event_id: string; count: number }[]>(`${this.endpoint}/count-by-event`).pipe(
+    catchError((err) => {
+      console.error('❌ Fehler beim Laden der Anmeldungszahlen:', err);
+      return throwError(() => err);
+    })
+  );
+}
+
 
   /** 🔍 Registrierungen nach Person abrufen */
   getByPerson(personId: string): Observable<EventRegistrationInterface[]> {

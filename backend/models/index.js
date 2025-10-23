@@ -2,7 +2,6 @@
 const sequelize = require("../config/db");
 const EventRegistrationParticipant = require("./eventRegistrationParticipant");
 
-
 // --------------------------------------------------------------
 // 🔹 Importiere alle Models
 // --------------------------------------------------------------
@@ -40,7 +39,6 @@ console.log("DEBUG MODELS:", {
 // --------------------------------------------------------------
 
 // 🧑‍💼 USER ↔ PERSON (1:n)
-// Ein User kann mehrere Personen besitzen (owner_id → user.id)
 User.hasMany(Person, {
     foreignKey: "owner_id",
     as: "persons",
@@ -85,9 +83,6 @@ Invoice.belongsTo(Person, {
 });
 
 // 🏡 BOOKING ↔ EVENT ↔ USER ↔ ACCOMMODATION
-// --------------------------------------------------------------
-// Eine Buchung gehört zu einem Event, wird vom User erstellt
-// und ist einer Unterkunft zugeordnet.
 Booking.belongsTo(Event, {
     foreignKey: "event_id",
     as: "event",
@@ -121,7 +116,6 @@ Accommodation.hasMany(Booking, {
     onDelete: "CASCADE",
 });
 
-
 // 🪪 EVENT ↔ SQUADRON (1:n)
 Event.hasMany(Squadron, {
     foreignKey: "event_id",
@@ -134,7 +128,6 @@ Squadron.belongsTo(Event, {
 });
 
 // 🏕️ EVENT ↔ ACCOMMODATION (n:m über OCCUPANCY)
-// Admin: Zuordnung Event ↔ Unterkunft
 Event.belongsToMany(Accommodation, {
     through: Occupancy,
     foreignKey: "event_id",
@@ -148,10 +141,10 @@ Accommodation.belongsToMany(Event, {
     as: "events",
 });
 
-// 1:n für direkten Zugriff auf die Belegungstabellen
+// 1:n für direkte Belegungstabellen
 Event.hasMany(Occupancy, {
     foreignKey: "event_id",
-    as: "occupancies", // ✅ gleich wie im Controller
+    as: "occupancies",
     onDelete: "CASCADE",
 });
 Occupancy.belongsTo(Event, {
@@ -161,10 +154,9 @@ Occupancy.belongsTo(Event, {
 
 Accommodation.hasMany(Occupancy, {
     foreignKey: "accommodation_id",
-    as: "occupancies", // 🔹 optional für saubere Symmetrie
+    as: "occupancies",
     onDelete: "CASCADE",
 });
-
 Occupancy.belongsTo(Accommodation, {
     foreignKey: "accommodation_id",
     as: "accommodation",
@@ -214,33 +206,62 @@ Runtime.belongsTo(EventRegistration, {
     as: "eventRegistration",
 });
 
-// 🟢 EVENTREGISTRATION ↔ PERSON/EVENT (n:1)
+// ======================================================
+// 🔗 EventRegistration – saubere Gruppenstruktur
+// ======================================================
+
+// 👤 Wer hat die Anmeldung erstellt (Anmelder)
 Person.hasMany(EventRegistration, {
-    foreignKey: "person_id",
-    as: "eventRegistrations",
+    foreignKey: "registered_by_person_id",
+    as: "createdEventRegistrations",
     onDelete: "CASCADE",
 });
 EventRegistration.belongsTo(Person, {
-    foreignKey: "person_id",
-    as: "person",
+    foreignKey: "registered_by_person_id",
+    as: "registered_by_person",
 });
 
+// 🔗 Zugehöriges Event
 Event.hasMany(EventRegistration, {
     foreignKey: "event_id",
     as: "eventRegistrations",
     onDelete: "CASCADE",
 });
-EventRegistration.belongsTo(Event, { foreignKey: "event_id", as: "event" });
-EventRegistration.belongsTo(User, { foreignKey: "user_id", as: "user" });
+EventRegistration.belongsTo(Event, {
+    foreignKey: "event_id",
+    as: "event",
+});
 
 
-// 🫂 SQUADRON ↔ EVENTREGISTRATION (1:n)
-Squadron.hasMany(EventRegistration, {
+// 👥 Teilnehmer (n:m über EventRegistrationParticipant)
+EventRegistration.hasMany(EventRegistrationParticipant, {
+    foreignKey: "registration_id",
+    as: "participants",
+    onDelete: "CASCADE",
+});
+EventRegistrationParticipant.belongsTo(EventRegistration, {
+    foreignKey: "registration_id",
+    as: "registration",
+});
+
+// 👤 Teilnehmer-Person
+Person.hasMany(EventRegistrationParticipant, {
+    foreignKey: "person_id",
+    as: "registrationParticipations",
+    onDelete: "CASCADE",
+});
+EventRegistrationParticipant.belongsTo(Person, {
+    foreignKey: "person_id",
+    as: "person",
+});
+
+// 🧭 Staffel optional
+Squadron.hasMany(EventRegistrationParticipant, {
     foreignKey: "squadron_id",
-    as: "eventRegistrations",
+    as: "registrationParticipants",
     onDelete: "SET NULL",
 });
-EventRegistration.belongsTo(Squadron, {
+EventRegistrationParticipant.belongsTo(Squadron, {
     foreignKey: "squadron_id",
     as: "squadron",
 });
@@ -275,56 +296,21 @@ Product.belongsToMany(Invoice, {
     as: "invoices",
 });
 
-
-// ======================================================
-// 🔗 Neue Relationen für EventRegistration (Gruppenstruktur)
-// ======================================================
-
-// 🧍 Wer hat die Anmeldung erstellt
-Person.hasMany(EventRegistration, {
-    foreignKey: "registered_by_person_id",
-    as: "createdEventRegistrations",
-});
-EventRegistration.belongsTo(Person, {
-    foreignKey: "registered_by_person_id",
-    as: "registered_by_person",
-});
-
-// 👥 Teilnehmer (n:m über event_registration_participant)
-EventRegistration.hasMany(EventRegistrationParticipant, {
-    foreignKey: "registration_id",
-    as: "participants",
-});
-
-EventRegistrationParticipant.belongsTo(EventRegistration, {
-    foreignKey: "registration_id",
-});
-
-Person.hasMany(EventRegistrationParticipant, {
-    foreignKey: "person_id",
-    as: "registrationParticipations",
-});
-EventRegistrationParticipant.belongsTo(Person, {
-    foreignKey: "person_id",
-    as: "person",
-});
-
-// Staffel optional
-Squadron.hasMany(EventRegistrationParticipant, {
+// 🪪 Staffel-Zuordnung (optional)
+Squadron.hasMany(EventRegistration, {
     foreignKey: "squadron_id",
-    as: "registrationParticipants",
+    as: "eventRegistrations",
+    onDelete: "SET NULL",
 });
-EventRegistrationParticipant.belongsTo(Squadron, {
+EventRegistration.belongsTo(Squadron, {
     foreignKey: "squadron_id",
     as: "squadron",
 });
 
-module.exports.EventRegistrationParticipant = EventRegistrationParticipant;
 
-
-// --------------------------------------------------------------
+// ======================================================
 // ✅ EXPORTIEREN
-// --------------------------------------------------------------
+// ======================================================
 module.exports = {
     sequelize,
     Person,

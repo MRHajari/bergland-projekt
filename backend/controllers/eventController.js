@@ -12,8 +12,6 @@ const {
 
 const { validateEvent } = require("../validators/eventValidator");
 
-
-
 // ============================================================
 // 📋 Alle Events abrufen (mit Unterkünften)
 // ============================================================
@@ -39,13 +37,14 @@ exports.getAllEvents = async (req, res) => {
             order: [["start_date", "ASC"]],
         });
 
-        // 🔄 Wir mappen alle Unterkünfte flach in ein `accommodations`-Array
+        // 🔄 Alle Unterkünfte flach mappen
         const result = events.map((e) => ({
             ...e.toJSON(),
             route_count: e.routes?.length || 0,
             squadron_count: e.squadrons?.length || 0,
             registration_count: e.eventRegistrations?.length || 0,
-            accommodations: e.occupancies?.map((o) => o.accommodation).filter(Boolean) || [],
+            accommodations:
+                e.occupancies?.map((o) => o.accommodation).filter(Boolean) || [],
         }));
 
         res.json(result);
@@ -70,7 +69,11 @@ exports.getEventById = async (req, res) => {
                     model: EventRegistration,
                     as: "eventRegistrations",
                     include: [
-                        { model: Person, as: "person", attributes: ["first_name", "last_name"] },
+                        {
+                            model: Person,
+                            as: "registered_by_person", // ✅ KORREKTER ALIAS
+                            attributes: ["first_name", "last_name", "email"],
+                        },
                     ],
                 },
                 { model: Route, as: "routes" },
@@ -79,7 +82,8 @@ exports.getEventById = async (req, res) => {
             ],
         });
 
-        if (!event) return res.status(404).json({ message: "Event nicht gefunden." });
+        if (!event)
+            return res.status(404).json({ message: "Event nicht gefunden." });
 
         res.json(event);
     } catch (err) {
@@ -97,7 +101,10 @@ exports.createEvent = async (req, res) => {
 
         const { error, value } = validateEvent(req.body);
         if (error) {
-            console.warn("⚠️ Validierungsfehler:", error.details.map((d) => d.message));
+            console.warn(
+                "⚠️ Validierungsfehler:",
+                error.details.map((d) => d.message)
+            );
             return res.status(400).json({
                 message: "Validierungsfehler",
                 details: error.details.map((d) => d.message),
@@ -120,7 +127,8 @@ exports.createEvent = async (req, res) => {
 exports.updateEvent = async (req, res) => {
     try {
         const event = await Event.findByPk(req.params.id);
-        if (!event) return res.status(404).json({ message: "Event nicht gefunden." });
+        if (!event)
+            return res.status(404).json({ message: "Event nicht gefunden." });
 
         const { error, value } = validateEvent(req.body);
         if (error) {
@@ -144,12 +152,13 @@ exports.updateEvent = async (req, res) => {
 exports.deleteEvent = async (req, res) => {
     try {
         const event = await Event.findByPk(req.params.id);
-        if (!event) return res.status(404).json({ message: "Event nicht gefunden." });
+        if (!event)
+            return res.status(404).json({ message: "Event nicht gefunden." });
 
         await event.destroy();
         res.json({ message: "🗑️ Event erfolgreich gelöscht." });
     } catch (err) {
         console.error("❌ Fehler beim Löschen des Events:", err);
-        res.status(500).json({ message: "Fehler beim Löschen des Events." });
+        res.status(500).json({ message: "Fehler beim Löschen des E  vents." });
     }
 };

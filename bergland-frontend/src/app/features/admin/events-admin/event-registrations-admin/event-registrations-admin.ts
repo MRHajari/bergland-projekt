@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -14,61 +14,97 @@ import { EventRegistrationService } from '../../../../core/services/event-regist
   styleUrls: ['./event-registrations-admin.css'],
 })
 export class EventRegistrationsAdmin implements OnInit {
+  // ======================================================
+  // 🔧 Dependencies
+  // ======================================================
   private route = inject(ActivatedRoute);
   private eventService = inject(EventService);
   private registrationService = inject(EventRegistrationService);
 
+  // ======================================================
+  // 🧩 Component state
+  // ======================================================
   eventId!: string;
   event: any = null;
-  registrations = signal<any[]>([]);
-  searchTerm = signal<string>('');
-  loading = signal<boolean>(true);
+  registrations: any[] = [];
+  searchTerm: string = '';
+  loading = true;
 
+  // ======================================================
+  // 🚀 Init
+  // ======================================================
   async ngOnInit(): Promise<void> {
     this.eventId = this.route.snapshot.paramMap.get('id')!;
     await this.loadData();
   }
 
+  // ======================================================
+  // 📦 Daten laden (Event + Registrierungen)
+  // ======================================================
   private async loadData(): Promise<void> {
+    this.loading = true;
     try {
       const [event, registrations] = await Promise.all([
         firstValueFrom(this.eventService.getById(this.eventId)),
         firstValueFrom(this.registrationService.getGroupByEvent(this.eventId)),
       ]);
+
       this.event = event;
-      this.registrations.set(registrations);
+      this.registrations = registrations || [];
+      console.log('📦 Registrierungen geladen:', this.registrations);
     } catch (err) {
       console.error('❌ Fehler beim Laden der Daten:', err);
     } finally {
-      this.loading.set(false);
+      this.loading = false;
     }
   }
 
+  // ======================================================
+  // 🔄 Status ändern (Admin)
+  // ======================================================
   async updateStatus(reg: any, newStatus: string): Promise<void> {
     if (reg.status === newStatus) return;
     try {
       await firstValueFrom(this.registrationService.updateStatus(reg.id, newStatus));
-      this.registrations.set(
-        this.registrations().map((r) =>
-          r.id === reg.id ? { ...r, status: newStatus } : r
-        )
+      this.registrations = this.registrations.map((r) =>
+        r.id === reg.id ? { ...r, status: newStatus } : r
       );
+      console.log(`✅ Status für ${reg.id} geändert auf ${newStatus}`);
     } catch (err) {
       console.error('❌ Fehler beim Ändern des Status:', err);
       alert('Fehler beim Ändern des Status.');
     }
   }
 
+  // ======================================================
+  // 🔍 Filter für Suchfeld (Anmelder + Teilnehmer)
+  // ======================================================
   get filteredRegistrations() {
-    const term = this.searchTerm().toLowerCase();
-    return this.registrations().filter((r) => {
-      const userName =
-        (r.user?.email || '').toLowerCase() +
-        ' ' +
-        (r.user?.person?.first_name || '') +
-        ' ' +
-        (r.user?.person?.last_name || '');
-      return !term || userName.includes(term);
+    const term = this.searchTerm.trim().toLowerCase();
+    console.log('🔍 Suchbegriff:', term);
+    if (!term) return this.registrations;
+
+
+    return this.registrations.filter((reg) => {
+      // 1️⃣ Namen + E-Mail des Anmelders
+      const registeredBy =
+        `${reg.registered_by_person?.first_name || ''} ${reg.registered_by_person?.last_name || ''} ${reg.registered_by_person?.email || ''}`
+          .toLowerCase();
+
+      // 2️⃣ Namen + E-Mails aller Teilnehmer
+      const participantsText = (reg.participants || [])
+        .map((p: any) => {
+          const first = (p.person?.first_name || '').toLowerCase();
+          const last = (p.person?.last_name || '').toLowerCase();
+          const email = (p.person?.email || '').toLowerCase();
+          return `${first} ${last} ${email}`;
+        })
+        .join(' ');
+
+      // 3️⃣ Gesamter Suchtext (Anmelder + Teilnehmer)
+      const combinedText = `${registeredBy} ${participantsText}`;
+
+      return combinedText.includes(term);
     });
   }
 }

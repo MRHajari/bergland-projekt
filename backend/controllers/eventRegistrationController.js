@@ -1,17 +1,18 @@
+// backend/controllers/eventRegistrationController.js
 const {
     EventRegistration,
-    EventRegistrationParticipant,  // ✅ hier direkt hinzufügen!
+    EventRegistrationParticipant,
     Person,
     Event,
     Squadron,
     Runtime,
-    User
+    User,
 } = require("../models");
 
 const Joi = require("joi");
 const eventRegistrationSchema = require("../validators/eventRegistrationValidator");
 
-// ✅ Update-Schema aus dem normalen Schema ableiten
+// ✅ Update-Schema ableiten
 const eventRegistrationUpdateSchema = eventRegistrationSchema.fork(
     ["event_id", "user_id", "participation_type", "liability_accept"],
     (schema) => schema.optional()
@@ -19,7 +20,7 @@ const eventRegistrationUpdateSchema = eventRegistrationSchema.fork(
 
 /**
  * 🎟️ EventRegistration Controller
- * CRUD-Logik für Anmeldungen einer Person zu einem Event
+ * CRUD-Logik für Anmeldungen (Gruppen & Einzelpersonen)
  */
 
 // ============================================================
@@ -29,9 +30,17 @@ exports.getAllRegistrations = async (req, res) => {
     try {
         const regs = await EventRegistration.findAll({
             include: [
-                { model: Person, as: "person" },
+                {
+                    model: Person,
+                    as: "registered_by_person", // ✅ korrekt
+                    attributes: ["id", "first_name", "last_name", "email"],
+                },
                 { model: Event, as: "event" },
-                { model: Squadron, as: "squadron" },
+                {
+                    model: Squadron,
+                    as: "squadron",
+                    attributes: ["id", "name"],
+                },
                 { model: Runtime, as: "runtimes" },
             ],
             order: [["createdAt", "DESC"]],
@@ -39,7 +48,9 @@ exports.getAllRegistrations = async (req, res) => {
         res.json(regs);
     } catch (err) {
         console.error("❌ Fehler beim Laden der Event-Registrierungen:", err);
-        res.status(500).json({ message: "Fehler beim Laden der Event-Registrierungen." });
+        res
+            .status(500)
+            .json({ message: "Fehler beim Laden der Event-Registrierungen." });
     }
 };
 
@@ -50,14 +61,35 @@ exports.getRegistrationById = async (req, res) => {
     try {
         const reg = await EventRegistration.findByPk(req.params.id, {
             include: [
-                { model: Person, as: "person" },
+                {
+                    model: Person,
+                    as: "registered_by_person", // ✅ korrigiert
+                    attributes: ["id", "first_name", "last_name", "email"],
+                },
                 { model: Event, as: "event" },
                 { model: Squadron, as: "squadron" },
-                { model: Runtime, as: "runtimes" },
+                {
+                    model: EventRegistrationParticipant,
+                    as: "participants",
+                    include: [
+                        {
+                            model: Person,
+                            as: "person",
+                            attributes: ["id", "first_name", "last_name", "email"],
+                        },
+                        {
+                            model: Squadron,
+                            as: "squadron",
+                            attributes: ["id", "name", "start_number"],
+                        },
+                    ],
+                },
             ],
         });
 
-        if (!reg) return res.status(404).json({ message: "Anmeldung nicht gefunden." });
+        if (!reg)
+            return res.status(404).json({ message: "Anmeldung nicht gefunden." });
+
         res.json(reg);
     } catch (err) {
         console.error("❌ Fehler beim Abrufen der Anmeldung:", err);
@@ -66,180 +98,7 @@ exports.getRegistrationById = async (req, res) => {
 };
 
 // ============================================================
-// ➕ Neue Anmeldung erstellen
-// ============================================================
-exports.createRegistration = async (req, res) => {
-    try {
-        const {
-            event_id,
-            user_id,
-            phone_number,
-            license_plate,
-            start_number,
-            catering_type,
-            wishes,
-            gender,
-            club,
-            status,
-        } = req.body;
-
-        if (!event_id || !user_id)
-            return res.status(400).json({ message: "event_id und user_id sind erforderlich." });
-
-        const existing = await EventRegistration.findOne({ where: { event_id, user_id } });
-        if (existing)
-            return res.status(409).json({ message: "User ist bereits für dieses Event angemeldet." });
-
-        const reg = await EventRegistration.create({
-            event_id,
-            user_id,
-            phone_number,
-            license_plate,
-            start_number,
-            catering_type,
-            wishes,
-            gender,
-            club,
-            status,
-        });
-
-        res.status(201).json(reg);
-    } catch (err) {
-        console.error("❌ Fehler beim Erstellen der Registrierung:", err);
-        res.status(500).json({ message: "Fehler beim Erstellen der Registrierung." });
-    }
-};
-
-// ============================================================
-// ✏️ Anmeldung aktualisieren
-// ============================================================
-exports.updateRegistration = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        // Verwende das Update-Schema (nicht das Create-Schema)
-        const { error } = eventRegistrationUpdateSchema.validate(req.body, { abortEarly: false });
-        if (error) {
-            return res.status(400).json({ message: error.details[0].message });
-        }
-
-        const registration = await EventRegistration.findByPk(id);
-        if (!registration) {
-            return res.status(404).json({ message: "Registrierung nicht gefunden." });
-        }
-
-        await registration.update(req.body);
-        res.json(registration);
-    } catch (err) {
-        console.error("❌ Fehler beim Aktualisieren der Registrierung:", err);
-        res.status(500).json({ message: "Fehler beim Aktualisieren der Registrierung." });
-    }
-};
-
-// ============================================================
-// ❌ Anmeldung löschen (nach ID)
-// ============================================================
-exports.deleteRegistration = async (req, res) => {
-    try {
-        const reg = await EventRegistration.findByPk(req.params.id);
-        if (!reg) return res.status(404).json({ message: "Anmeldung nicht gefunden." });
-
-        await reg.destroy();
-        res.json({ message: "Anmeldung erfolgreich gelöscht." });
-    } catch (err) {
-        console.error("❌ Fehler beim Löschen der Anmeldung:", err);
-        res.status(500).json({ message: "Fehler beim Löschen der Anmeldung." });
-    }
-};
-
-// ============================================================
-// 🔹 Registrierung nach Person-ID
-// ============================================================
-exports.getByPersonId = async (req, res) => {
-    try {
-        const { personId } = req.params;
-
-        const regs = await EventRegistration.findAll({
-            where: { person_id: personId },
-            include: [
-                { model: Person, as: "person", attributes: ["first_name", "last_name"] },
-                { model: Event, as: "event", attributes: ["name", "start_date"] },
-                { model: Squadron, as: "squadron", attributes: ["name", "start_number"] },
-                { model: Runtime, as: "runtimes" },
-            ],
-            order: [["createdAt", "DESC"]],
-        });
-
-        res.json(regs || []);
-    } catch (err) {
-        console.error("❌ Fehler beim Laden der Registrierungen für Person:", err);
-        res.status(500).json({ message: "Fehler beim Laden der Registrierungen für Person." });
-    }
-};
-
-// ============================================================
-// 🗑️ Person aus Event entfernen (aber Person bleibt bestehen)
-// ============================================================
-exports.deleteByPersonAndEvent = async (req, res) => {
-    try {
-        const { event_id, person_id } = req.params;
-
-        if (!event_id || !person_id)
-            return res.status(400).json({ message: "event_id und person_id sind erforderlich." });
-
-        const registration = await EventRegistration.findOne({ where: { event_id, person_id } });
-        if (!registration)
-            return res.status(404).json({ message: "Registrierung nicht gefunden." });
-
-        await registration.destroy();
-        console.log(`🗑️ Person ${person_id} wurde aus Event ${event_id} entfernt.`);
-        res.json({ message: "Person wurde aus diesem Event entfernt." });
-    } catch (err) {
-        console.error("❌ Fehler beim Entfernen der Person aus dem Event:", err);
-        res.status(500).json({ message: "Fehler beim Entfernen der Person aus dem Event." });
-    }
-};
-
-// ============================================================
-// 📊 Anzahl Registrierungen pro Event abrufen
-// ============================================================
-exports.getCountByEvent = async (req, res) => {
-    try {
-        const counts = await EventRegistration.findAll({
-            attributes: [
-                "event_id",
-                [EventRegistration.sequelize.fn("COUNT", EventRegistration.sequelize.col("event_id")), "count"],
-            ],
-            group: ["event_id"],
-        });
-
-        const result = {};
-        counts.forEach((c) => {
-            result[c.event_id] = parseInt(c.dataValues.count);
-        });
-
-        res.json(result);
-    } catch (err) {
-        console.error("❌ Fehler beim Zählen der Registrierungen:", err);
-        res.status(500).json({ message: "Fehler beim Abrufen der Anmeldungszahlen." });
-    }
-};
-
-exports.getByEventId = async (req, res) => {
-    try {
-        const regs = await EventRegistration.findAll({
-            where: { event_id: req.params.eventId },
-            include: [{ model: Person, as: 'person' }],
-        });
-        res.json(regs);
-    } catch (err) {
-        console.error('❌ Fehler beim Laden der Event-Registrierungen:', err);
-        res.status(500).json({ message: err.message });
-    }
-};
-
-// ============================================================
-// ➕ Neue Gruppen-Registrierung (User + Teilnehmer-Liste)
+// ➕ Neue Gruppen- oder Einzel-Anmeldung erstellen
 // ============================================================
 exports.createGroupRegistration = async (req, res) => {
     const t = await EventRegistration.sequelize.transaction();
@@ -259,9 +118,9 @@ exports.createGroupRegistration = async (req, res) => {
         } = req.body;
 
         if (!registered_by_person_id || !Array.isArray(participants)) {
-            return res
-                .status(400)
-                .json({ message: "registered_by_person_id und participants[] erforderlich." });
+            return res.status(400).json({
+                message: "registered_by_person_id und participants[] erforderlich.",
+            });
         }
 
         // 🔹 Registrierung anlegen
@@ -281,7 +140,7 @@ exports.createGroupRegistration = async (req, res) => {
             { transaction: t }
         );
 
-        // 🔹 Teilnehmer anlegen
+        // 🔹 Teilnehmer hinzufügen
         for (const p of participants) {
             await EventRegistrationParticipant.create(
                 {
@@ -300,7 +159,55 @@ exports.createGroupRegistration = async (req, res) => {
     } catch (err) {
         await t.rollback();
         console.error("❌ Fehler beim Erstellen der Gruppen-Registrierung:", err);
-        res.status(500).json({ message: "Fehler beim Erstellen der Gruppen-Registrierung." });
+        res
+            .status(500)
+            .json({ message: "Fehler beim Erstellen der Gruppen-Registrierung." });
+    }
+};
+
+// ============================================================
+// ✏️ Anmeldung aktualisieren
+// ============================================================
+exports.updateRegistration = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const { error } = eventRegistrationUpdateSchema.validate(req.body, {
+            abortEarly: false,
+        });
+        if (error) {
+            return res.status(400).json({ message: error.details[0].message });
+        }
+
+        const registration = await EventRegistration.findByPk(id);
+        if (!registration) {
+            return res.status(404).json({ message: "Registrierung nicht gefunden." });
+        }
+
+        await registration.update(req.body);
+        res.json(registration);
+    } catch (err) {
+        console.error("❌ Fehler beim Aktualisieren der Registrierung:", err);
+        res
+            .status(500)
+            .json({ message: "Fehler beim Aktualisieren der Registrierung." });
+    }
+};
+
+// ============================================================
+// 🗑️ Anmeldung löschen (nach ID)
+// ============================================================
+exports.deleteRegistration = async (req, res) => {
+    try {
+        const reg = await EventRegistration.findByPk(req.params.id);
+        if (!reg)
+            return res.status(404).json({ message: "Anmeldung nicht gefunden." });
+
+        await reg.destroy();
+        res.json({ message: "Anmeldung erfolgreich gelöscht." });
+    } catch (err) {
+        console.error("❌ Fehler beim Löschen der Anmeldung:", err);
+        res.status(500).json({ message: "Fehler beim Löschen der Anmeldung." });
     }
 };
 
@@ -312,11 +219,26 @@ exports.getGroupByEvent = async (req, res) => {
         const regs = await EventRegistration.findAll({
             where: { event_id: req.params.eventId },
             include: [
-                { model: User, as: "user", attributes: ["id", "email"] },
+                {
+                    model: Person,
+                    as: "registered_by_person", // ✅ wichtig
+                    attributes: ["id", "first_name", "last_name", "email"],
+                },
                 {
                     model: EventRegistrationParticipant,
                     as: "participants",
-                    include: [{ model: Person, as: "person", attributes: ["id", "first_name", "last_name"] }],
+                    include: [
+                        {
+                            model: Person,
+                            as: "person",
+                            attributes: ["id", "first_name", "last_name", "email"],
+                        },
+                        {
+                            model: Squadron,
+                            as: "squadron",
+                            attributes: ["id", "name", "start_number"],
+                        },
+                    ],
                 },
             ],
             order: [["createdAt", "DESC"]],
@@ -329,6 +251,58 @@ exports.getGroupByEvent = async (req, res) => {
     }
 };
 
+// ============================================================
+// 🔍 Registrierungen eines Users abrufen
+// ============================================================
+exports.getByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        console.log("🔍 Suche Registrierungen für user_id =", userId);
+
+        // 1️⃣ Finde Personen, die diesem User gehören
+        const persons = await Person.findAll({ where: { owner_id: userId } });
+
+        if (!persons || persons.length === 0) {
+            console.warn("⚠️ Keine Personen zu diesem Benutzer gefunden.");
+            return res.json([]);
+        }
+
+        const personIds = persons.map((p) => p.id);
+        console.log("👤 Gefundene Personen:", personIds);
+
+        // 2️⃣ Lade Registrierungen, die diese Personen erstellt haben
+        const regs = await EventRegistration.findAll({
+            where: { registered_by_person_id: personIds },
+            include: [
+                {
+                    model: Event,
+                    as: "event",
+                    attributes: ["id", "name", "start_date", "end_date"],
+                },
+                {
+                    model: EventRegistrationParticipant,
+                    as: "participants",
+                    include: [
+                        {
+                            model: Person,
+                            as: "person",
+                            attributes: ["id", "first_name", "last_name"],
+                        },
+                    ],
+                },
+            ],
+            order: [["createdAt", "DESC"]],
+        });
+
+        console.log("📦 Gefundene Registrierungen:", regs.length);
+        res.json(regs);
+    } catch (err) {
+        console.error("❌ Fehler beim Laden der Registrierungen für User:", err);
+        res
+            .status(500)
+            .json({ message: "Fehler beim Laden der Registrierungen für User." });
+    }
+};
 
 // ============================================================
 // 🟢 Nur den Status einer Registrierung ändern (Admin)
@@ -339,7 +313,8 @@ exports.updateRegistrationStatus = async (req, res) => {
         const { status } = req.body;
 
         const reg = await EventRegistration.findByPk(id);
-        if (!reg) return res.status(404).json({ message: "Registrierung nicht gefunden." });
+        if (!reg)
+            return res.status(404).json({ message: "Registrierung nicht gefunden." });
 
         await reg.update({ status });
         res.json({ message: "Status erfolgreich aktualisiert." });
@@ -350,71 +325,27 @@ exports.updateRegistrationStatus = async (req, res) => {
 };
 
 
-// ==================================================
-// ➕ Teilnehmer zu bestehender Registrierung hinzufügen
-// ==================================================
-exports.addParticipant = async (req, res) => {
-    try {
-        const {
-            registration_id,
-            person_id,
-            squadron_id,
-            participation_type,
-            liability_accept,
-        } = req.body;
-
-        if (!registration_id || !person_id) {
-            return res
-                .status(400)
-                .json({ message: "registration_id und person_id sind erforderlich." });
-        }
-
-        const participant = await EventRegistrationParticipant.create({
-            registration_id,
-            person_id,
-            squadron_id: squadron_id || null,
-            participation_type: participation_type || "einzeln",
-            liability_accept: liability_accept ?? true,
-        });
-
-        res.status(201).json(participant);
-    } catch (err) {
-        console.error("❌ Fehler beim Hinzufügen eines Teilnehmers:", err);
-        res
-            .status(500)
-            .json({ message: "Fehler beim Hinzufügen eines Teilnehmers." });
-    }
-};
-
-
 // ============================================================
-// 🔍 Registrierungen eines Users (inkl. Teilnehmer & Event)
+// 📊 Anzahl Registrierungen pro Event (alle Events)
 // ============================================================
-exports.getByUserId = async (req, res) => {
+exports.getCountByEvent = async (req, res) => {
     try {
-        const { userId } = req.params;
-        console.log('🔍 Suche Registrierungen für user_id =', userId);
-
-        const regs = await EventRegistration.findAll({
-            where: { user_id: userId },
-            include: [
-                { model: Event, as: "event" },
-                {
-                    model: EventRegistrationParticipant,
-                    as: "participants",
-                    include: [{ model: Person, as: "person" }],
-                },
+        const counts = await EventRegistration.findAll({
+            attributes: [
+                "event_id",
+                [EventRegistration.sequelize.fn("COUNT", EventRegistration.sequelize.col("event_id")), "count"],
             ],
+            group: ["event_id"],
         });
 
-        console.log('📦 Gefundene Registrierungen:', regs.length);
-        res.json(regs);
+        const result = counts.map((row) => ({
+            event_id: row.event_id,
+            count: parseInt(row.dataValues.count, 10),
+        }));
+
+        res.json(result);
     } catch (err) {
-        console.error("❌ Fehler beim Laden der Registrierungen für User:", err);
-        res.status(500).json({ message: "Fehler beim Laden der Registrierungen für User." });
+        console.error("❌ Fehler beim Abrufen der Anmeldungszahlen:", err);
+        res.status(500).json({ message: "Fehler beim Abrufen der Anmeldungszahlen." });
     }
 };
-
-
-
-

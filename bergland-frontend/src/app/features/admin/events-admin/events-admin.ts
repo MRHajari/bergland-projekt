@@ -76,20 +76,19 @@ private occupancyService = inject(OccupancyService);
   // =====================================================
   loadCounts(): void {
     this.countsMap = {};
-  
-    for (const evt of this.events) {
-      this.eventRegistrationService.getCountByEvent(evt.id).subscribe({
-        next: (res) => {
-          // res = { event_id: 'uuid', count: 5 }
-          this.countsMap[res.event_id] = res.count;
-        },
-        error: (err: any) => {
-          console.warn(`⚠️ Konnte Anmeldungszahl für ${evt.name} nicht laden:`, err);
-          this.countsMap[evt.id] = 0;
-        },
-      });
-    }
+    this.eventRegistrationService.getCountByEvent().subscribe({
+      next: (data) => {
+        console.log("📊 Counts empfangen:", data);
+        data.forEach((row) => {
+          this.countsMap[row.event_id] = row.count;
+        });
+      },
+      error: (err) => {
+        console.error("❌ Fehler beim Laden der Counts:", err);
+      },
+    });
   }
+  
   
 
   // =====================================================

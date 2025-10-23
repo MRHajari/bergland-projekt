@@ -342,8 +342,9 @@ async onSelectExistingPerson(e: any): Promise<void> {
 }
 
 
+
 // ======================================================
-// 🔹 Neue Person hinzufügen (lokal + im Backend registrieren)
+// 🔹 Neue Person hinzufügen (nur lokal vormerken, noch kein Backend-Aufruf)
 // ======================================================
 async addPerson(): Promise<void> {
   const v = this.personForm.value;
@@ -354,135 +355,86 @@ async addPerson(): Promise<void> {
     return;
   }
 
- try {
-  const ownerId = this.authService.getUserId();
-  if (!ownerId) {
-    alert('⚠️ Kein eingeloggter Benutzer gefunden.');
-    return;
-  }
-
-  const first = v.first_name.trim();
-  const last = v.last_name.trim();
-
-  // 🧠 Schritt 1: Prüfen, ob Person bereits im Backend existiert
-  const allPersons = await firstValueFrom(this.personService.getAll(ownerId));
-  const existingPerson = allPersons.find(
-    (p) =>
-      p.first_name.toLowerCase() === first.toLowerCase() &&
-      p.last_name.toLowerCase() === last.toLowerCase()
-  );
-
-  let person: Person;
-
-  if (existingPerson) {
-    console.log('👀 Person existiert bereits:', existingPerson);
-    person = existingPerson;
-  } else {
-    // 👤 Neue Person anlegen (in DB speichern)
-    const newPerson: Person = {
-      first_name: first,
-      last_name: last,
-      birth_date: v.birth_date || undefined,
-      email: v.email || undefined,
-      owner_id: ownerId,
-    };
-
-    const created = await firstValueFrom(this.personService.create(newPerson));
-    if (!created?.id) {
-      alert('❌ Person konnte nicht korrekt angelegt werden.');
+  try {
+    const ownerId = this.authService.getUserId();
+    if (!ownerId) {
+      alert('⚠️ Kein eingeloggter Benutzer gefunden.');
       return;
     }
-    person = created;
-    console.log('🆕 Neue Person in DB angelegt:', created);
-  }
 
-  // 🧩 Staffelzuordnung
-  const squadronId =
-    this.registrationForm.value.teilnahme_art === 'staffel'
-      ? this.registrationForm.value.squadron_id
-      : null;
+    const first = v.first_name.trim();
+    const last = v.last_name.trim();
 
-  const squadronName = squadronId
-    ? this.squadrons.find((s) => s.id === squadronId)?.name || 'Unbekannte Staffel'
-    : null;
+    // 🧠 Schritt 1: Prüfen, ob Person bereits existiert (im Backend)
+    const allPersons = await firstValueFrom(this.personService.getAll(ownerId));
+    const existingPerson = allPersons.find(
+      (p) =>
+        p.first_name.toLowerCase() === first.toLowerCase() &&
+        p.last_name.toLowerCase() === last.toLowerCase()
+    );
 
-  // 🔹 Prüfen, ob Person schon in der UI hinzugefügt ist
-  const alreadyAdded = this.addedPersons.some((p) => p.id === person.id);
-  if (alreadyAdded) {
-    alert(`${first} ${last} wurde bereits zur Liste hinzugefügt.`);
-    return;
-  }
+    let person: Person;
 
-  // 🔹 Person lokal vormerken
-  this.addedPersons.push({
-    ...person,
-    inSquadron: !!squadronId,
-    squadronName,
-  });
-
-  // 🔹 Person aus Auswahl entfernen (falls vorhanden)
-  this.existingPersons = this.existingPersons.filter((p) => p.id !== person.id);
-
-  // ============================================================
-  // 💾 Schritt 2: Registrierung & Teilnehmer im Backend speichern
-  // ============================================================
-  if (this.event?.id) {
-    // 👉 Teilnehmer-Objekt vorbereiten
-    const participant = {
-      person_id: person.id!,
-      squadron_id: squadronId,
-      participation_type: this.registrationForm.value.teilnahme_art,
-      liability_accept: this.registrationForm.value.liability_accept,
-    };
-
-    if (!this.existingRegistration) {
-      // 🆕 Neue Gruppen-Registrierung anlegen
-      const payload = {
-        event_id: this.event.id,
-        registered_by_person_id: this.authService.getPersonId() ?? '',
-        phone_number: this.registrationForm.value.phone_number || null,
-        license_plate: this.registrationForm.value.license_plate || null,
-        start_number: this.registrationForm.value.start_number || null,
-        catering_type: this.registrationForm.value.catering_type || null,
-        wishes: this.registrationForm.value.wishes || null,
-        gender: this.registrationForm.value.gender || null,
-        club: this.registrationForm.value.club || null,
-        status: this.registrationForm.value.status || 'in_auswahl',
-        participants: [participant],
+    if (existingPerson) {
+      console.log('👀 Person existiert bereits:', existingPerson);
+      person = existingPerson;
+    } else {
+      // 👤 Neue Person im Backend anlegen
+      const newPerson: Person = {
+        first_name: first,
+        last_name: last,
+        birth_date: v.birth_date || undefined,
+        email: v.email || undefined,
+        owner_id: ownerId,
       };
 
-      const createdReg = await firstValueFrom(
-        this.registrationService.createGroupRegistration(payload)
-      );
-
-      if (createdReg?.id) {
-        console.log('✅ Gruppen-Registrierung erstellt:', createdReg);
-        this.existingRegistration = createdReg;
-        this.isRegistered = true;
+      const created = await firstValueFrom(this.personService.create(newPerson));
+      if (!created?.id) {
+        alert('❌ Person konnte nicht korrekt angelegt werden.');
+        return;
       }
-    } else {
-      // ➕ Registrierung existiert → neuen Teilnehmer hinzufügen
-      const regId = this.existingRegistration.id!;
-      const participantPayload = { ...participant, registration_id: regId };
-
-      const createdPart = await firstValueFrom(
-        this.registrationService.addParticipant(participantPayload)
-      );
-
-      console.log('➕ Teilnehmer zur bestehenden Registrierung hinzugefügt:', createdPart);
+      person = created;
+      console.log('🆕 Neue Person in DB angelegt:', created);
     }
+
+    // 🧩 Staffelzuordnung
+    const squadronId =
+      this.registrationForm.value.teilnahme_art === 'staffel'
+        ? this.registrationForm.value.squadron_id
+        : null;
+
+    const squadronName = squadronId
+      ? this.squadrons.find((s) => s.id === squadronId)?.name || 'Unbekannte Staffel'
+      : null;
+
+    // 🧩 Prüfen, ob Person schon lokal hinzugefügt ist
+    const alreadyAdded = this.addedPersons.some((p) => p.id === person.id);
+    if (alreadyAdded) {
+      alert(`${first} ${last} wurde bereits hinzugefügt.`);
+      return;
+    }
+
+    // ✅ Person nur lokal vormerken (noch keine Registrierung!)
+    this.addedPersons.push({
+      ...person,
+      inSquadron: !!squadronId,
+      squadronName,
+    });
+
+    // ✅ Aus Dropdown entfernen
+    this.existingPersons = this.existingPersons.filter((p) => p.id !== person.id);
+
+    // ✅ Formular zurücksetzen
+    this.personForm.reset();
+
+    console.log(`✅ ${first} ${last} wurde lokal zur Teilnehmerliste hinzugefügt.`);
+
+  } catch (err) {
+    console.error('❌ Fehler beim Hinzufügen der Person:', err);
+    alert('Fehler beim Hinzufügen der Person.');
   }
-
-  // 🔹 Formular zurücksetzen
-  this.personForm.reset();
-
-  console.log(`✅ ${first} ${last} wurde lokal + im Backend zur Anmeldung hinzugefügt.`);
-} catch (err) {
-  console.error('❌ Fehler beim Hinzufügen der Person:', err);
-  alert('Fehler beim Hinzufügen der Person.');
 }
 
-}
 
 // ======================================================
 // 🔹 Person aus Event-Registrierung entfernen
@@ -587,61 +539,76 @@ async removePerson(personId?: string) {
   }
   
 
-  // ======================================================
-  // 🔹 Registrierung (neu oder update)
-  // ======================================================
-  async registerAll(): Promise<void> {
-    if (!this.event?.id) return alert('Event fehlt.');
-    if (this.addedPersons.length === 0) return alert('Bitte mindestens eine Person hinzufügen.');
-    if (this.registrationForm.invalid) return alert('Bitte Haftung akzeptieren.');
-  
-    try {
-      const personId = this.authService.getPersonId();
-      if (!personId) {
-        alert('❌ Kein eingeloggter Benutzer gefunden.');
-        return;
-      }
-  
-      for (const p of this.addedPersons) {
-        const payload: EventRegistrationGroupPayload = {
-          event_id: this.event.id,
-          registered_by_person_id: personId,
-          phone_number: this.registrationForm.value.phone_number || null,
-          license_plate: this.registrationForm.value.license_plate || null,
-          start_number: this.registrationForm.value.start_number || null,
-          catering_type: this.registrationForm.value.catering_type || null,
-          wishes: this.registrationForm.value.wishes || null,
-          gender: this.registrationForm.value.gender || null,
-          club: this.registrationForm.value.club || null,
-          status: this.registrationForm.value.status || 'in_auswahl',
-        
-          // 👇 Teilnehmerliste ist Pflicht in EventRegistrationGroupPayload
-          participants: [
-            {
-              person_id: p.id!,
-              squadron_id:
-                this.registrationForm.value.teilnahme_art === 'staffel'
-                  ? this.registrationForm.value.squadron_id
-                  : null,
-              participation_type: this.registrationForm.value.teilnahme_art,
-              liability_accept: this.registrationForm.value.liability_accept,
-            },
-          ],
-        };
-        
-        const created = await firstValueFrom(
-          this.registrationService.createGroupRegistration(payload)
-        );
-        if (created?.id) this.createdRegistrationIds.push(created.id);
-      }
-  
-      this.isRegistered = true;
-      alert('✅ Erfolgreich angemeldet!');
-    } catch (err) {
-      console.error(err);
-      alert('❌ Fehler bei der Anmeldung.');
+// ======================================================
+// 🔹 Registrierung (nur 1x pro User + Event, mit allen Teilnehmern)
+// ======================================================
+async registerAll(): Promise<void> {
+  if (!this.event?.id) return alert('❌ Event fehlt.');
+  if (this.addedPersons.length === 0) return alert('Bitte mindestens eine Person hinzufügen.');
+  if (this.registrationForm.invalid) return alert('Bitte Haftung akzeptieren.');
+
+  try {
+    const personId = this.authService.getPersonId();
+    if (!personId) {
+      alert('❌ Kein eingeloggter Benutzer gefunden.');
+      return;
     }
+
+    // 🧩 Prüfen, ob bereits eine Registrierung existiert
+    if (this.existingRegistration) {
+      alert('⚠️ Du bist bereits für dieses Event angemeldet.');
+      return;
+    }
+
+    // 🧠 Registrierungspayload zusammenbauen
+    const payload: EventRegistrationGroupPayload = {
+      event_id: this.event.id,
+      registered_by_person_id: personId,
+      phone_number: this.registrationForm.value.phone_number || null,
+      license_plate: this.registrationForm.value.license_plate || null,
+      start_number: this.registrationForm.value.start_number || null,
+      catering_type: this.registrationForm.value.catering_type || null,
+      wishes: this.registrationForm.value.wishes || null,
+      gender: this.registrationForm.value.gender || null,
+      club: this.registrationForm.value.club || null,
+      status: this.registrationForm.value.status || 'in_auswahl',
+
+      // 👇 Alle hinzugefügten Personen als Teilnehmer
+      participants: this.addedPersons.map((p) => ({
+        person_id: p.id!,
+        squadron_id:
+          this.registrationForm.value.teilnahme_art === 'staffel'
+            ? this.registrationForm.value.squadron_id
+            : null,
+        participation_type: this.registrationForm.value.teilnahme_art,
+        liability_accept: this.registrationForm.value.liability_accept,
+      })),
+    };
+
+    console.log('📦 Registrierungspayload:', payload);
+
+    // 💾 API-Aufruf: Gruppenregistrierung anlegen
+    const created = await firstValueFrom(
+      this.registrationService.createGroupRegistration(payload)
+    );
+
+    // 🔹 Erfolgreich angelegt?
+    const newReg = created?.registration || created; // je nach Backend-Rückgabe
+    if (newReg?.id) {
+      this.existingRegistration = newReg;
+      this.isRegistered = true;
+      console.log('✅ Registrierung erfolgreich erstellt:', newReg.id);
+      alert('✅ Anmeldung erfolgreich erstellt!');
+    } else {
+      alert('❌ Unerwartete Antwort vom Server – keine Registrierung-ID.');
+    }
+
+  } catch (err) {
+    console.error('❌ Fehler bei der Gruppenregistrierung:', err);
+    alert('❌ Fehler bei der Anmeldung.');
   }
+}
+
   
 
   // ======================================================

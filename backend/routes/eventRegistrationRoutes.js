@@ -1,48 +1,36 @@
 const express = require("express");
 const router = express.Router();
-const { authenticateToken } = require("../middlewares/authMiddleware");
 const eventRegistrationController = require("../controllers/eventRegistrationController");
 
-// 📊 Anzahl der Registrierungen pro Event (muss VOR :id stehen!)
-router.get("/count-by-event", authenticateToken, eventRegistrationController.getCountByEvent);
+// ======================================================
+// 🎟️ Event Registration Routes
+// ======================================================
 
-// 📋 Alle Event-Registrierungen
-router.get("/", authenticateToken, eventRegistrationController.getAllRegistrations);
+// ➕ Gruppenregistrierung erstellen
+router.post("/group", eventRegistrationController.createGroupRegistration);
 
-// 🔍 Registrierungen nach Person-ID
-router.get("/person/:personId", authenticateToken, eventRegistrationController.getByPersonId);
+// 🔍 Gruppen-Registrierungen eines Events
+router.get("/group/event/:eventId", eventRegistrationController.getGroupByEvent);
 
-// 🔍 Einzelne Registrierung
-router.get("/:id", authenticateToken, eventRegistrationController.getRegistrationById);
+// 🔍 Registrierungen eines Users
+router.get("/user/:userId", eventRegistrationController.getByUserId);
 
-// ➕ Neue Registrierung
-router.post("/", authenticateToken, eventRegistrationController.createRegistration);
+// 📊 Anzahl aller Registrierungen pro Event abrufen (für Admin)
+router.get("/count-by-event", eventRegistrationController.getCountByEvent);
 
-// ✏️ Registrierung aktualisieren
-router.put("/:id", authenticateToken, eventRegistrationController.updateRegistration);
+// 📋 Alle Registrierungen
+router.get("/", eventRegistrationController.getAllRegistrations);
 
-// 🟢 Nur Status aktualisieren (Admin)
-router.put("/:id/status", authenticateToken, eventRegistrationController.updateRegistrationStatus);
+// 🔍 Registrierung nach ID (⚠️ muss **ganz unten** bleiben)
+router.get("/:id", eventRegistrationController.getRegistrationById);
 
-// 🗑️ Person aus Event entfernen
-router.delete("/:event_id/person/:person_id", authenticateToken, eventRegistrationController.deleteByPersonAndEvent);
+// 🟢 Status ändern
+router.put("/:id/status", eventRegistrationController.updateRegistrationStatus);
+
+// ✏️ Registrierung bearbeiten
+router.put("/:id", eventRegistrationController.updateRegistration);
 
 // ❌ Registrierung löschen
-router.delete("/:id", authenticateToken, eventRegistrationController.deleteRegistration);
-
-// 🔍 Registrierungen nach Event-ID
-router.get("/event/:eventId", authenticateToken, eventRegistrationController.getByEventId);
-
-// 🧩 Gruppen-Registrierung
-router.post("/group", authenticateToken, eventRegistrationController.createGroupRegistration);
-
-// 🧩 Gruppen nach Event
-router.get("/group/event/:eventId", authenticateToken, eventRegistrationController.getGroupByEvent);
-
-// ➕ Teilnehmer zu bestehender Registrierung hinzufügen ✅
-router.post("/participant", authenticateToken, eventRegistrationController.addParticipant);
-
-// 🔍 Registrierungen nach User-ID
-router.get("/user/:userId", authenticateToken, eventRegistrationController.getByUserId);
+router.delete("/:id", eventRegistrationController.deleteRegistration);
 
 module.exports = router;
