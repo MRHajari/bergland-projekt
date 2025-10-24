@@ -4,9 +4,11 @@ const sequelize = require("../config/db");
 
 /**
  * 🏨 Booking Model
- * Repräsentiert eine Unterkunftsbuchung für ein bestimmtes Event.
- * Der eingeloggte User führt die Buchung durch.
- * Die Zuordnung zu einzelnen Personen erfolgt später manuell durch das Personal.
+ * Repräsentiert eine Unterkunftsbuchung im Rahmen einer Event-Registrierung.
+ * Eine Buchung gehört:
+ *  - zu einer EventRegistration (fachlich)
+ *  - zu einem Event (zur Admin-Auswertung)
+ *  - zu einem User (wer gebucht hat)
  */
 const Booking = sequelize.define(
     "booking",
@@ -17,42 +19,55 @@ const Booking = sequelize.define(
             defaultValue: DataTypes.UUIDV4,
         },
 
-        // 🔹 Der Benutzer, der die Buchung vorgenommen hat
-        user_id: {
+        // 🔗 Verknüpft mit EventRegistration
+        event_registration_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            comment: "Referenz zur EventRegistration (onDelete: CASCADE)",
         },
 
-        // 🔹 Zugehöriges Event (z. B. Pfälzer Berglauf 2025)
+        // 🔗 Direkte Verbindung zum Event (für schnelle Abfragen / Admin)
         event_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            comment: "Referenz zum Event (automatisch aus EventRegistration gesetzt)",
         },
 
-        // 🔹 Unterkunft (z. B. Haus am See)
+        // 👤 Wer hat die Buchung erstellt
+        user_id: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            comment: "Referenz zum User (JWT-Authentifizierung)",
+        },
+
+        // 🏨 Unterkunft (z. B. Haus am See)
         accommodation_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            comment: "Referenz zur gebuchten Unterkunft",
         },
 
-        // 🔹 Anzahl gebuchter Betten
+        // 🛏️ Anzahl gebuchter Betten
         single_beds: {
             type: DataTypes.INTEGER,
             defaultValue: 0,
+            validate: { min: 0 },
         },
         double_beds: {
             type: DataTypes.INTEGER,
             defaultValue: 0,
+            validate: { min: 0 },
         },
         multi_beds: {
             type: DataTypes.INTEGER,
             defaultValue: 0,
+            validate: { min: 0 },
         },
     },
     {
         tableName: "booking",
         freezeTableName: true,
-        timestamps: true, // erstellt automatisch createdAt & updatedAt
+        timestamps: true,
     }
 );
 

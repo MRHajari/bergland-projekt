@@ -5,7 +5,7 @@ const { authenticateToken } = require("../middlewares/authMiddleware");
 const bookingController = require("../controllers/bookingController");
 
 // ============================================================
-// 🆕 Buchung erstellen
+// ➕ Neue Buchung erstellen
 // ============================================================
 router.post("/", authenticateToken, bookingController.createBooking);
 
@@ -15,16 +15,14 @@ router.post("/", authenticateToken, bookingController.createBooking);
 router.get("/", authenticateToken, bookingController.getAllBookings);
 
 // ============================================================
-// 👤 Alle Buchungen eines bestimmten Users
-// /api/bookings/user/:userId
+// 🔍 Buchung für bestimmte EventRegistration
+// /api/bookings/by-registration/:registrationId
 // ============================================================
-router.get("/user/:userId", authenticateToken, bookingController.getByUser);
-
-// ============================================================
-// 📅 Alle Buchungen eines bestimmten Events (Admin)
-// /api/bookings/event/:eventId
-// ============================================================
-router.get("/event/:eventId", authenticateToken, bookingController.getByEvent);
+router.get(
+    "/by-registration/:registrationId",
+    authenticateToken,
+    bookingController.getByEventRegistration
+);
 
 // ============================================================
 // 🔍 Einzelne Buchung per ID

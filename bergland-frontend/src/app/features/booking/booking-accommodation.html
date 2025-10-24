@@ -6,7 +6,7 @@
     } @else {
 
     <!-- ============================
-         📦 1️⃣ Meine Buchungen
+         📦 Meine Buchungen
          ============================ -->
     @if (!eventId) {
     <h1>📦 Meine Buchungen</h1>
@@ -20,16 +20,16 @@
             <tr>
                 <th>Unterkunft</th>
                 <th>Event</th>
-                <th>EZ</th>
-                <th>DZ</th>
-                <th>MBZ</th>
+                <th>Einzelzimmer</th>
+                <th>Doppelzimmer</th>
+                <th>Mehrbettzimmer</th>
             </tr>
         </thead>
         <tbody>
             @for (b of bookings; track b.id) {
             <tr>
                 <td>{{ b.accommodation?.name || '—' }}</td>
-                <td>{{ b.event?.name || '—' }}</td>
+                <td>{{ b.eventRegistration?.event_id || '—' }}</td>
                 <td>{{ b.single_beds }}</td>
                 <td>{{ b.double_beds }}</td>
                 <td>{{ b.multi_beds }}</td>
@@ -41,7 +41,7 @@
     }
 
     <!-- ============================
-         🏨 2️⃣ Unterkunft buchen
+         🏨 Unterkunft buchen
          ============================ -->
     @if (eventId) {
     <h1>🏨 Unterkunft für Event buchen</h1>
@@ -51,16 +51,61 @@
     } @else {
     <div class="accommodation-grid">
         @for (acc of accommodations; track acc.id) {
-        <div class="acc-card">
-            <h3>{{ acc.name }}</h3>
-            <p>{{ acc.street }}, {{ acc.postal_code }} {{ acc.city }}</p>
-            <p>
-                🛏️ EZ: {{ acc.single_rooms }} |
-                DZ: {{ acc.double_rooms }} |
-                MBZ: {{ acc.multi_bed_rooms }}
-            </p>
+        <div class="acc-card" [class.selected]="existingBooking?.accommodation_id === acc.id">
+            <h3>🏨 {{ acc.name }}</h3>
+            <p class="location">{{ acc.street }}, {{ acc.postal_code }} {{ acc.city }}</p>
+
+            <div class="availability">
+                <p><strong>Verfügbare Zimmer:</strong></p>
+                <p>Einzelzimmer: {{ acc.available_single }} / {{ acc.single_beds_total }}</p>
+                <p>Doppelzimmer: {{ acc.available_double }} / {{ acc.double_beds_total }}</p>
+                <p>Mehrbettzimmer: {{ acc.available_multi }} / {{ acc.multi_beds_total }}</p>
+
+            </div>
+
             <p class="desc">{{ acc.description || 'Keine Beschreibung vorhanden.' }}</p>
-            <button class="primary" (click)="bookAccommodation(acc)">Jetzt buchen</button>
+
+            <div class="room-selection">
+                <div class="room-row">
+                    <label>Einzelzimmer:</label>
+                    <input type="number" step="1" min="0" [attr.max]="acc.available_single"
+                        [(ngModel)]="acc.request_single" />
+                </div>
+                <div class="room-row">
+                    <label>Doppelzimmer:</label>
+                    <input type="number" step="1" min="0" [attr.max]="acc.available_double"
+                        [(ngModel)]="acc.request_double" />
+                </div>
+                <div class="room-row">
+                    <label>Mehrbettzimmer:</label>
+                    <input type="number" step="1" min="0" [attr.max]="acc.available_multi"
+                        [(ngModel)]="acc.request_multi" />
+                </div>
+            </div>
+
+            <!-- ===================== -->
+            <!-- 🎯 Dynamische Buttons -->
+            <!-- ===================== -->
+            @if (existingBooking && existingBooking.accommodation_id === acc.id) {
+            <button class="primary" (click)="saveBooking(acc)" [disabled]="
+                    (acc.request_single || 0) +
+                      (acc.request_double || 0) +
+                      (acc.request_multi || 0) === 0
+                  ">
+                💾 Änderungen speichern
+            </button>
+            <button class="secondary delete" (click)="deleteBooking()">
+                🗑️ Buchung löschen
+            </button>
+            } @else {
+            <button class="primary" (click)="saveBooking(acc)" [disabled]="
+                    (acc.request_single || 0) +
+                      (acc.request_double || 0) +
+                      (acc.request_multi || 0) === 0
+                  ">
+                Jetzt buchen
+            </button>
+            }
         </div>
         }
     </div>

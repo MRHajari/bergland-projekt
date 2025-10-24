@@ -82,38 +82,25 @@ Invoice.belongsTo(Person, {
     as: "person",
 });
 
-// 🏡 BOOKING ↔ EVENT ↔ USER ↔ ACCOMMODATION
-Booking.belongsTo(Event, {
-    foreignKey: "event_id",
-    as: "event",
+// 🏨 BOOKING ↔ EVENTREGISTRATION ↔ ACCOMMODATION
+EventRegistration.hasOne(Booking, {
+    foreignKey: "event_registration_id",
+    as: "booking",
     onDelete: "CASCADE",
 });
-Event.hasMany(Booking, {
-    foreignKey: "event_id",
-    as: "bookings",
-    onDelete: "CASCADE",
-});
-
-Booking.belongsTo(User, {
-    foreignKey: "user_id",
-    as: "user",
-    onDelete: "CASCADE",
-});
-User.hasMany(Booking, {
-    foreignKey: "user_id",
-    as: "bookings",
-    onDelete: "CASCADE",
+Booking.belongsTo(EventRegistration, {
+    foreignKey: "event_registration_id",
+    as: "eventRegistration",
 });
 
-Booking.belongsTo(Accommodation, {
-    foreignKey: "accommodation_id",
-    as: "accommodation",
-    onDelete: "CASCADE",
-});
 Accommodation.hasMany(Booking, {
     foreignKey: "accommodation_id",
     as: "bookings",
     onDelete: "CASCADE",
+});
+Booking.belongsTo(Accommodation, {
+    foreignKey: "accommodation_id",
+    as: "accommodation",
 });
 
 // 🪪 EVENT ↔ SQUADRON (1:n)
@@ -127,21 +114,9 @@ Squadron.belongsTo(Event, {
     as: "event",
 });
 
-// 🏕️ EVENT ↔ ACCOMMODATION (n:m über OCCUPANCY)
-Event.belongsToMany(Accommodation, {
-    through: Occupancy,
-    foreignKey: "event_id",
-    otherKey: "accommodation_id",
-    as: "accommodations",
-});
-Accommodation.belongsToMany(Event, {
-    through: Occupancy,
-    foreignKey: "accommodation_id",
-    otherKey: "event_id",
-    as: "events",
-});
-
-// 1:n für direkte Belegungstabellen
+// ======================================================
+// 🏨 EVENT ↔ OCCUPANCY (direkte Relationen)
+// ======================================================
 Event.hasMany(Occupancy, {
     foreignKey: "event_id",
     as: "occupancies",
@@ -160,6 +135,29 @@ Accommodation.hasMany(Occupancy, {
 Occupancy.belongsTo(Accommodation, {
     foreignKey: "accommodation_id",
     as: "accommodation",
+});
+
+// ======================================================
+// 🏨 EVENT ↔ BOOKING (1:n für Admin-Auswertungen)
+// ======================================================
+Event.hasMany(Booking, {
+    foreignKey: "event_id",
+    as: "bookings",
+    onDelete: "CASCADE",
+});
+Booking.belongsTo(Event, {
+    foreignKey: "event_id",
+    as: "event",
+});
+
+User.hasMany(Booking, {
+    foreignKey: "user_id",
+    as: "bookings",
+    onDelete: "CASCADE",
+});
+Booking.belongsTo(User, {
+    foreignKey: "user_id",
+    as: "user",
 });
 
 // 🗺️ EVENT ↔ ROUTE (1:n)
@@ -207,10 +205,8 @@ Runtime.belongsTo(EventRegistration, {
 });
 
 // ======================================================
-// 🔗 EventRegistration – saubere Gruppenstruktur
+// 🔗 EventRegistration – Gruppenstruktur
 // ======================================================
-
-// 👤 Wer hat die Anmeldung erstellt (Anmelder)
 Person.hasMany(EventRegistration, {
     foreignKey: "registered_by_person_id",
     as: "createdEventRegistrations",
@@ -221,7 +217,6 @@ EventRegistration.belongsTo(Person, {
     as: "registered_by_person",
 });
 
-// 🔗 Zugehöriges Event
 Event.hasMany(EventRegistration, {
     foreignKey: "event_id",
     as: "eventRegistrations",
@@ -231,7 +226,6 @@ EventRegistration.belongsTo(Event, {
     foreignKey: "event_id",
     as: "event",
 });
-
 
 // 👥 Teilnehmer (n:m über EventRegistrationParticipant)
 EventRegistration.hasMany(EventRegistrationParticipant, {
@@ -244,7 +238,6 @@ EventRegistrationParticipant.belongsTo(EventRegistration, {
     as: "registration",
 });
 
-// 👤 Teilnehmer-Person
 Person.hasMany(EventRegistrationParticipant, {
     foreignKey: "person_id",
     as: "registrationParticipations",
@@ -255,7 +248,6 @@ EventRegistrationParticipant.belongsTo(Person, {
     as: "person",
 });
 
-// 🧭 Staffel optional
 Squadron.hasMany(EventRegistrationParticipant, {
     foreignKey: "squadron_id",
     as: "registrationParticipants",
@@ -278,7 +270,6 @@ Squadron.belongsToMany(Person, {
     as: "persons",
 });
 
-// include-Unterstützung für RelPersonSquadron
 RelPersonSquadron.belongsTo(Person, { foreignKey: "person_id", as: "person" });
 RelPersonSquadron.belongsTo(Squadron, { foreignKey: "squadron_id", as: "squadron" });
 
@@ -306,7 +297,6 @@ EventRegistration.belongsTo(Squadron, {
     foreignKey: "squadron_id",
     as: "squadron",
 });
-
 
 // ======================================================
 // ✅ EXPORTIEREN

@@ -1,5 +1,11 @@
-// backend/controllers/accommodationController.js
-const { Accommodation, EventRegistration, Person, Occupancy, Event } = require("../models");
+const {
+    Accommodation,
+    EventRegistration,
+    Person,
+    Occupancy,
+    Event,
+    Booking,
+} = require("../models");
 const accommodationSchema = require("../validators/accommodationValidator");
 
 // ======================================================
@@ -107,6 +113,68 @@ exports.deleteAccommodation = async (req, res, next) => {
         res.json({ message: "Unterkunft gelöscht" });
     } catch (err) {
         console.error("❌ Fehler beim Löschen der Unterkunft:", err);
+        next(err);
+    }
+};
+
+// ======================================================
+// 🏨 Verfügbare Unterkünfte für ein Event (mit Restbetten)
+// ======================================================
+exports.getAccommodationsByEvent = async (req, res, next) => {
+    const { eventId } = req.params;
+
+    try {
+        const occupancies = await Occupancy.findAll({
+            where: { event_id: eventId },
+            include: [
+                {
+                    model: Accommodation,
+                    as: "accommodation",
+                    include: [{ model: Booking, as: "bookings" }],
+                },
+            ],
+        });
+
+        if (!occupancies || occupancies.length === 0) {
+            return res.status(404).json({
+                error: "Keine Unterkünfte für dieses Event gefunden.",
+            });
+        }
+
+        const result = occupancies.map((occ) => {
+            const acc = occ.accommodation;
+            const bookedSingle = acc.bookings?.reduce(
+                (sum, b) => sum + (b.single_beds || 0),
+                0
+            );
+            const bookedDouble = acc.bookings?.reduce(
+                (sum, b) => sum + (b.double_beds || 0),
+                0
+            );
+            const bookedMulti = acc.bookings?.reduce(
+                (sum, b) => sum + (b.multi_beds || 0),
+                0
+            );
+
+            return {
+                id: acc.id,
+                name: acc.name,
+                street: acc.street,
+                postal_code: acc.postal_code,
+                city: acc.city,
+                description: acc.description,
+                total_single: acc.single_rooms,
+                total_double: acc.double_rooms,
+                total_multi: acc.multi_bed_rooms,
+                available_single: acc.single_rooms - bookedSingle,
+                available_double: acc.double_rooms - bookedDouble,
+                available_multi: acc.multi_bed_rooms - bookedMulti,
+            };
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error("❌ Fehler beim Berechnen der Unterkunftsverfügbarkeit:", err);
         next(err);
     }
 };

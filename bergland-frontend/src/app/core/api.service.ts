@@ -37,21 +37,29 @@ export class ApiService {
   // 🔹 Einheitliche Fehlerbehandlung
   // ============================================================
   private handleError(error: HttpErrorResponse) {
+    // ✅ 404 = Kein echter Fehler (z. B. keine Buchung vorhanden)
+    if (error.status === 404) {
+      console.info('ℹ️ 404 – Ressource nicht gefunden (kein Problem).');
+      // gib einfach null zurück, statt Fehler zu werfen
+      return throwError(() => ({ status: 404, silent: true }));
+    }
+  
     const msg =
       error.error?.message ||
       error.message ||
       'Unbekannter Serverfehler. Bitte später erneut versuchen.';
-
+  
     console.error('❌ API-Fehler:', msg, error);
-
-    // Falls Auth-Token ungültig
+  
+    // ⚠️ Auth-Token prüfen
     if (error.status === 401) {
       console.warn('⚠️ 401 – Ungültiger oder abgelaufener Token. Benutzer wird ausgeloggt.');
       this.auth.logout();
     }
-
+  
     return throwError(() => new Error(msg));
   }
+  
 
   // ============================================================
   // 🔹 CRUD-Methoden mit Auth-Header

@@ -5,33 +5,61 @@ import { ApiService } from '../api.service';
 export interface AccommodationInterface {
   id?: string;
   name: string;
-  street: string;
-  postal_code: string;
-  city: string;
-  country: string;
-  single_rooms: number;
-  double_rooms: number;
-  multi_bed_rooms: number;
-  total_beds?: number;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
   description?: string;
+
+  // ==========================================================
+  // 🛏️ Zimmeranzahl (Stammdaten aus Unterkunft)
+  // ==========================================================
+  single_rooms?: number;
+  double_rooms?: number;
+  multi_bed_rooms?: number;
+  total_beds?: number;
+
+  // ==========================================================
+  // 📊 Verfügbare Betten (vom Backend berechnet – aus Occupancy)
+  // ==========================================================
+  single_beds_total?: number;
+  double_beds_total?: number;
+  multi_beds_total?: number;
+
+  available_single?: number;
+  available_double?: number;
+  available_multi?: number;
+
+  // ==========================================================
+  // 🔗 Referenzen (Event & Occupancy)
+  // ==========================================================
+  occupancy_id?: string;
   event_id?: string;
-  createdAt?: string;
-  updatedAt?: string;
-    // 🧩 neue Zeile:
-    occupancies?: {
-      id: string;
-      event_id: string;
-      single_beds_total?: number;
-      double_beds_total?: number;
-      multi_beds_total?: number;
-      event?: {
-        id: string;
-        name: string;
-        start_date?: string;
-        end_date?: string;
-      };
-    }[];
+
+  // ==========================================================
+  // 🧾 Historische Belegungen (falls du später Übersicht brauchst)
+  // ==========================================================
+  occupancies?: {
+    id?: string;
+    event_id?: string;
+    used_beds?: number;
+    event?: {
+      id?: string;
+      name?: string;
+      start_date?: string;
+      end_date?: string;
+    };
+  }[];
+
+  // ==========================================================
+  // 🧍 Frontend-Only-Felder (nicht an Backend senden!)
+  // ==========================================================
+  request_single?: number;
+  request_double?: number;
+  request_multi?: number;
 }
+
+
  
 @Injectable({
   providedIn: 'root'
@@ -65,6 +93,6 @@ export class AccommodationService {
   // 🔹 Unterkünfte eines bestimmten Events laden
   getByEvent(eventId: string): Observable<AccommodationInterface[]> {
     return this.api.get<AccommodationInterface[]>(`occupancies/events/${eventId}/accommodations`);
-  }
+  }  
   
 }

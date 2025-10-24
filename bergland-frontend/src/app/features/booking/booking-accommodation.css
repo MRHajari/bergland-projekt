@@ -1,6 +1,5 @@
 .booking-container {
   padding: 2rem;
-  background: #f9fafb;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -8,7 +7,7 @@
 
 h1 {
   color: var(--primary-color);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   text-align: center;
 }
 
@@ -18,63 +17,121 @@ h1 {
   margin: 1rem 0;
 }
 
-.booking-table {
-  width: 100%;
-  max-width: 900px;
-  border-collapse: collapse;
-  background: white;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.booking-table th,
-.booking-table td {
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.booking-table th {
-  background: var(--primary-color);
-  color: white;
-  text-align: left;
-}
-
+/* ============================
+   📦 Accommodation Cards
+   ============================ */
 .accommodation-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
   width: 100%;
-  max-width: 1000px;
+  align-items: stretch;
 }
 
 .acc-card {
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  justify-content: space-between;
+  min-height: 420px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.acc-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .acc-card h3 {
+  font-size: 1.3rem;
   color: var(--primary-color);
-  font-size: 1.2rem;
   margin-bottom: 0.3rem;
 }
 
-.acc-card .desc {
+.location {
   font-size: 0.9rem;
   color: #475569;
 }
 
+.availability {
+  background: #f1f5f9;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: #1e293b;
+}
+
+.desc {
+  margin: 0.8rem 0;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+/* ============================
+   🛏️ Room Selection Inputs
+   ============================ */
+.room-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.room-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.room-row label {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+/* ✅ FIX: funktionierende Stepper (Pfeile) */
+.room-row input[type="number"] {
+  flex: 0 0 100px;
+  text-align: center;
+  padding: 0.4rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #fff;
+  color: #0f172a;
+  -webkit-appearance: textfield; /* Standarddarstellung mit Pfeilen */
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Chrome / Safari: Stepper sichtbar + klickbar */
+.room-row input[type="number"]::-webkit-inner-spin-button,
+.room-row input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: inner-spin-button;
+  opacity: 1;
+  margin: 0;
+  transform: scale(1.2);
+}
+
+/* Firefox */
+.room-row input[type="number"] {
+  -moz-appearance: number-input;
+}
+
+/* ============================
+   🎨 Buttons
+   ============================ */
 button.primary {
+  margin-top: 1rem;
   background: var(--primary-color);
   color: var(--text-on-primary);
   border: none;
-  border-radius: 6px;
-  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  padding: 0.7rem 1.3rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -82,4 +139,32 @@ button.primary {
 
 button.primary:hover {
   background: #0d3660;
+}
+
+button.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 🔹 Visuelle Hervorhebung der aktiven Buchung */
+.acc-card.selected {
+  border: 2px solid var(--primary-color);
+  box-shadow: 0 0 10px rgba(29, 78, 216, 0.3);
+  background: #f8fafc;
+}
+
+/* 🔹 Sekundärer Button (Löschen) */
+button.secondary.delete {
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  margin-top: 0.6rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button.secondary.delete:hover {
+  background: #b91c1c;
 }

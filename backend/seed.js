@@ -332,35 +332,30 @@ module.exports = async function runSeed() {
         console.log("🧾 Rechnungen erstellt.");
 
         // =====================================================
-        // 🛏️ BUCHUNGEN
+        // 🛏️ BUCHUNGEN (mit direkter EventRegistration-Verknüpfung)
         // =====================================================
         await Booking.bulkCreate([
             {
-                user_id: users[0].id,
+                event_registration_id: group1.id, // 🔗 direkter Bezug zur Registrierung
                 accommodation_id: accommodations[0].id,
-                event_id: events[0].id,
+                event_id: events[0].id,            // bleibt optional für Performance
+                user_id: users[0].id,              // wird für Queries beibehalten
                 single_beds: 1,
                 double_beds: 0,
                 multi_beds: 0,
             },
             {
-                user_id: users[1].id,
+                event_registration_id: group2.id,
                 accommodation_id: accommodations[1].id,
                 event_id: events[1].id,
-                single_beds: 1,
-                double_beds: 1,
-                multi_beds: 0,
-            },
-            {
                 user_id: users[2].id,
-                accommodation_id: accommodations[2].id,
-                event_id: events[2].id,
-                single_beds: 2,
-                double_beds: 0,
+                single_beds: 0,
+                double_beds: 1,
                 multi_beds: 1,
             },
         ]);
-        console.log("🛏️ Buchungen erstellt.");
+        console.log("🛏️ Buchungen (mit EventRegistration-Bezug) erstellt.");
+
 
         console.log("✅ Seeding erfolgreich abgeschlossen!");
     } catch (err) {

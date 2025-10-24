@@ -1,39 +1,88 @@
 // backend/controllers/bookingController.js
-const { Booking, Event, Accommodation, User } = require("../models");
+const { Booking, EventRegistration, Accommodation, Occupancy } = require("../models");
 const bookingSchema = require("../validators/bookingValidator");
 
 // ============================================================
 // ➕ Neue Buchung erstellen
 // ============================================================
 exports.createBooking = async (req, res, next) => {
+    const t = await Booking.sequelize.transaction();
     try {
         const { error } = bookingSchema.validate(req.body);
         if (error) {
             return res.status(400).json({ error: error.details[0].message });
         }
 
-        const { user_id, event_id, accommodation_id } = req.body;
+        const { event_registration_id, accommodation_id, single_beds, double_beds, multi_beds } = req.body;
 
-        if (!user_id || !event_id || !accommodation_id) {
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ error: "Nicht autorisiert." });
+
+        if (!event_registration_id || !accommodation_id) {
             return res.status(400).json({
-                error: "❌ user_id, event_id und accommodation_id sind erforderlich.",
+                error: "❌ event_registration_id und accommodation_id sind erforderlich.",
             });
         }
 
-        // ⚠️ Optional: prüfen, ob der User diese Unterkunft für das Event schon gebucht hat
-        const existing = await Booking.findOne({
-            where: { user_id, event_id, accommodation_id },
-        });
+        // 🔍 Registrierung prüfen
+        const registration = await EventRegistration.findByPk(event_registration_id);
+        if (!registration) {
+            return res.status(404).json({ error: "❌ Die angegebene EventRegistration existiert nicht." });
+        }
 
+        // ⚠️ Doppelte Buchung vermeiden
+        const existing = await Booking.findOne({ where: { event_registration_id } });
         if (existing) {
-            return res.status(409).json({
-                error: "⚠️ Du hast diese Unterkunft für dieses Event bereits gebucht.",
-            });
+            return res.status(409).json({ error: "⚠️ Es existiert bereits eine Unterkunftsbuchung für diese Anmeldung." });
         }
 
-        const booking = await Booking.create(req.body);
+        const eventId = registration.event_id;
+
+        // 🏨 Unterkunft prüfen
+        const accommodation = await Accommodation.findByPk(accommodation_id);
+        if (!accommodation) return res.status(404).json({ error: "Unterkunft nicht gefunden." });
+
+        // 🔎 Occupancy für Event + Unterkunft finden
+        const occupancy = await Occupancy.findOne({ where: { event_id: eventId, accommodation_id } });
+        if (!occupancy) return res.status(404).json({ error: "Keine Belegungsdaten für diese Unterkunft gefunden." });
+
+        // 🧮 Verfügbarkeit prüfen
+        if (
+            single_beds > occupancy.single_beds_total - occupancy.single_beds_booked ||
+            double_beds > occupancy.double_beds_total - occupancy.double_beds_booked ||
+            multi_beds > occupancy.multi_beds_total - occupancy.multi_beds_booked
+        ) {
+            return res.status(400).json({ error: "❌ Nicht genügend freie Betten verfügbar." });
+        }
+
+        // 💾 Buchung anlegen
+        const booking = await Booking.create(
+            {
+                event_registration_id,
+                event_id: eventId,
+                accommodation_id,
+                user_id: userId,
+                single_beds,
+                double_beds,
+                multi_beds,
+            },
+            { transaction: t }
+        );
+
+        // 📊 Occupancy aktualisieren
+        await occupancy.update(
+            {
+                single_beds_booked: occupancy.single_beds_booked + single_beds,
+                double_beds_booked: occupancy.double_beds_booked + double_beds,
+                multi_beds_booked: occupancy.multi_beds_booked + multi_beds,
+            },
+            { transaction: t }
+        );
+
+        await t.commit();
         res.status(201).json(booking);
     } catch (err) {
+        await t.rollback();
         console.error("❌ Fehler beim Erstellen der Buchung:", err);
         next(err);
     }
@@ -46,9 +95,12 @@ exports.getAllBookings = async (req, res, next) => {
     try {
         const bookings = await Booking.findAll({
             include: [
-                { model: Event, as: "event", attributes: ["id", "name", "start_date", "end_date"] },
+                {
+                    model: EventRegistration,
+                    as: "eventRegistration",
+                    attributes: ["id", "event_id", "registered_by_person_id"],
+                },
                 { model: Accommodation, as: "accommodation", attributes: ["id", "name", "city"] },
-                { model: User, as: "user", attributes: ["id", "email"] },
             ],
             order: [["createdAt", "DESC"]],
         });
@@ -66,15 +118,16 @@ exports.getBookingById = async (req, res, next) => {
     try {
         const booking = await Booking.findByPk(req.params.id, {
             include: [
-                { model: Event, as: "event", attributes: ["id", "name"] },
-                { model: Accommodation, as: "accommodation", attributes: ["id", "name"] },
-                { model: User, as: "user", attributes: ["id", "email"] },
+                {
+                    model: EventRegistration,
+                    as: "eventRegistration",
+                    attributes: ["id", "event_id", "registered_by_person_id"],
+                },
+                { model: Accommodation, as: "accommodation", attributes: ["id", "name", "city"] },
             ],
         });
 
-        if (!booking) {
-            return res.status(404).json({ error: "❌ Buchung nicht gefunden." });
-        }
+        if (!booking) return res.status(404).json({ error: "❌ Buchung nicht gefunden." });
 
         res.json(booking);
     } catch (err) {
@@ -84,88 +137,111 @@ exports.getBookingById = async (req, res, next) => {
 };
 
 // ============================================================
-// ✏️ Buchung aktualisieren
+// ✏️ Buchung aktualisieren (inkl. Occupancy-Anpassung)
 // ============================================================
 exports.updateBooking = async (req, res, next) => {
+    const t = await Booking.sequelize.transaction();
     try {
         const { error } = bookingSchema.validate(req.body);
-        if (error) {
-            return res.status(400).json({ error: error.details[0].message });
-        }
+        if (error) return res.status(400).json({ error: error.details[0].message });
 
         const booking = await Booking.findByPk(req.params.id);
-        if (!booking) {
-            return res.status(404).json({ error: "❌ Buchung nicht gefunden." });
-        }
+        if (!booking) return res.status(404).json({ error: "❌ Buchung nicht gefunden." });
 
-        await booking.update(req.body);
+        const occupancy = await Occupancy.findOne({
+            where: { event_id: booking.event_id, accommodation_id: booking.accommodation_id },
+        });
+
+        if (!occupancy) return res.status(404).json({ error: "Belegungsdaten nicht gefunden." });
+
+        // alte Werte zurücknehmen
+        await occupancy.update(
+            {
+                single_beds_booked: occupancy.single_beds_booked - booking.single_beds,
+                double_beds_booked: occupancy.double_beds_booked - booking.double_beds,
+                multi_beds_booked: occupancy.multi_beds_booked - booking.multi_beds,
+            },
+            { transaction: t }
+        );
+
+        // neue Werte anwenden
+        await booking.update(req.body, { transaction: t });
+
+        await occupancy.update(
+            {
+                single_beds_booked: occupancy.single_beds_booked + req.body.single_beds,
+                double_beds_booked: occupancy.double_beds_booked + req.body.double_beds,
+                multi_beds_booked: occupancy.multi_beds_booked + req.body.multi_beds,
+            },
+            { transaction: t }
+        );
+
+        await t.commit();
         res.json(booking);
     } catch (err) {
+        await t.rollback();
         console.error("❌ Fehler beim Aktualisieren der Buchung:", err);
         next(err);
     }
 };
 
 // ============================================================
-// ❌ Buchung löschen
+// ❌ Buchung löschen (Occupancy zurücksetzen)
 // ============================================================
 exports.deleteBooking = async (req, res, next) => {
+    const t = await Booking.sequelize.transaction();
     try {
         const booking = await Booking.findByPk(req.params.id);
-        if (!booking) {
-            return res.status(404).json({ error: "❌ Buchung nicht gefunden." });
+        if (!booking) return res.status(404).json({ error: "❌ Buchung nicht gefunden." });
+
+        const occupancy = await Occupancy.findOne({
+            where: { event_id: booking.event_id, accommodation_id: booking.accommodation_id },
+        });
+
+        if (occupancy) {
+            await occupancy.update(
+                {
+                    single_beds_booked: occupancy.single_beds_booked - booking.single_beds,
+                    double_beds_booked: occupancy.double_beds_booked - booking.double_beds,
+                    multi_beds_booked: occupancy.multi_beds_booked - booking.multi_beds,
+                },
+                { transaction: t }
+            );
         }
 
-        await booking.destroy();
+        await booking.destroy({ transaction: t });
+        await t.commit();
+
         res.json({ message: "✅ Buchung erfolgreich gelöscht." });
     } catch (err) {
+        await t.rollback();
         console.error("❌ Fehler beim Löschen der Buchung:", err);
         next(err);
     }
 };
 
 // ============================================================
-// 👤 Alle Buchungen eines bestimmten Users abrufen
+// 📋 Buchung zu einer EventRegistration abrufen
 // ============================================================
-exports.getByUser = async (req, res) => {
-    const { userId } = req.params;
+exports.getByEventRegistration = async (req, res) => {
+    const { registrationId } = req.params;
 
     try {
-        const bookings = await Booking.findAll({
-            where: { user_id: userId },
+        const booking = await Booking.findOne({
+            where: { event_registration_id: registrationId },
             include: [
-                { model: Event, as: "event", attributes: ["id", "name", "start_date", "end_date"] },
                 { model: Accommodation, as: "accommodation", attributes: ["id", "name", "city"] },
             ],
-            order: [["createdAt", "DESC"]],
         });
 
-        res.json(bookings);
+        if (!booking) {
+            return res.status(404).json({ error: "Keine Buchung für diese Registrierung gefunden." });
+        }
+
+        res.json(booking);
     } catch (err) {
-        console.error("❌ Fehler beim Laden der Buchungen eines Users:", err);
-        res.status(500).json({ error: "Fehler beim Laden der Buchungen." });
+        console.error("❌ Fehler beim Laden der Buchung für Registrierung:", err);
+        res.status(500).json({ error: "Fehler beim Laden der Buchung." });
     }
 };
 
-// ============================================================
-// 📅 Buchungen für ein bestimmtes Event abrufen (Admin)
-// ============================================================
-exports.getByEvent = async (req, res) => {
-    const { eventId } = req.params;
-
-    try {
-        const bookings = await Booking.findAll({
-            where: { event_id: eventId },
-            include: [
-                { model: User, as: "user", attributes: ["id", "email"] },
-                { model: Accommodation, as: "accommodation", attributes: ["id", "name", "city"] },
-            ],
-            order: [["createdAt", "DESC"]],
-        });
-
-        res.json(bookings);
-    } catch (err) {
-        console.error("❌ Fehler beim Laden der Buchungen für das Event:", err);
-        res.status(500).json({ error: "Fehler beim Laden der Event-Buchungen." });
-    }
-};

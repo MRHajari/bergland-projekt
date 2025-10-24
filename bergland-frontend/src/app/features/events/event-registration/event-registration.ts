@@ -731,8 +731,19 @@ async updateRegistration(): Promise<void> {
       return;
     }
   
-    // 🔹 Navigiere zur Booking-Seite mit eventId als QueryParam
-    this.router.navigate(['/booking'], { queryParams: { eventId: this.event.id } });
+    if (!this.existingRegistration?.id) {
+      alert('❌ Registrierung-ID fehlt – bitte erneut versuchen.');
+      return;
+    }
+  
+    // ✅ Navigiere mit eventId UND registrationId
+    this.router.navigate(['/booking-accommodation'], {
+      queryParams: {
+        eventId: this.event.id,
+        registrationId: this.existingRegistration.id,
+      },
+    });
+  
   }
   
 
