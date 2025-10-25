@@ -6,6 +6,7 @@ import { AuthService } from '../../core/auth.service';
 import { BookingService, BookingInterface } from '../../core/services/booking.service';
 import { AccommodationService, AccommodationInterface } from '../../core/services/accommodation.service';
 import { firstValueFrom } from 'rxjs';
+import { EventService } from '../../core/services/event.service';
 
 @Component({
   selector: 'app-booking',
@@ -22,13 +23,18 @@ export class BookingAccommodation implements OnInit {
   errorMessage = '';
   eventId: string | null = null;
   registrationId: string | null = null;
-  existingBooking: BookingInterface | null = null; // ✅ neue Variable
+  event: any = null;
+
+  /** ✅ mehrere Buchungen gleichzeitig möglich */
+  existingBookings: BookingInterface[] = [];
 
   private bookingService = inject(BookingService);
   private authService = inject(AuthService);
   private accommodationService = inject(AccommodationService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private eventService = inject(EventService);
+
 
   async ngOnInit(): Promise<void> {
     this.eventId = this.route.snapshot.queryParamMap.get('eventId');
@@ -41,18 +47,16 @@ export class BookingAccommodation implements OnInit {
       return;
     }
 
-
     if (this.eventId && this.registrationId) {
+      this.event = await firstValueFrom(this.eventService.getEventById(this.eventId));
+
       await this.loadAccommodations(this.eventId);
-      await this.loadExistingBooking(this.registrationId); // ✅ bestehende Buchung laden
+      await this.loadExistingBookings(this.registrationId);
     } else {
       this.loadAllBookings();
     }
   }
 
-  // ======================================================
-  // 📦 Alle Buchungen anzeigen (Admin/MyBookings-Ansicht)
-  // ======================================================
   private loadAllBookings(): void {
     this.bookingService.getAll().subscribe({
       next: (data) => {
@@ -67,16 +71,12 @@ export class BookingAccommodation implements OnInit {
     });
   }
 
-  // ======================================================
-  // 🏨 Unterkünfte für Event laden
-  // ======================================================
   private async loadAccommodations(eventId: string): Promise<void> {
     this.loading = true;
     this.errorMessage = '';
 
     try {
       const data = await firstValueFrom(this.accommodationService.getByEvent(eventId));
-      console.log('✅ Unterkünfte geladen:', data);
       this.accommodations = (data || []).map(acc => ({
         ...acc,
         available_single: acc.available_single ?? acc.single_rooms ?? 0,
@@ -86,7 +86,6 @@ export class BookingAccommodation implements OnInit {
         request_double: 0,
         request_multi:  0,
       }));
-      console.log('🏨 Verfügbare Unterkünfte:', this.accommodations);
       this.loading = false;
     } catch (err) {
       console.error('❌ Fehler beim Laden der Unterkünfte:', err);
@@ -95,51 +94,37 @@ export class BookingAccommodation implements OnInit {
     }
   }
 
-  // ======================================================
-  // 🔎 Bestehende Buchung laden
-  // ======================================================
-  private async loadExistingBooking(registrationId: string): Promise<void> {
+  private async loadExistingBookings(registrationId: string): Promise<void> {
     try {
-      console.log(' ++++ booking - registrationId:', registrationId);
-      const booking = await firstValueFrom(this.bookingService.getByRegistration(registrationId));
-      console.log(' -----booking:', booking);
-  
-      if (!booking) {
-        console.log('ℹ️ Keine bestehende Buchung gefunden.');
-        return;
+      const bookings = await firstValueFrom(
+        this.bookingService.getAllByRegistration(registrationId)
+      );
+      this.existingBookings = bookings || [];
+
+      // bereits gebuchte Betten übernehmen
+      for (const booking of this.existingBookings) {
+        const acc = this.accommodations.find(a => a.id === booking.accommodation_id);
+        if (acc) {
+          acc.request_single = booking.single_beds ?? 0;
+          acc.request_double = booking.double_beds ?? 0;
+          acc.request_multi  = booking.multi_beds ?? 0;
+        }
       }
-  
-      this.existingBooking = booking;
-  
-      const acc = this.accommodations.find(a => a.id === booking.accommodation_id);
-      if (acc) {
-        acc.request_single = booking.single_beds ?? 0;
-        acc.request_double = booking.double_beds ?? 0;
-        acc.request_multi  = booking.multi_beds ?? 0;
-      }
-  
     } catch (err: any) {
       if (err.status === 404) {
-        console.log('ℹ️ Keine bestehende Buchung vorhanden (noch nichts gebucht).');
-        this.existingBooking = null;
-        return; // kein echtes Problem → still bleiben
+        this.existingBookings = [];
+      } else {
+        console.error('❌ Fehler beim Laden der Buchungen:', err);
       }
-  
-      console.error('❌ Fehler beim Laden der bestehenden Buchung:', err);
     }
   }
-  
-  
 
-  // ======================================================
-  // 💾 Neue Buchung oder Update
-  // ======================================================
   async saveBooking(acc: AccommodationInterface): Promise<void> {
     if (!this.registrationId) {
       alert('❌ Registrierung fehlt – Buchung nicht möglich.');
       return;
     }
-
+  
     const payload: BookingInterface = {
       event_registration_id: this.registrationId,
       accommodation_id: acc.id!,
@@ -147,57 +132,77 @@ export class BookingAccommodation implements OnInit {
       double_beds: acc.request_double || 0,
       multi_beds: acc.request_multi || 0,
     };
-
+  
     try {
-      if (this.existingBooking && this.existingBooking.accommodation_id === acc.id) {
-        // ✏️ Update der bestehenden Buchung
-        await firstValueFrom(this.bookingService.update(this.existingBooking.id!, payload));
+      const existing = this.getBooking(acc.id!);
+  
+      if (existing) {
+        // ✏️ Update bestehender Buchung
+        await firstValueFrom(this.bookingService.update(existing.id!, payload));
         alert('✅ Änderungen erfolgreich gespeichert!');
-      } else if (this.existingBooking && this.existingBooking.accommodation_id !== acc.id) {
-        // 🔁 Alte Buchung löschen, neue Unterkunft buchen
-        await firstValueFrom(this.bookingService.delete(this.existingBooking.id!));
-        await firstValueFrom(this.bookingService.create(payload));
-        alert(`✅ Unterkunft wurde geändert auf "${acc.name}".`);
       } else {
         // ➕ Neue Buchung
         await firstValueFrom(this.bookingService.create(payload));
         alert(`✅ Unterkunft "${acc.name}" wurde erfolgreich gebucht.`);
       }
-
-      await this.loadExistingBooking(this.registrationId); // UI aktualisieren
+  
+      // 🔄 Jetzt beide Listen neu laden
+      if (this.eventId) {
+        await this.loadAccommodations(this.eventId);
+        await this.loadExistingBookings(this.registrationId!);
+      }
+  
     } catch (err: any) {
       console.error('❌ Fehler bei der Buchung:', err);
       if (err.status === 400) {
         alert('⚠️ Nicht genügend freie Betten verfügbar.');
       } else if (err.status === 409) {
-        alert('⚠️ Es existiert bereits eine Buchung.');
+        alert('⚠️ Es existiert bereits eine Buchung für diese Unterkunft.');
       } else {
         alert('❌ Buchung konnte nicht abgeschlossen werden.');
       }
     }
   }
+  
 
-  // ======================================================
-  // ❌ Buchung löschen
-  // ======================================================
-  async deleteBooking(): Promise<void> {
-    if (!this.existingBooking?.id) return;
-    if (!confirm('⚠️ Willst du deine Buchung wirklich löschen?')) return;
-
+  async deleteBooking(acc: AccommodationInterface): Promise<void> {
+    const booking = this.getBooking(acc.id);
+    if (!booking?.id) return;
+  
+    if (!confirm(`⚠️ Willst du die Buchung für "${acc.name}" wirklich löschen?`)) return;
+  
     try {
-      await firstValueFrom(this.bookingService.delete(this.existingBooking.id));
-      alert('✅ Deine Buchung wurde erfolgreich gelöscht.');
-      this.existingBooking = null;
-      await this.loadAccommodations(this.eventId!);
+      await firstValueFrom(this.bookingService.delete(booking.id));
+      alert(`✅ Buchung für "${acc.name}" wurde gelöscht.`);
+  
+      // 1️⃣ Buchung lokal entfernen
+      this.existingBookings = this.existingBookings.filter(b => b.id !== booking.id);
+  
+      // 2️⃣ Unterkunft zurücksetzen
+      acc.request_single = 0;
+      acc.request_double = 0;
+      acc.request_multi = 0;
+  
+      // 3️⃣ 🔄 Verfügbare Zimmer neu laden
+      if (this.eventId) {
+        await this.loadAccommodations(this.eventId);
+        await this.loadExistingBookings(this.registrationId!);
+      }
+  
     } catch (err) {
       console.error('❌ Fehler beim Löschen der Buchung:', err);
       alert('❌ Fehler beim Löschen der Buchung.');
     }
   }
+  
+  /** ✅ wird im Template verwendet */
+ /** darf auch undefined reinbekommen, gibt dann undefined zurück */
+getBooking(accId?: string): BookingInterface | undefined {
+  if (!accId) return undefined;
+  return this.existingBookings.find(b => b.accommodation_id === accId);
+}
 
-  // ======================================================
-  // 🔙 Navigation
-  // ======================================================
+
   goToEvents(): void {
     this.router.navigate(['/events']);
   }

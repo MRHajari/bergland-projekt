@@ -88,4 +88,9 @@ export class BookingService {
     if (!registrationId) return of(null);
     return this.api.get(`${this.endpoint}/by-registration/${registrationId}`);
   }
+
+  getAllByRegistration(registrationId: string): Observable<BookingInterface[]> {
+    return this.api.get(`${this.endpoint}/by-registration/${registrationId}/all`);
+  }
+  
 }

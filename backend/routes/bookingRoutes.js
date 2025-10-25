@@ -25,6 +25,16 @@ router.get(
 );
 
 // ============================================================
+// ✨ NEU: Alle Buchungen für eine Registrierung (mehrere Unterkünfte möglich)
+// /api/bookings/by-registration/:registrationId/all
+// ============================================================
+router.get(
+    "/by-registration/:registrationId/all",
+    authenticateToken, // ✅ korrigiert!
+    bookingController.getAllByRegistration
+);
+
+// ============================================================
 // 🔍 Einzelne Buchung per ID
 // ============================================================
 router.get("/:id", authenticateToken, bookingController.getBookingById);

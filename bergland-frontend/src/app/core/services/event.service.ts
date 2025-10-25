@@ -89,4 +89,9 @@ export class EventService {
       })
     );
   }
+
+  getEventById(id: string) {
+    return this.api.get(`events/${id}`);
+  }
+  
 }
