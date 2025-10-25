@@ -92,5 +92,13 @@ export class BookingService {
   getAllByRegistration(registrationId: string): Observable<BookingInterface[]> {
     return this.api.get(`${this.endpoint}/by-registration/${registrationId}/all`);
   }
+
+    // ============================================================
+  // 👤 Alle Buchungen eines Benutzers (über alle Events)
+  // ============================================================
+  getByUser(userId: string): Observable<BookingInterface[]> {
+    return this.api.get(`${this.endpoint}/by-user/${userId}`);
+  }
+
   
 }

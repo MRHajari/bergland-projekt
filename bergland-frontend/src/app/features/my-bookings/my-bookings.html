@@ -1,0 +1,43 @@
+<div class="my-bookings-container">
+    @if (loading()) {
+    <p>⏳ Lade deine Buchungen...</p>
+    } @else if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+    } @else if (groupedBookings().length === 0) {
+    <p>📭 Du hast noch keine Buchungen vorgenommen.</p>
+    <button class="primary" routerLink="/events">➡️ Jetzt Event auswählen</button>
+    } @else {
+    <div class="header-lbl">
+        <h1>📦 Meine gebuchten Unterkünfte</h1>
+    </div>
+
+
+    @for (group of groupedBookings(); track group.eventId) {
+    <div class="event-card">
+        <header class="event-header">
+            <h2>🏔️ {{ group.event?.name || 'Unbekanntes Event' }}</h2>
+            <span class="dates">{{ getEventDates(group.event) }}</span>
+        </header>
+
+
+        <ul class="booking-list">
+            @for (b of group.bookings; track b.id) {
+            <li>
+                🏨 <strong>{{ b.accommodation?.name }}</strong>
+                <span class="city">({{ b.accommodation?.city }})</span> —
+                <span>Einzel: {{ b.single_beds || 0 }}, Doppel: {{ b.double_beds || 0 }}, Mehrbett: {{ b.multi_beds || 0
+                    }}</span>
+            </li>
+            }
+        </ul>
+
+        <footer>
+            <button class="secondary" (click)="goToBooking(group.eventId, group.bookings[0].event_registration_id)">
+                ✏️ Buchungen bearbeiten
+            </button>
+
+        </footer>
+    </div>
+    }
+    }
+</div>

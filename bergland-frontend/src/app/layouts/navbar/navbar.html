@@ -4,9 +4,7 @@
         <li class="nav-item" [class.collapsed]="isCollapsed">
             <a routerLink="/events" routerLinkActive="active">
                 <i class="fa-solid fa-calendar-days"></i>
-                @if (!isCollapsed) {
-                <span class="label">Events</span>
-                }
+                @if (!isCollapsed) { <span class="label">Events</span> }
                 <span class="tooltip-text tooltip-bottom">Events</span>
             </a>
         </li>
@@ -15,21 +13,17 @@
         <li class="nav-item" [class.collapsed]="isCollapsed">
             <a routerLink="/my-registrations" routerLinkActive="active">
                 <i class="fa-solid fa-book"></i>
-                @if (!isCollapsed) {
-                <span class="label">Meine Anmeldungen</span>
-                }
-                <span class="tooltip-text">Meine Anmeldungen</span>
+                @if (!isCollapsed) { <span class="label">Meine Anmeldungen</span> }
+                <span class="tooltip-text tooltip-bottom">Meine Anmeldungen</span>
             </a>
         </li>
 
-        <!-- Unterkünfte -->
+        <!-- Meine Buchungen -->
         <li class="nav-item" [class.collapsed]="isCollapsed">
-            <a routerLink="/accommodations" routerLinkActive="active">
-                <i class="fa-solid fa-bed"></i>
-                @if (!isCollapsed) {
-                <span class="label">Unterkünfte</span>
-                }
-                <span class="tooltip-text">Unterkünfte</span>
+            <a routerLink="/my-bookings" routerLinkActive="active">
+                <i class="fa-solid fa-clipboard-check"></i>
+                @if (!isCollapsed) { <span class="label">Meine Buchungen</span> }
+                <span class="tooltip-text tooltip-bottom">Meine Buchungen</span>
             </a>
         </li>
     </ul>
@@ -39,24 +33,20 @@
     <div class="admin-section">
         <button class="admin-btn" routerLink="/admin">
             <i class="fa-solid fa-gear"></i>
-            @if (!isCollapsed) {
-            <span class="label">Administration</span>
-            }
-            <span class="tooltip-text">Administration</span>
+            @if (!isCollapsed) { <span class="label">Administration</span> }
+            <span class="tooltip-text tooltip-bottom">Administration</span>
         </button>
     </div>
+    } @else {
+    <div class="admin-section-spacer"></div>
     }
 
     <!-- 🔹 Toggle unten -->
     <div class="nav-bottom">
         <button class="collapse-toggle" (click)="toggleCollapse()" aria-label="Sidebar umschalten">
             <i class="fa-solid" [ngClass]="isCollapsed ? 'fa-angles-right' : 'fa-angles-left'"></i>
-
-            @if (!isCollapsed) {
-            <span class="label">Einklappen</span>
-            }
-
-            <span class="tooltip-text">
+            @if (!isCollapsed) { <span class="label">Einklappen</span> }
+            <span class="tooltip-text tooltip-bottom">
                 {{ isCollapsed ? 'Ausklappen' : 'Einklappen' }}
             </span>
         </button>

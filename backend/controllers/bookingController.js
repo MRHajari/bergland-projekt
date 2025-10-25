@@ -322,3 +322,44 @@ exports.getAllByRegistration = async (req, res, next) => {
 };
 
 
+// ============================================================
+// 📋 Alle Buchungen eines bestimmten Benutzers (über alle Events)
+// ============================================================
+exports.getBookingsByUser = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({ error: "userId ist erforderlich." });
+        }
+
+        // 🔍 Alle Buchungen des Benutzers holen
+        const bookings = await Booking.findAll({
+            where: { user_id: userId },
+            include: [
+                {
+                    model: EventRegistration,
+                    as: "eventRegistration",
+                    attributes: ["id", "event_id", "registered_by_person_id"],
+                },
+                {
+                    model: Accommodation,
+                    as: "accommodation",
+                    attributes: ["id", "name", "city", "street", "postal_code"],
+                },
+            ],
+            order: [["createdAt", "DESC"]],
+        });
+
+        if (!bookings || bookings.length === 0) {
+            return res.status(404).json({ message: "Keine Buchungen gefunden." });
+        }
+
+        res.json(bookings);
+    } catch (err) {
+        console.error("❌ Fehler beim Laden der Buchungen des Benutzers:", err);
+        next(err);
+    }
+};
+
+
+

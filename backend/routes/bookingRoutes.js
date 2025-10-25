@@ -15,6 +15,17 @@ router.post("/", authenticateToken, bookingController.createBooking);
 router.get("/", authenticateToken, bookingController.getAllBookings);
 
 // ============================================================
+// 👤 Alle Buchungen eines Benutzers (über alle Events)
+// /api/bookings/by-user/:userId
+// ============================================================
+router.get(
+    "/by-user/:userId",
+    authenticateToken,
+    bookingController.getBookingsByUser
+);
+
+
+// ============================================================
 // 🔍 Buchung für bestimmte EventRegistration
 // /api/bookings/by-registration/:registrationId
 // ============================================================

@@ -11,7 +11,6 @@ import { EventRegistration } from './features/events/event-registration/event-re
 import { BookingAccommodation } from './features/booking/booking-accommodation';
 import { Profile } from './features/profile/profile/profile';
 import { Products } from './features/products/products';
-import { AccommodationsList } from './features/accommodations/accommodations-list/accommodations-list';
 import { AccommodationDetail } from './features/accommodations/accommodation-detail/accommodation-detail';
 import { MyRegistrations } from './features/my-registrations/my-registrations';
 
@@ -21,6 +20,8 @@ import { ProductsAdmin } from './features/admin/products-admin/products-admin';
 import { EventsAdmin } from './features/admin/events-admin/events-admin';
 import { UsersAdmin } from './features/admin/users-admin/users-admin';
 import { AccommodationsAdmin } from './features/admin/accommodations-admin/accommodations-admin';
+import { MyBookings } from './features/my-bookings/my-bookings';
+
 
 // 🔹 Layouts
 import { AuthLayout } from './layouts/auth-layout/auth-layout';
@@ -61,8 +62,10 @@ export const routes: Routes = [
       { path: 'my-registrations', component: MyRegistrations, canActivate: [authGuard] },
 
       // 🏨 Unterkünfte (Benutzer)
-      { path: 'accommodations', component: AccommodationsList, canActivate: [authGuard] },
       { path: 'accommodations/:id', component: AccommodationDetail, canActivate: [authGuard] },
+
+      { path: 'my-bookings', component: MyBookings },
+
 
       // ⚙️ Adminbereich
       {
