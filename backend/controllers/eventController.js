@@ -17,10 +17,13 @@ const { validateEvent } = require("../validators/eventValidator");
 // ============================================================
 exports.getAllEvents = async (req, res) => {
     try {
+        // ✅ Lazy-Import verhindert EagerLoadingError
+        const { Event, Route, Squadron, EventRegistration, Occupancy, Accommodation } = require("../models");
+
         const events = await Event.findAll({
             include: [
                 { model: Route, as: "routes" },
-                { model: Squadron, as: "squadrons" },
+                { model: Squadron, as: "squadrons" }, // ✅ richtiger Alias
                 { model: EventRegistration, as: "eventRegistrations" },
                 {
                     model: Occupancy,
@@ -37,7 +40,6 @@ exports.getAllEvents = async (req, res) => {
             order: [["start_date", "ASC"]],
         });
 
-        // 🔄 Alle Unterkünfte flach mappen
         const result = events.map((e) => ({
             ...e.toJSON(),
             route_count: e.routes?.length || 0,
@@ -57,11 +59,14 @@ exports.getAllEvents = async (req, res) => {
     }
 };
 
+
 // ============================================================
 // 🔍 Einzelnes Event mit allen Details abrufen
 // ============================================================
 exports.getEventById = async (req, res) => {
     try {
+        const { Event, Squadron, EventRegistration, Person, Route, Occupancy, Booking } = require("../models");
+
         const event = await Event.findByPk(req.params.id, {
             include: [
                 { model: Squadron, as: "squadrons" },
@@ -71,7 +76,7 @@ exports.getEventById = async (req, res) => {
                     include: [
                         {
                             model: Person,
-                            as: "registered_by_person", // ✅ KORREKTER ALIAS
+                            as: "registered_by_person",
                             attributes: ["first_name", "last_name", "email"],
                         },
                     ],
@@ -91,6 +96,7 @@ exports.getEventById = async (req, res) => {
         res.status(500).json({ message: "Fehler beim Laden des Events." });
     }
 };
+
 
 // ============================================================
 // ➕ Neues Event erstellen

@@ -7,20 +7,46 @@ import { ApiService } from '../api.service';
 // ============================================================
 export interface BookingInterface {
   id?: string;
-  event_registration_id: string;     // 🔗 Pflichtfeld
-  accommodation_id: string;
-  user_id?: string;                  // ⚙️ Backend setzt automatisch
-  event_id?: string;                 // ⚙️ Backend setzt automatisch
-
+  event_registration_id?: string;
+  event_id?: string;
+  user_id?: string;
+  accommodation_id?: string;
   single_beds?: number;
   double_beds?: number;
   multi_beds?: number;
-
   createdAt?: string;
   updatedAt?: string;
 
-  accommodation?: { id: string; name: string; city?: string };
-  eventRegistration?: { id: string; event_id?: string };
+  // ➕ Relationen
+  accommodation?: {
+    id?: string;
+    name?: string;
+    city?: string;
+    street?: string;
+    postal_code?: string;
+    country?: string;
+  };
+
+  eventRegistration?: {
+    id?: string;
+    event_id?: string;
+    registered_by_person_id?: string;
+    event?: {
+      id?: string;
+      name?: string;
+      start_date?: string;
+      end_date?: string;
+    };
+  };
+
+  user?: {
+    id?: string;
+    email?: string;
+    person?: {
+      first_name?: string;
+      last_name?: string;
+    };
+  };
 }
 
 // ============================================================

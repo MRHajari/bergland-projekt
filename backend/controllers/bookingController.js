@@ -119,27 +119,67 @@ exports.createBooking = async (req, res, next) => {
 
 
 // ============================================================
-// 📋 Alle Buchungen (Admin oder Debug)
+// 📋 Alle Buchungen (Admin oder Debug) – mit Event + Benutzer + Unterkunft
 // ============================================================
 exports.getAllBookings = async (req, res, next) => {
     try {
+        const { Event, User, Person } = require("../models");
+
         const bookings = await Booking.findAll({
             include: [
+                // 🔗 Verknüpfung zur Registrierung + Event
                 {
                     model: EventRegistration,
                     as: "eventRegistration",
                     attributes: ["id", "event_id", "registered_by_person_id"],
+                    include: [
+                        {
+                            model: Event,
+                            as: "event",
+                            attributes: ["id", "name", "start_date", "end_date"],
+                        },
+                    ],
                 },
-                { model: Accommodation, as: "accommodation", attributes: ["id", "name", "city"] },
+
+                // 🏨 Unterkunft
+                {
+                    model: Accommodation,
+                    as: "accommodation",
+                    attributes: ["id", "name", "city"],
+                },
+
+                // 👤 Benutzer + Person
+                {
+                    model: User,
+                    as: "user",
+                    attributes: ["id", "email"],
+                    include: [
+                        {
+                            model: Person,
+                            as: "person",
+                            attributes: ["first_name", "last_name"],
+                        },
+                    ],
+                },
             ],
-            order: [["createdAt", "DESC"]],
+            order: [
+                [{ model: Accommodation, as: "accommodation" }, "name", "ASC"],
+                ["createdAt", "DESC"],
+            ],
         });
-        res.json(bookings);
+
+        if (!bookings.length) {
+            return res.status(404).json({ message: "Keine Buchungen gefunden." });
+        }
+
+        res.status(200).json(bookings);
     } catch (err) {
         console.error("❌ Fehler beim Laden der Buchungen:", err);
         next(err);
     }
 };
+
+
 
 // ============================================================
 // 🔍 Einzelne Buchung per ID abrufen

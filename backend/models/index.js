@@ -1,4 +1,7 @@
-// backend/models/index.js
+// ======================================================
+// 🧩 Model Loader & Associations – vollständig integriert
+// ======================================================
+
 const sequelize = require("../config/db");
 const EventRegistrationParticipant = require("./eventRegistrationParticipant");
 
@@ -29,9 +32,7 @@ console.log("DEBUG MODELS:", {
     User: !!User?.getTableName,
     Event: !!Event?.getTableName,
     EventRegistration: !!EventRegistration?.getTableName,
-    Runtime: !!Runtime?.getTableName,
-    Squadron: !!Squadron?.getTableName,
-    Route: !!Route?.getTableName,
+    Booking: !!Booking?.getTableName,
 });
 
 // --------------------------------------------------------------
@@ -82,10 +83,14 @@ Invoice.belongsTo(Person, {
     as: "person",
 });
 
-// 🏨 BOOKING ↔ EVENTREGISTRATION ↔ ACCOMMODATION
-EventRegistration.hasOne(Booking, {
+// ======================================================
+// 🏨 BOOKING ↔ EVENTREGISTRATION ↔ ACCOMMODATION ↔ EVENT
+// ======================================================
+
+// Eine Registrierung kann mehrere Buchungen haben
+EventRegistration.hasMany(Booking, {
     foreignKey: "event_registration_id",
-    as: "booking",
+    as: "bookings",
     onDelete: "CASCADE",
 });
 Booking.belongsTo(EventRegistration, {
@@ -93,6 +98,7 @@ Booking.belongsTo(EventRegistration, {
     as: "eventRegistration",
 });
 
+// Eine Unterkunft kann viele Buchungen haben
 Accommodation.hasMany(Booking, {
     foreignKey: "accommodation_id",
     as: "bookings",
@@ -103,7 +109,17 @@ Booking.belongsTo(Accommodation, {
     as: "accommodation",
 });
 
-// 🪪 EVENT ↔ SQUADRON (1:n)
+// Ein Event kann viele Buchungen haben
+Event.hasMany(Booking, {
+    foreignKey: "event_id",
+    as: "bookings",
+    onDelete: "CASCADE",
+});
+Booking.belongsTo(Event, {
+    foreignKey: "event_id",
+    as: "event",
+});
+
 Event.hasMany(Squadron, {
     foreignKey: "event_id",
     as: "squadrons",
@@ -114,8 +130,20 @@ Squadron.belongsTo(Event, {
     as: "event",
 });
 
+
+// Ein Benutzer kann viele Buchungen haben
+User.hasMany(Booking, {
+    foreignKey: "user_id",
+    as: "bookings",
+    onDelete: "CASCADE",
+});
+Booking.belongsTo(User, {
+    foreignKey: "user_id",
+    as: "user",
+});
+
 // ======================================================
-// 🏨 EVENT ↔ OCCUPANCY (direkte Relationen)
+// 🏨 EVENT ↔ OCCUPANCY
 // ======================================================
 Event.hasMany(Occupancy, {
     foreignKey: "event_id",
@@ -138,29 +166,8 @@ Occupancy.belongsTo(Accommodation, {
 });
 
 // ======================================================
-// 🏨 EVENT ↔ BOOKING (1:n für Admin-Auswertungen)
-// ======================================================
-Event.hasMany(Booking, {
-    foreignKey: "event_id",
-    as: "bookings",
-    onDelete: "CASCADE",
-});
-Booking.belongsTo(Event, {
-    foreignKey: "event_id",
-    as: "event",
-});
-
-User.hasMany(Booking, {
-    foreignKey: "user_id",
-    as: "bookings",
-    onDelete: "CASCADE",
-});
-Booking.belongsTo(User, {
-    foreignKey: "user_id",
-    as: "user",
-});
-
 // 🗺️ EVENT ↔ ROUTE (1:n)
+// ======================================================
 Event.hasMany(Route, {
     foreignKey: "event_id",
     as: "routes",

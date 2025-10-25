@@ -13,6 +13,8 @@ import {
 import { PersonService, Person } from '../../../core/services/person.service';
 import { SquadronService } from '../../../core/services/squadron.service';
 import { AuthService } from '../../../core/auth.service';
+import { BookingService, BookingInterface } from '../../../core/services/booking.service'; 
+
 
 type AddedPerson = Person & { inSquadron?: boolean; squadronName?: string | null; };
 
@@ -28,6 +30,8 @@ export class EventRegistration implements OnInit {
   squadrons: any[] = [];
   existingPersons: Person[] = [];
   addedPersons: AddedPerson[] = [];
+  bookedAccommodations: BookingInterface[] = []; // 🏨 bereits gebuchte Unterkünfte
+
 
   existingRegs: EventRegistrationInterface[] = []; // ✅ neu hinzugefügt
   existingRegistration: EventRegistrationInterface | null = null;
@@ -51,6 +55,8 @@ export class EventRegistration implements OnInit {
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private bookingService = inject(BookingService);
+
 
   ngOnInit(): void {
     const eventId = this.route.snapshot.paramMap.get('id');
@@ -151,27 +157,26 @@ private async loadExistingRegistration(eventId: string) {
       return;
     }
 
-  // 5️⃣ Teilnehmer-Daten aus Registrierung laden
-if (this.existingRegistration?.participants?.length) {
-  const squadronMap: Record<string, string> = {};
-  for (const s of this.squadrons) squadronMap[s.id] = s.name;
+    // 5️⃣ Teilnehmer-Daten laden
+    if (this.existingRegistration?.participants?.length) {
+      const squadronMap: Record<string, string> = {};
+      for (const s of this.squadrons) squadronMap[s.id] = s.name;
 
-  this.addedPersons = this.existingRegistration.participants.map((p: any) => ({
-    ...(p.person || {}),
-    inSquadron: !!p.squadron_id,
-    squadronName: p.squadron_id
-      ? squadronMap[p.squadron_id] || 'Unbekannte Staffel'
-      : null,
-  }));
+      this.addedPersons = this.existingRegistration.participants.map((p: any) => ({
+        ...(p.person || {}),
+        inSquadron: !!p.squadron_id,
+        squadronName: p.squadron_id
+          ? squadronMap[p.squadron_id] || 'Unbekannte Staffel'
+          : null,
+      }));
 
-  const addedIds = new Set(this.addedPersons.map((p) => p.id));
-  this.existingPersons = this.existingPersons.filter(
-    (p) => !addedIds.has(p.id!)
-  );
-}
+      const addedIds = new Set(this.addedPersons.map((p) => p.id));
+      this.existingPersons = this.existingPersons.filter(
+        (p) => !addedIds.has(p.id!)
+      );
+    }
 
-
-    // 6️⃣ Formular mit Registrierungsdaten füllen
+    // 6️⃣ Formular füllen
     const r = this.existingRegistration;
     this.registrationForm.patchValue({
       phone_number: r.phone_number || '',
@@ -185,16 +190,20 @@ if (this.existingRegistration?.participants?.length) {
       liability_accept: true,
     });
 
-    // 7️⃣ Status setzen
+    // 7️⃣ Status + Buchungen laden
     this.isRegistered = true;
     this.loading = false;
-
     console.log('✅ Bestehende Registrierung erfolgreich geladen:', this.existingRegistration);
+
+    // ⬇️ Jetzt ist existingRegistration vorhanden → Buchungen laden
+    await this.loadBookingsForRegistration();
+
   } catch (err) {
     console.error('❌ Fehler beim Laden bestehender Registrierung:', err);
     this.loading = false;
   }
 }
+
 
 
 
@@ -778,5 +787,22 @@ async cancelRegistration(): Promise<void> {
     alert('Fehler beim Stornieren der Anmeldung.');
   }
 }
+
+private async loadBookingsForRegistration(): Promise<void> {
+  if (!this.existingRegistration?.id) return;
+  try {
+    const bookings = await firstValueFrom(
+      this.bookingService.getAllByRegistration(this.existingRegistration.id)
+    );
+    this.bookedAccommodations = bookings || [];
+  } catch (err: any) {
+    if (err.status === 404) {
+      this.bookedAccommodations = [];
+    } else {
+      console.error('❌ Fehler beim Laden der gebuchten Unterkünfte:', err);
+    }
+  }
+}
+
 
 }

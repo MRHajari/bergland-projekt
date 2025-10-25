@@ -196,4 +196,68 @@
     </section>
     }
     }
+
+
+
+    <!-- ====================================================== -->
+    <!-- 🏨 Buchungsübersicht (Admin) -->
+    <!-- ====================================================== -->
+    <div class="bookings-admin-container">
+        <h2>🏨 Buchungsübersicht (Admin)</h2>
+
+        @if (loading) {
+        <p class="loading">⏳ Buchungen werden geladen...</p>
+        } @else if (errorMessage) {
+        <p class="error">{{ errorMessage }}</p>
+        } @else if (allBookings.length === 0) {
+        <p>Keine Buchungen vorhanden.</p>
+        } @else {
+        @for (accommodationName of groupedBookingKeys; track accommodationName) {
+        <section class="accommodation-group">
+            <h3>🏠 {{ accommodationName }}</h3>
+            <p class="acc-location">
+                📍 {{ groupedBookings[accommodationName][0].accommodation?.city || '—' }}
+            </p>
+
+            <!-- 🧮 Statistik -->
+            <div class="acc-stats">
+                <span>🛏️ Gesamt: {{ getTotalBeds(accommodationName) }}</span>
+                <span>📘 Gebucht: {{ getBookedBeds(accommodationName) }}</span>
+                <span>🟢 Frei: {{ getFreeBeds(accommodationName) }}</span>
+            </div>
+
+            <table class="bookings-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Benutzer</th>
+                        <th>Einzel</th>
+                        <th>Doppel</th>
+                        <th>Mehrbett</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (b of groupedBookings[accommodationName]; track b.id) {
+                    <tr>
+                        <td>{{ b.eventRegistration?.event?.name || '—' }}</td>
+                        <td>
+                            {{ b.user?.person?.first_name || '' }}
+                            {{ b.user?.person?.last_name || '' }}
+                            <br />
+                            <small>{{ b.user?.email }}</small>
+                        </td>
+                        <td>{{ b.single_beds || 0 }}</td>
+                        <td>{{ b.double_beds || 0 }}</td>
+                        <td>{{ b.multi_beds || 0 }}</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+        }
+        }
+    </div>
+
+
+
 </div>

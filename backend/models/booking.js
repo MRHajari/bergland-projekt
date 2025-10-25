@@ -1,4 +1,3 @@
-// backend/models/booking.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -9,6 +8,7 @@ const sequelize = require("../config/db");
  *  - zu einer EventRegistration (fachlich)
  *  - zu einem Event (zur Admin-Auswertung)
  *  - zu einem User (wer gebucht hat)
+ *  - zu einer Unterkunft (z. B. Hotel)
  */
 const Booking = sequelize.define(
     "booking",
@@ -19,14 +19,14 @@ const Booking = sequelize.define(
             defaultValue: DataTypes.UUIDV4,
         },
 
-        // 🔗 Verknüpft mit EventRegistration
+        // 🔗 Verknüpfung zur EventRegistration
         event_registration_id: {
             type: DataTypes.UUID,
             allowNull: false,
             comment: "Referenz zur EventRegistration (onDelete: CASCADE)",
         },
 
-        // 🔗 Direkte Verbindung zum Event (für schnelle Abfragen / Admin)
+        // 🔗 Direkte Verbindung zum Event (für Admin-Auswertung)
         event_id: {
             type: DataTypes.UUID,
             allowNull: false,
@@ -70,5 +70,35 @@ const Booking = sequelize.define(
         timestamps: true,
     }
 );
+
+// ============================================================
+// 🔗 ASSOCIATIONS
+// ============================================================
+Booking.associate = (models) => {
+    // 🔹 Eine Buchung gehört zu einer EventRegistration
+    Booking.belongsTo(models.EventRegistration, {
+        as: "eventRegistration",
+        foreignKey: "event_registration_id",
+        onDelete: "CASCADE",
+    });
+
+    // 🔹 Eine Buchung gehört zu einem Event
+    Booking.belongsTo(models.Event, {
+        as: "event",
+        foreignKey: "event_id",
+    });
+
+    // 🔹 Eine Buchung gehört zu einem User (wer gebucht hat)
+    Booking.belongsTo(models.User, {
+        as: "user",
+        foreignKey: "user_id",
+    });
+
+    // 🔹 Eine Buchung gehört zu einer Unterkunft
+    Booking.belongsTo(models.Accommodation, {
+        as: "accommodation",
+        foreignKey: "accommodation_id",
+    });
+};
 
 module.exports = Booking;

@@ -245,6 +245,32 @@
     <hr class="section-divider" />
 
     <!-- ================================
+     🏨 MEINE GEBUCHTEN UNTERKÜNFTE
+     ================================ -->
+    @if (bookedAccommodations.length > 0) {
+    <section class="booked-accommodations">
+        <h3>🏨 Meine gebuchten Unterkünfte</h3>
+        <ul>
+            @for (b of bookedAccommodations; track b.id) {
+            <li>
+                <strong>{{ b.accommodation?.name }}</strong>
+                @if (b.accommodation?.city) {
+                <span>({{ b.accommodation?.city }})</span>
+                }
+                –
+                🛏️ {{ b.single_beds || 0 }} Einzel,
+                🛌 {{ b.double_beds || 0 }} Doppel,
+                🧍 {{ b.multi_beds || 0 }} Mehrbett
+            </li>
+            }
+        </ul>
+    </section>
+    }
+
+
+    <hr class="section-divider" />
+
+    <!-- ================================
              🔘 BUTTON-LEISTE
              ================================ -->
     <section class="button-bar">
