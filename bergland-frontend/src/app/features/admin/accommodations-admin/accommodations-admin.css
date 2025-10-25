@@ -263,3 +263,10 @@ input[type='number'] {
   color: #27ae60;
 }
 
+.small-input {
+  width: 70px;
+  text-align: right;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}

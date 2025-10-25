@@ -1,4 +1,3 @@
-// backend/validators/accommodationValidator.js
 const Joi = require("joi");
 
 module.exports = Joi.object({
@@ -6,9 +5,7 @@ module.exports = Joi.object({
         "string.empty": `"Name" darf nicht leer sein.`,
         "any.required": `"Name" ist erforderlich.`,
     }),
-    street: Joi.string().allow("", null).messages({
-        "string.base": `"Straße" muss ein Text sein.`,
-    }),
+    street: Joi.string().allow("", null),
     postal_code: Joi.string().allow("", null),
     city: Joi.string().allow("", null),
     country: Joi.string().allow("", null).default("Deutschland"),

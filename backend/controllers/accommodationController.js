@@ -1,3 +1,7 @@
+// ======================================================
+// 🏨 Accommodation Controller – Vollständig & robust
+// ======================================================
+
 const {
     Accommodation,
     EventRegistration,
@@ -6,18 +10,26 @@ const {
     Event,
     Booking,
 } = require("../models");
-const accommodationSchema = require("../validators/accommodationValidator");
+
+const createSchema = require("../validators/accommodationCreateValidator");
+const updateSchema = require("../validators/accommodationUpdateValidator");
 
 // ======================================================
 // ➕ Neue Unterkunft erstellen
 // ======================================================
 exports.createAccommodation = async (req, res, next) => {
     try {
-        const { error } = accommodationSchema.validate(req.body);
+        const { error, value } = createSchema.validate(req.body, {
+            abortEarly: false,
+            stripUnknown: true,
+        });
         if (error)
-            return res.status(400).json({ error: error.details[0].message });
+            return res.status(400).json({
+                message: "Validierungsfehler",
+                details: error.details.map((d) => d.message),
+            });
 
-        const accommodation = await Accommodation.create(req.body);
+        const accommodation = await Accommodation.create(value);
         res.status(201).json(accommodation);
     } catch (err) {
         console.error("❌ Fehler beim Erstellen der Unterkunft:", err);
@@ -35,7 +47,7 @@ exports.getAllAccommodations = async (req, res, next) => {
                 {
                     model: Occupancy,
                     as: "occupancies",
-                    required: false, // ✅ auch Unterkünfte ohne Belegung laden
+                    required: false, // auch Unterkünfte ohne Belegung laden
                     include: [
                         {
                             model: Event,
@@ -65,10 +77,17 @@ exports.getAccommodationById = async (req, res, next) => {
                 {
                     model: Occupancy,
                     as: "occupancies",
-                    include: [{ model: Event, as: "event", attributes: ["id", "name"] }],
+                    include: [
+                        {
+                            model: Event,
+                            as: "event",
+                            attributes: ["id", "name", "start_date", "end_date"],
+                        },
+                    ],
                 },
             ],
         });
+
         if (!accommodation)
             return res.status(404).json({ error: "Unterkunft nicht gefunden" });
 
@@ -84,16 +103,22 @@ exports.getAccommodationById = async (req, res, next) => {
 // ======================================================
 exports.updateAccommodation = async (req, res, next) => {
     try {
-        const { error } = accommodationSchema.validate(req.body);
+        const { error, value } = updateSchema.validate(req.body, {
+            abortEarly: false,
+            stripUnknown: true,
+        });
         if (error)
-            return res.status(400).json({ error: error.details[0].message });
+            return res.status(400).json({
+                message: "Validierungsfehler",
+                details: error.details.map((d) => d.message),
+            });
 
         const accommodation = await Accommodation.findByPk(req.params.id);
         if (!accommodation)
             return res.status(404).json({ error: "Unterkunft nicht gefunden" });
 
-        await accommodation.update(req.body);
-        res.json(accommodation);
+        await accommodation.update(value);
+        res.json({ message: "✅ Unterkunft erfolgreich aktualisiert", accommodation });
     } catch (err) {
         console.error("❌ Fehler beim Aktualisieren der Unterkunft:", err);
         next(err);
@@ -110,7 +135,7 @@ exports.deleteAccommodation = async (req, res, next) => {
             return res.status(404).json({ error: "Unterkunft nicht gefunden" });
 
         await accommodation.destroy();
-        res.json({ message: "Unterkunft gelöscht" });
+        res.json({ message: "🗑️ Unterkunft gelöscht" });
     } catch (err) {
         console.error("❌ Fehler beim Löschen der Unterkunft:", err);
         next(err);
@@ -143,6 +168,8 @@ exports.getAccommodationsByEvent = async (req, res, next) => {
 
         const result = occupancies.map((occ) => {
             const acc = occ.accommodation;
+
+            // 🧮 Buchungszähler
             const bookedSingle = acc.bookings?.reduce(
                 (sum, b) => sum + (b.single_beds || 0),
                 0

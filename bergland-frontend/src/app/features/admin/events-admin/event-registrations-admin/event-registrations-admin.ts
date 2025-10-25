@@ -81,7 +81,6 @@ export class EventRegistrationsAdmin implements OnInit {
   // ======================================================
   get filteredRegistrations() {
     const term = this.searchTerm.trim().toLowerCase();
-    console.log('🔍 Suchbegriff:', term);
     if (!term) return this.registrations;
 
 

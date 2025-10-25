@@ -55,18 +55,11 @@
                 </div>
 
                 <div class="form-actions">
-                </div>
-
-
-                <div class="form-actions">
                     <button type="submit" class="primary">Hinzufügen</button>
                 </div>
             </div>
-
-
         </form>
     </section>
-
 
     <!-- ====================================================== -->
     <!-- 📋 Bestehende Unterkünfte -->
@@ -110,9 +103,33 @@
                         }
                     </td>
 
-                    <td>{{ a.single_rooms }}</td>
-                    <td>{{ a.double_rooms }}</td>
-                    <td>{{ a.multi_bed_rooms }}</td>
+                    <!-- ✅ NEU: EZ / DZ / MBZ jetzt bearbeitbar -->
+                    <td>
+                        @if (editingAccommodation && editingAccommodation.id === a.id) {
+                        <input type="number" [(ngModel)]="editingAccommodation.single_rooms" name="edit_single_{{a.id}}"
+                            min="0" class="small-input" />
+                        } @else {
+                        {{ a.single_rooms }}
+                        }
+                    </td>
+
+                    <td>
+                        @if (editingAccommodation && editingAccommodation.id === a.id) {
+                        <input type="number" [(ngModel)]="editingAccommodation.double_rooms" name="edit_double_{{a.id}}"
+                            min="0" class="small-input" />
+                        } @else {
+                        {{ a.double_rooms }}
+                        }
+                    </td>
+
+                    <td>
+                        @if (editingAccommodation && editingAccommodation.id === a.id) {
+                        <input type="number" [(ngModel)]="editingAccommodation.multi_bed_rooms"
+                            name="edit_multi_{{a.id}}" min="0" class="small-input" />
+                        } @else {
+                        {{ a.multi_bed_rooms }}
+                        }
+                    </td>
 
                     <td>
                         <div class="events-cell">
@@ -132,7 +149,6 @@
                         <button (click)="cancelEdit()">Abbrechen</button>
                         } @else {
                         <button class="secondary" (click)="editAccommodation(a)">Bearbeiten</button>
-                        <!-- <button class="primary" (click)="selectAccommodation(a)">Events zuordnen</button> -->
                         <button class="danger" (click)="deleteAccommodation(a.id || '', a.name)">Löschen</button>
                         }
                     </td>
@@ -197,8 +213,6 @@
     }
     }
 
-
-
     <!-- ====================================================== -->
     <!-- 🏨 Buchungsübersicht (Admin) -->
     <!-- ====================================================== -->
@@ -257,7 +271,4 @@
         }
         }
     </div>
-
-
-
 </div>
