@@ -4,8 +4,7 @@
     } @else if (errorMessage()) {
     <p class="error">{{ errorMessage() }}</p>
     } @else if (groupedBookings().length === 0) {
-    <p>📭 Du hast noch keine Buchungen vorgenommen.</p>
-    <button class="primary" routerLink="/events">➡️ Jetzt Event auswählen</button>
+    <p class="empty-message">📭 Du hast noch keine Buchungen vorgenommen.</p>
     } @else {
     <div class="header-lbl">
         <h1>📦 Meine gebuchten Unterkünfte</h1>

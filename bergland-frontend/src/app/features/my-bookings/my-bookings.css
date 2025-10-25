@@ -70,3 +70,23 @@ button.secondary {
 button.secondary:hover {
   background: #0056b3; /* z. B. dunkleres Blau */
 }
+
+
+
+.empty-message {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #444;
+  margin-top: 2.5rem;
+  letter-spacing: 0.3px;
+}
+
+.empty-message::first-letter {
+  text-transform: uppercase;
+}
+
+.empty-message span {
+  color: var(--primary-color, #2e6fa6);
+  font-weight: 600;
+}

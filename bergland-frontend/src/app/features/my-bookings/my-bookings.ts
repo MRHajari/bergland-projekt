@@ -40,7 +40,12 @@ export class MyBookings implements OnInit {
     try {
       const allBookings = await firstValueFrom(this.bookingService.getByUser(this.userId));
       this.bookings.set(allBookings);
-
+    
+      if (!allBookings || allBookings.length === 0) {
+        this.loading.set(false);
+        return; // kein Fehler, einfach leere Liste
+      }
+    
       // Gruppiere Buchungen nach Event
       const groupedMap = new Map<string, BookingInterface[]>();
       for (const b of allBookings) {
@@ -49,7 +54,7 @@ export class MyBookings implements OnInit {
         if (!groupedMap.has(eventId)) groupedMap.set(eventId, []);
         groupedMap.get(eventId)!.push(b);
       }
-
+    
       // Lade Event-Infos
       const groupedList: { eventId: string; event?: EventInterface; bookings: BookingInterface[] }[] = [];
       for (const [eventId, bookings] of groupedMap.entries()) {
@@ -61,14 +66,23 @@ export class MyBookings implements OnInit {
         }
         groupedList.push({ eventId, event, bookings });
       }
-
+    
       this.groupedBookings.set(groupedList);
       this.loading.set(false);
     } catch (err: any) {
       console.error('❌ Fehler beim Laden der Buchungen:', err);
+    
+      // 🔹 Wenn Status 404 → keine Buchungen, kein Fehler
+      if (err?.status === 404) {
+        this.bookings.set([]);
+        this.loading.set(false);
+        return;
+      }
+    
       this.errorMessage.set(err?.error?.message || 'Fehler beim Laden der Buchungen.');
       this.loading.set(false);
     }
+    
   }
 
   getEventDates(event?: EventInterface): string {
