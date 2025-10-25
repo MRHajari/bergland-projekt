@@ -1,29 +1,103 @@
-h2 {
-    margin-bottom: 1rem;
-  }
-  
-  .user-info {
-    background: #f4f4f4;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-  }
-  
-  .booking-list {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .booking-card {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
-  
-  .error {
-    color: red;
-  }
-  
+.profile-container {
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+.header-lbl{
+  font-size: 1.2rem;
+  color: var(--primary-color, #2e6fa6);
+  margin-bottom: 1rem;
+}
+
+.profile-card {
+  background: var(--card-color, #fff);
+  border-radius: var(--border-radius, 10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.profile-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  color: var(--primary-color, #2e6fa6);
+}
+
+.profile-header .email {
+  font-size: 0.95rem;
+  color: #777;
+  margin-top: 0.3rem;
+}
+
+.info-grid,
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 1.5rem;
+}
+
+.form-grid label {
+  font-weight: 600;
+  align-self: center;
+}
+
+input {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.form-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+button.primary {
+  background: var(--primary-color, #2e6fa6);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button.primary:hover {
+  background: #1e5888;
+}
+
+button {
+  background: #eee;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #ddd;
+}
+
+.success {
+  color: green;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.error {
+  color: red;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.loading {
+  text-align: center;
+  color: #666;
+}

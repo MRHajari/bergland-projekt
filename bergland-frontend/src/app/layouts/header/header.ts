@@ -28,18 +28,31 @@ export class Header implements OnInit {
 
   private loadUser(): void {
     const token = this.authService.getAccessToken();
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        this.userName = payload.first_name
-          ? `${payload.first_name} ${payload.last_name || ''}`.trim()
-          : payload.email || 'Benutzer';
-        this.userEmail = payload.email || null;
-      } catch {
-        this.userName = 'Benutzer';
-      }
+    if (!token) {
+      this.userName = 'Gast';
+      return;
+    }
+  
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+  
+      // 🔹 Unterstützt sowohl flache als auch verschachtelte Struktur
+      const userData = payload.user || payload;
+  
+      const first = userData.first_name || '';
+      const last = userData.last_name || '';
+      const email = userData.email || '';
+  
+      this.userName = (first || last)
+        ? `${first} ${last}`.trim()
+        : email || 'Benutzer';
+      this.userEmail = email || null;
+    } catch (err) {
+      console.error('❌ Fehler beim Lesen des Tokens:', err);
+      this.userName = 'Benutzer';
     }
   }
+  
 
   logout(): void {
     this.authService.logout().subscribe({
