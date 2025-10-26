@@ -21,6 +21,7 @@ const Squadron = require("./squadron");
 const RelPersonSquadron = require("./rel_person_squadron");
 const Invoice = require("./invoice");
 const Product = require("./product");
+const RelInvoiceProduct = require("./rel_invoice_product");
 const Token = require("./token");
 const Occupancy = require("./occupancy");
 
@@ -33,6 +34,8 @@ console.log("DEBUG MODELS:", {
     Event: !!Event?.getTableName,
     EventRegistration: !!EventRegistration?.getTableName,
     Booking: !!Booking?.getTableName,
+    Invoice: !!Invoice?.getTableName,
+    Product: !!Product?.getTableName,
 });
 
 // --------------------------------------------------------------
@@ -74,20 +77,33 @@ UserRegistration.belongsTo(User, {
 
 // 💰 PERSON ↔ INVOICE (1:n)
 Person.hasMany(Invoice, {
-    foreignKey: "person_id",
+    foreignKey: "id_person",
     as: "invoices",
     onDelete: "CASCADE",
 });
 Invoice.belongsTo(Person, {
-    foreignKey: "person_id",
-    as: "person",
+    foreignKey: "id_person",
+    as: "kunde",
+});
+
+// 💰 INVOICE ↔ PRODUCT (n:m über RelInvoiceProduct)
+Invoice.belongsToMany(Product, {
+    through: RelInvoiceProduct,
+    foreignKey: "id_rechnung",
+    otherKey: "id_produkt",
+    as: "products",
+});
+Product.belongsToMany(Invoice, {
+    through: RelInvoiceProduct,
+    foreignKey: "id_produkt",
+    otherKey: "id_rechnung",
+    as: "invoices",
 });
 
 // ======================================================
 // 🏨 BOOKING ↔ EVENTREGISTRATION ↔ ACCOMMODATION ↔ EVENT
 // ======================================================
 
-// Eine Registrierung kann mehrere Buchungen haben
 EventRegistration.hasMany(Booking, {
     foreignKey: "event_registration_id",
     as: "bookings",
@@ -98,7 +114,6 @@ Booking.belongsTo(EventRegistration, {
     as: "eventRegistration",
 });
 
-// Eine Unterkunft kann viele Buchungen haben
 Accommodation.hasMany(Booking, {
     foreignKey: "accommodation_id",
     as: "bookings",
@@ -109,7 +124,6 @@ Booking.belongsTo(Accommodation, {
     as: "accommodation",
 });
 
-// Ein Event kann viele Buchungen haben
 Event.hasMany(Booking, {
     foreignKey: "event_id",
     as: "bookings",
@@ -130,8 +144,6 @@ Squadron.belongsTo(Event, {
     as: "event",
 });
 
-
-// Ein Benutzer kann viele Buchungen haben
 User.hasMany(Booking, {
     foreignKey: "user_id",
     as: "bookings",
@@ -280,20 +292,6 @@ Squadron.belongsToMany(Person, {
 RelPersonSquadron.belongsTo(Person, { foreignKey: "person_id", as: "person" });
 RelPersonSquadron.belongsTo(Squadron, { foreignKey: "squadron_id", as: "squadron" });
 
-// 💰 INVOICE ↔ PRODUCT (n:m)
-Invoice.belongsToMany(Product, {
-    through: { model: "invoice_products" },
-    foreignKey: "invoice_id",
-    otherKey: "product_id",
-    as: "products",
-});
-Product.belongsToMany(Invoice, {
-    through: { model: "invoice_products" },
-    foreignKey: "product_id",
-    otherKey: "invoice_id",
-    as: "invoices",
-});
-
 // 🪪 Staffel-Zuordnung (optional)
 Squadron.hasMany(EventRegistration, {
     foreignKey: "squadron_id",
@@ -325,5 +323,6 @@ module.exports = {
     Occupancy,
     Invoice,
     Product,
+    RelInvoiceProduct,
     Token,
 };

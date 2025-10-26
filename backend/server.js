@@ -5,9 +5,12 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
 const { sequelize, Person, User, Token } = require("./models");
+
 const occupancyRoutes = require("./routes/occupancyRoutes");
 
-
+// ============================================================
+// 🚀 SERVER GRUNDAUFBAU
+// ============================================================
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -28,10 +31,10 @@ app.use(bodyParser.json());
 // ============================================================
 app.get("/", (req, res) => res.send("Backend is running 🚀"));
 
-
 // ============================================================
 // ✅ 3. Import aller Routen
 // ============================================================
+// 🧩 Standardmodule
 app.use("/api/persons", require("./routes/personRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/accommodations", require("./routes/accommodationRoutes"));
@@ -43,13 +46,14 @@ app.use("/api/squadrons", require("./routes/squadronRoutes"));
 app.use("/api/rel-person-squadron", require("./routes/relPersonSquadronRoutes"));
 app.use("/api/event-registrations", require("./routes/eventRegistrationRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/invoices", require("./routes/invoiceRoutes"));
-app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/occupancies", occupancyRoutes);
 
+// 🧾 Neue Module (voll kompatibel mit neuen Models)
+app.use("/api/invoices", require("./routes/invoiceRoutes"));
+app.use("/api/products", require("./routes/productRoutes"));
 
 // ============================================================
-// ✅ 4. Admin-Setup-Funktion (robust, verknüpft User ⇄ Person)
+// ✅ 4. Admin-Setup-Funktion (legt Default-Admin an)
 // ============================================================
 async function ensureAdminUser() {
     try {
@@ -66,7 +70,7 @@ async function ensureAdminUser() {
                 is_verified: true,
             });
 
-            // 🔄 Sicherstellen, dass Person existiert
+            // 🔄 Sicherstellen, dass zugehörige Person existiert
             let person = await Person.findOne({ where: { email: adminEmail } });
             if (!person) {
                 person = await Person.create({
@@ -78,7 +82,7 @@ async function ensureAdminUser() {
                 });
             }
 
-            // ✅ Beziehung wiederherstellen
+            // 🔗 Beziehung wiederherstellen
             if (!existingUser.person_id) {
                 await existingUser.update({ person_id: person.id });
             }
@@ -87,7 +91,7 @@ async function ensureAdminUser() {
             return;
         }
 
-        // 🔹 Wenn kein User existiert → komplett neu anlegen
+        // 🆕 Wenn kein User existiert → komplett neu anlegen
         const hashed = await bcrypt.hash(adminPassword, 10);
         const person = await Person.create({
             first_name: "System",
@@ -101,10 +105,9 @@ async function ensureAdminUser() {
             password_hash: hashed,
             role: "admin",
             is_verified: true,
-            person_id: person.id, // 🧩 hier wichtig
+            person_id: person.id,
         });
 
-        // Person-Owner setzen
         await person.update({ owner_id: user.id });
 
         console.log("✅ Default Admin erstellt:");
@@ -114,8 +117,6 @@ async function ensureAdminUser() {
         console.error("❌ Fehler beim Anlegen des Admins:", err);
     }
 }
-
-
 
 // ============================================================
 // ✅ 5. DB-Sync + Serverstart
@@ -137,7 +138,7 @@ async function startServer() {
 
         console.log("✅ Database connected.");
 
-        // 🔑 Admin anlegen
+        // 🔑 Admin sicherstellen
         console.log("🚀 Starte ensureAdminUser()...");
         await ensureAdminUser();
         console.log("✅ ensureAdminUser() beendet.");
@@ -153,9 +154,8 @@ async function startServer() {
 
 startServer();
 
-
 // ============================================================
-// ✅ 6. Token-Cleanup (1x täglich)
+// ✅ 6. Token-Cleanup (1x täglich ablaufen lassen)
 // ============================================================
 setInterval(async () => {
     await Token.destroy({

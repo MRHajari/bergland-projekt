@@ -315,21 +315,48 @@ module.exports = async function runSeed() {
         console.log("✅ Gruppen-Registrierungen inkl. Teilnehmer erstellt.");
 
 
+
         // =====================================================
-        // 💰 PRODUKTE & RECHNUNGEN
+        // 💰 PRODUKTE
         // =====================================================
-        await Product.bulkCreate([
+        const products = await Product.bulkCreate([
             { name: "Startgebühr Berglauf", price: 39.5, vat: 19 },
             { name: "T-Shirt Lauf 2025", price: 15, vat: 19 },
             { name: "Medaille Gravur", price: 9.9, vat: 19 },
         ]);
         console.log("💰 Produkte erstellt.");
 
-        await Invoice.bulkCreate([
-            { person_id: persons[0].id, total_amount: 64.4, status: "bezahlt", issued_date: "2025-06-15" },
-            { person_id: persons[2].id, total_amount: 54.5, status: "offen", issued_date: "2025-09-10" },
+
+
+        // =====================================================
+        // 🧾 RECHNUNGEN
+        // =====================================================
+        const invoices = await Invoice.bulkCreate([
+            {
+                rechnungs_nr: "R-2025-001",
+                id_person: persons[0].id,
+                betrag_gesamt: 64.4,
+                ist_bezahlt: true,
+                datum: "2025-06-15",
+            },
+            {
+                rechnungs_nr: "R-2025-002",
+                id_person: persons[1].id,
+                betrag_gesamt: 54.5,
+                ist_bezahlt: false,
+                datum: "2025-09-10",
+            },
         ]);
         console.log("🧾 Rechnungen erstellt.");
+
+
+        // =====================================================
+        // 💳 RECHNUNGSPRODUKTE (Zwischentabelle)
+        // =====================================================
+        await invoices[0].addProducts([products[0], products[1]]); // Erste Rechnung → 2 Produkte
+        await invoices[1].addProducts([products[2]]);              // Zweite Rechnung → 1 Produkt
+        console.log("🧾 Rechnungen und Produktverknüpfungen erstellt.");
+
 
         // =====================================================
         // 🛏️ BUCHUNGEN (mit direkter EventRegistration-Verknüpfung)
