@@ -9,6 +9,16 @@
             </a>
         </li>
 
+        <!-- Produkte bestellen -->
+        <li class="nav-item" [class.collapsed]="isCollapsed">
+            <a routerLink="/products-order" routerLinkActive="active">
+                <i class="fa-solid fa-cart-shopping"></i>
+                @if (!isCollapsed) { <span class="label">Produkte bestellen</span> }
+                <span class="tooltip-text tooltip-bottom">Produkte bestellen</span>
+            </a>
+        </li>
+
+
         <!-- Meine Anmeldungen -->
         <li class="nav-item" [class.collapsed]="isCollapsed">
             <a routerLink="/my-registrations" routerLinkActive="active">

@@ -11,20 +11,38 @@
     <section class="form-section">
         <h2>➕ Neues Produkt hinzufügen</h2>
 
-        <form (ngSubmit)="addProduct()">
-            <div class="form-group">
-                <label for="name">Produktname:</label>
-                <input id="name" type="text" [(ngModel)]="newProduct.name" name="name"
-                    placeholder="z. B. Startnummern-Set" required />
+        <form (ngSubmit)="addProduct()" class="product-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Produktname</label>
+                    <input type="text" [(ngModel)]="newProduct.produkt_name" name="produkt_name" required />
+                </div>
+
+                <div class="form-group form-group-full">
+                    <label>Beschreibung</label>
+                    <textarea [(ngModel)]="newProduct.beschreibung" name="beschreibung" rows="3"
+                        placeholder="Kurze Produktbeschreibung..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Preis (€)</label>
+                    <input type="number" [(ngModel)]="newProduct.preis" name="preis" min="0" step="0.01" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Gültig von</label>
+                    <input type="date" [(ngModel)]="newProduct.gueltig_von" name="gueltig_von" />
+                </div>
+
+                <div class="form-group">
+                    <label>Gültig bis</label>
+                    <input type="date" [(ngModel)]="newProduct.gueltig_bis" name="gueltig_bis" />
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="price">Preis (€):</label>
-                <input id="price" type="number" [(ngModel)]="newProduct.price" name="price" min="0" step="0.01"
-                    required />
+            <div class="form-actions">
+                <button type="submit" class="primary">Hinzufügen</button>
             </div>
-
-            <button type="submit" class="primary">Hinzufügen</button>
         </form>
     </section>
 
@@ -32,7 +50,6 @@
     <section class="list-section">
         <h2>📦 Bestehende Produkte</h2>
 
-        <!-- 🔍 Suchfeld -->
         <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Nach Produktname oder Preis suchen..."
             class="search-input" />
 
@@ -43,36 +60,70 @@
             <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Beschreibung</th>
                     <th>Preis (€)</th>
+                    <th>Gültig von</th>
+                    <th>Gültig bis</th>
                     <th>Aktionen</th>
                 </tr>
             </thead>
+
             <tbody>
-                @for (p of pagedProducts; track p.id) {
+                @for (p of pagedProducts; track p.id_produkt) {
                 <tr>
                     <td>
-                        @if (editingProduct?.id === p.id) {
-                        <input [(ngModel)]="editingProduct.name" />
+                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                        <input [(ngModel)]="editingProduct.produkt_name" name="edit_name_{{ p.id_produkt }}" />
                         } @else {
-                        {{ p.name }}
+                        {{ p.produkt_name }}
                         }
                     </td>
 
                     <td>
-                        @if (editingProduct?.id === p.id) {
-                        <input type="number" [(ngModel)]="editingProduct.price" min="0" step="0.01" />
+                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                        <textarea [(ngModel)]="editingProduct.beschreibung" name="edit_beschreibung_{{ p.id_produkt }}"
+                            rows="2"></textarea>
                         } @else {
-                        {{ p.price | number: '1.2-2' }}
+                        {{ p.beschreibung || '—' }}
                         }
                     </td>
 
                     <td>
-                        @if (editingProduct?.id === p.id) {
-                        <button class="primary" (click)="saveProduct()">Speichern</button>
-                        <button (click)="cancelEdit()">Abbrechen</button>
+                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                        <input type="number" [(ngModel)]="editingProduct.preis" name="edit_preis_{{ p.id_produkt }}"
+                            min="0" step="0.01" />
                         } @else {
-                        <button class="secondary" (click)="editProduct(p)">Bearbeiten</button>
-                        <button class="danger" (click)="deleteProduct(p.id, p.name)">Löschen</button>
+                        {{ p.preis | number: '1.2-2' }}
+                        }
+                    </td>
+
+
+                    <td>
+                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                        <input type="date" [(ngModel)]="editingProduct.gueltig_von"
+                            name="edit_von_{{ p.id_produkt }}" />
+                        } @else {
+                        {{ p.gueltig_von | date: 'yyyy-MM-dd' }}
+                        }
+                    </td>
+
+                    <td>
+                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                        <input type="date" [(ngModel)]="editingProduct.gueltig_bis"
+                            name="edit_bis_{{ p.id_produkt }}" />
+                        } @else {
+                        {{ p.gueltig_bis | date: 'yyyy-MM-dd' }}
+                        }
+                    </td>
+
+                    <td class="actions">
+                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                        <button class="primary" (click)="saveProduct()">💾 Speichern</button>
+                        <button (click)="cancelEdit()">❌ Abbrechen</button>
+                        } @else {
+                        <button class="secondary" (click)="editProduct(p)">✏️ Bearbeiten</button>
+                        <button class="danger" (click)="deleteProduct(p.id_produkt, p.produkt_name)">🗑️
+                            Löschen</button>
                         }
                     </td>
                 </tr>
@@ -80,7 +131,6 @@
             </tbody>
         </table>
 
-        <!-- 📄 Pagination -->
         <div class="pagination">
             <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
             <span>Seite {{ page }} / {{ totalPages }}</span>

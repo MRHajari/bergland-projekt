@@ -30,7 +30,7 @@ export class InvoicesAdmin implements OnInit {
   markAsPaid(invoice: any): void {
     if (invoice.is_paid) return; // schon bezahlt
 
-    this.invoiceService.update(invoice.id, { is_paid: true }).subscribe({
+    this.invoiceService.update(invoice.id_rechnung, { ist_bezahlt: true }).subscribe({
       next: () => {
         invoice.is_paid = true; // UI sofort aktualisieren
         console.log(`✅ Rechnung ${invoice.invoice_number} als bezahlt markiert.`);

@@ -1,38 +1,77 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { ApiService } from '../api.service';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface Invoice {
+  id_rechnung: string;
+  rechnungs_nr: string;
+  id_person: string;
+  betrag_gesamt: number;
+  ist_bezahlt: boolean;
+  bezahlt_am?: string | null;
+  datum: string;
+  products?: Product[]; // optional, falls du Produkte mitladen willst
+}
+
+export interface Product {
+  id_produkt: string;
+  produkt_name: string;
+  beschreibung?: string;
+  preis: number;
+  mwst_satz: number;
+  gueltig_von?: string | null;
+  gueltig_bis?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class InvoiceService {
-  private endpoint = 'invoices';
+  private http = inject(HttpClient);
 
-  constructor(private api: ApiService) {}
+  /** 🌍 Volle Backend-Basis-URL (kein Proxy nötig) */
+  private readonly baseUrl = 'http://localhost:3000/api/invoices';
 
-  getAll(): Observable<any[]> {
-    return this.api.get(this.endpoint);
+  /** 🧾 Alle Rechnungen abrufen */
+  getAll(): Observable<Invoice[]> {
+    return this.http.get<Invoice[]>(this.baseUrl);
   }
 
-  getById(id: string): Observable<any> {
-    return this.api.getById(this.endpoint, id);
+  /** 🔍 Einzelne Rechnung abrufen */
+  getById(id: string): Observable<Invoice> {
+    return this.http.get<Invoice>(`${this.baseUrl}/${id}`);
   }
 
-  create(data: any): Observable<any> {
-    return this.api.post(this.endpoint, data);
+  /** ➕ Neue Rechnung erstellen */
+  create(payload: Partial<Invoice>): Observable<Invoice> {
+    return this.http.post<Invoice>(this.baseUrl, payload);
   }
 
-  update(id: string, data: any): Observable<any> {
-    return this.api.put(this.endpoint, id, data);
+  /** ✏️ Rechnung aktualisieren */
+  update(id: string, payload: Partial<Invoice>): Observable<Invoice> {
+    return this.http.put<Invoice>(`${this.baseUrl}/${id}`, payload);
   }
 
-  delete(id: string): Observable<any> {
-    return this.api.delete(this.endpoint, id);
+  /** 🗑️ Rechnung löschen */
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  // 🧩 NEU: Alle Rechnungen eines bestimmten Benutzers
-  getByUser(userId: string | null): Observable<any[]> {
-    if (!userId) return of([]); // Keine userId → nichts zurückgeben
-    return this.api.get(`${this.endpoint}/user/${userId}`);
+  /** 🧾 Rechnung aus Produktbestellung erstellen */
+  createFromProducts(payload: {
+    id_person: string;
+    items: { id_produkt: string; menge: number }[];
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/from-products`, payload);
+  }
+
+  /** 💡 Produkt zu Rechnung hinzufügen */
+  addProduct(invoiceId: string, productId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${invoiceId}/products/${productId}`, {});
+  }
+
+  /** 💡 Produkt von Rechnung entfernen */
+  removeProduct(invoiceId: string, productId: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/${invoiceId}/products/${productId}`);
   }
 }

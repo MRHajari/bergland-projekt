@@ -23,6 +23,15 @@ const RelInvoiceProduct = sequelize.define(
             },
             onDelete: "CASCADE",
         },
+        // 🔹 NEU: Menge pro Produkt
+        menge: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 1,
+            validate: {
+                min: 1,
+            },
+        },
     },
     {
         tableName: "rel_invoice_product",

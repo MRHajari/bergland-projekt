@@ -315,16 +315,54 @@ module.exports = async function runSeed() {
         console.log("✅ Gruppen-Registrierungen inkl. Teilnehmer erstellt.");
 
 
-
         // =====================================================
-        // 💰 PRODUKTE
+        // 💰 PRODUKTE (vollständig mit allen Feldern)
         // =====================================================
         const products = await Product.bulkCreate([
-            { name: "Startgebühr Berglauf", price: 39.5, vat: 19 },
-            { name: "T-Shirt Lauf 2025", price: 15, vat: 19 },
-            { name: "Medaille Gravur", price: 9.9, vat: 19 },
+            {
+                produkt_name: "Startgebühr Berglauf",
+                beschreibung: "Teilnahmegebühr für den Berglauf 2025 in Tirol.",
+                preis: 39.50,
+                mwst_satz: 19,
+                gueltig_von: "2025-01-01",
+                gueltig_bis: "2025-12-31",
+            },
+            {
+                produkt_name: "T-Shirt Lauf 2025",
+                beschreibung: "Offizielles Laufshirt mit Eventlogo in verschiedenen Größen.",
+                preis: 15.00,
+                mwst_satz: 19,
+                gueltig_von: "2025-01-01",
+                gueltig_bis: "2025-12-31",
+            },
+            {
+                produkt_name: "Medaille Gravur",
+                beschreibung: "Individuelle Gravur der Finisher-Medaille mit Namen und Zeit.",
+                preis: 9.90,
+                mwst_satz: 19,
+                gueltig_von: "2025-01-01",
+                gueltig_bis: "2025-12-31",
+            },
+            {
+                produkt_name: "Verpflegungspaket Premium",
+                beschreibung: "Enthält isotonische Getränke, Energy-Gels und Proteinriegel.",
+                preis: 12.50,
+                mwst_satz: 7,
+                gueltig_von: "2025-03-01",
+                gueltig_bis: "2025-12-31",
+            },
+            {
+                produkt_name: "Parkticket Eventtag",
+                beschreibung: "Parkplatzreservierung in der Nähe des Startbereichs.",
+                preis: 5.00,
+                mwst_satz: 19,
+                gueltig_von: "2025-04-01",
+                gueltig_bis: "2025-12-31",
+            },
         ]);
+
         console.log("💰 Produkte erstellt.");
+
 
 
 

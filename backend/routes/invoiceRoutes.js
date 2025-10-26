@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const invoiceController = require("../controllers/invoiceController");
 
+// POST /api/rechnungen/from-products → Rechnung aus Produktbestellung erstellen
+router.post("/from-products", invoiceController.createInvoiceFromProducts);
+
 // POST /api/rechnungen → neue Rechnung (nach Bestellung)
 router.post("/", invoiceController.createInvoice);
 

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ProductService } from '../../../core/services/product.service';
+import { ProductService, Product } from '../../../core/services/product.service';
 
 @Component({
   selector: 'app-products-admin',
@@ -11,9 +11,18 @@ import { ProductService } from '../../../core/services/product.service';
   styleUrls: ['./products-admin.css']
 })
 export class ProductsAdmin implements OnInit {
-  products: any[] = [];
-  editingProduct: any = null;
-  newProduct = { name: '', price: 0 };
+  products: Product[] = [];
+  editingProduct: Product | null = null;
+
+  newProduct: Partial<Product> = {
+    produkt_name: '',
+    beschreibung: '',
+    preis: 0,
+    mwst_satz: 19,
+    gueltig_von: '',
+    gueltig_bis: ''
+  };
+
   searchTerm = '';
   loading = false;
   errorMessage: string | null = null;
@@ -28,6 +37,9 @@ export class ProductsAdmin implements OnInit {
     this.loadProducts();
   }
 
+  // ============================================
+  // 🔄 Produkte laden
+  // ============================================
   loadProducts(): void {
     this.loading = true;
     this.errorMessage = null;
@@ -36,54 +48,73 @@ export class ProductsAdmin implements OnInit {
       next: (data) => {
         this.products = data;
         this.loading = false;
+        console.log('✅ Produkte geladen:', data);
       },
       error: (err) => {
-        console.error('Fehler beim Laden der Produkte:', err);
+        console.error('❌ Fehler beim Laden der Produkte:', err);
         this.errorMessage = '❌ Fehler beim Laden der Produkte.';
         this.loading = false;
       }
     });
   }
 
+  // ============================================
+  // ➕ Neues Produkt hinzufügen
+  // ============================================
   addProduct(): void {
-    if (!this.newProduct.name.trim() || this.newProduct.price <= 0) {
+    if (!this.newProduct.produkt_name?.trim() || (this.newProduct.preis ?? 0) <= 0) {
       alert('Bitte gib einen gültigen Produktnamen und Preis ein.');
       return;
     }
 
     this.productService.create(this.newProduct).subscribe({
       next: () => {
-        alert(`✅ Produkt "${this.newProduct.name}" hinzugefügt.`);
-        this.newProduct = { name: '', price: 0 };
+        alert(`✅ Produkt "${this.newProduct.produkt_name}" hinzugefügt.`);
+        this.newProduct = {
+          produkt_name: '',
+          beschreibung: '',
+          preis: 0,
+          mwst_satz: 19,
+          gueltig_von: '',
+          gueltig_bis: ''
+        };
         this.loadProducts();
       },
       error: (err) => {
-        console.error('Fehler beim Erstellen:', err);
+        console.error('❌ Fehler beim Erstellen:', err);
         alert('❌ Fehler beim Erstellen des Produkts.');
       }
     });
   }
 
-  editProduct(product: any): void {
+  // ============================================
+  // ✏️ Produkt bearbeiten
+  // ============================================
+  editProduct(product: Product): void {
     this.editingProduct = { ...product };
   }
 
   saveProduct(): void {
     if (!this.editingProduct) return;
 
-    this.productService.update(this.editingProduct.id, this.editingProduct).subscribe({
-      next: () => {
-        alert(`💾 Änderungen gespeichert für "${this.editingProduct.name}".`);
-        this.editingProduct = null;
-        this.loadProducts();
-      },
-      error: (err) => {
-        console.error('Fehler beim Speichern:', err);
-        alert('❌ Fehler beim Speichern des Produkts.');
-      }
-    });
+    this.productService
+      .update(this.editingProduct.id_produkt, this.editingProduct)
+      .subscribe({
+        next: () => {
+          alert(`💾 Änderungen gespeichert für "${this.editingProduct!.produkt_name}".`);
+          this.editingProduct = null;
+          this.loadProducts();
+        },
+        error: (err) => {
+          console.error('❌ Fehler beim Speichern:', err);
+          alert('❌ Fehler beim Speichern des Produkts.');
+        }
+      });
   }
 
+  // ============================================
+  // 🗑️ Produkt löschen
+  // ============================================
   deleteProduct(id: string, name: string): void {
     if (!confirm(`Willst du das Produkt "${name}" wirklich löschen?`)) return;
 
@@ -93,7 +124,7 @@ export class ProductsAdmin implements OnInit {
         this.loadProducts();
       },
       error: (err) => {
-        console.error('Fehler beim Löschen:', err);
+        console.error('❌ Fehler beim Löschen:', err);
         alert('❌ Fehler beim Löschen des Produkts.');
       }
     });
@@ -103,18 +134,22 @@ export class ProductsAdmin implements OnInit {
     this.editingProduct = null;
   }
 
+  // ============================================
   // 🔍 Filterfunktion
+  // ============================================
   get filteredProducts() {
     if (!this.searchTerm.trim()) return this.products;
     const term = this.searchTerm.toLowerCase();
     return this.products.filter(
       (p) =>
-        (p.name && p.name.toLowerCase().includes(term)) ||
-        (p.price && p.price.toString().includes(term))
+        p.produkt_name.toLowerCase().includes(term) ||
+        p.preis.toString().includes(term)
     );
   }
 
+  // ============================================
   // 📄 Pagination
+  // ============================================
   get pagedProducts() {
     const start = (this.page - 1) * this.pageSize;
     return this.filteredProducts.slice(start, start + this.pageSize);

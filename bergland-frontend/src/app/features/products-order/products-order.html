@@ -1,0 +1,64 @@
+<div class="order-container">
+    <h1>🛒 Produkte bestellen</h1>
+
+    @if (loading()) {
+    <p class="loading">⏳ Lädt...</p>
+    } @else {
+    <section class="notice" *ngIf="successMessage()">
+        {{ successMessage() }}
+    </section>
+    <section class="error" *ngIf="errorMessage()">
+        {{ errorMessage() }}
+    </section>
+
+    <section class="card">
+        <div class="toolbar">
+            <input class="search" type="text" [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)"
+                placeholder="🔎 Produktname oder Beschreibung..." />
+
+            <div class="total">
+                Gesamt: <strong>{{ total() | number:'1.2-2' }} €</strong>
+            </div>
+        </div>
+
+        @if (filtered().length === 0) {
+        <p>Keine gültigen Produkte gefunden.</p>
+        } @else {
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Produkt</th>
+                    <th class="col-desc">Beschreibung</th>
+                    <th class="col-price">Preis</th>
+                    <th class="col-qty">Menge</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (p of filtered(); track p.id_produkt) {
+                <tr>
+                    <td class="col-name">{{ p.produkt_name }}</td>
+                    <td class="col-desc">{{ p.beschreibung || '—' }}</td>
+                    <td class="col-price">{{ p.preis | number:'1.2-2' }} €</td>
+                    <td class="col-qty">
+                        <div class="qty">
+                            <button type="button" (click)="updateQty(p, (p.menge || 0) - 1)">−</button>
+                            <input type="number" min="0" step="1" [value]="p.menge || 0"
+                                (input)="updateQty(p, +$any($event.target).value)" />
+                            <button type="button" (click)="updateQty(p, (p.menge || 0) + 1)">+</button>
+                        </div>
+                    </td>
+
+                </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="actions">
+            <button class="primary" [disabled]="!anySelected()" (click)="submitOrder()">
+                🧾 Bestellung abschicken
+            </button>
+        </div>
+        }
+    </section>
+    }
+</div>

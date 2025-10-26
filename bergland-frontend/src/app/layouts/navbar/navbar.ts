@@ -11,13 +11,15 @@ import { AuthService } from '../../core/auth.service';
   styleUrls: ['./navbar.css']
 })
 export class Navbar implements OnInit {
-  isCollapsed = false; // Sidebar Zustand
+  isCollapsed = false;
   isAdmin = false;
+  isLoggedIn = false;   // 🔹 neu
 
   private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.isAdmin = this.authService.getUserRole() === 'admin';
+    this.isLoggedIn = this.authService.isLoggedIn(); // 🔹 neu
   }
 
   toggleCollapse(): void {

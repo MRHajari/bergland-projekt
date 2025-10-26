@@ -10,7 +10,7 @@ import { Events } from './features/events/events';
 import { EventRegistration } from './features/events/event-registration/event-registration';
 import { BookingAccommodation } from './features/booking/booking-accommodation';
 import { Profile } from './features/profile/profile/profile';
-import { Products } from './features/products/products';
+import { ProductsOrder } from './features/products-order/products-order';
 import { AccommodationDetail } from './features/accommodations/accommodation-detail/accommodation-detail';
 import { MyRegistrations } from './features/my-registrations/my-registrations';
 
@@ -54,7 +54,7 @@ export const routes: Routes = [
       // 👤 Benutzerbereich
       { path: 'events', component: Events },
       { path: 'event-registration/:id', component: EventRegistration },
-      { path: 'products', component: Products },
+      { path: 'products-order', component: ProductsOrder },
       { path: 'booking-accommodation', component: BookingAccommodation, canActivate: [authGuard] },
       { path: 'profile', component: Profile, canActivate: [authGuard] },
 
