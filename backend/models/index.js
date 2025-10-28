@@ -75,7 +75,11 @@ UserRegistration.belongsTo(User, {
     as: "user",
 });
 
-// 💰 PERSON ↔ INVOICE (1:n)
+// ======================================================
+// 💰 RECHNUNGEN & PRODUKTE (Invoice, Product, RelInvoiceProduct)
+// ======================================================
+
+// 💳 PERSON ↔ INVOICE (1:n)
 Person.hasMany(Invoice, {
     foreignKey: "id_person",
     as: "invoices",
@@ -86,18 +90,39 @@ Invoice.belongsTo(Person, {
     as: "kunde",
 });
 
-// 💰 INVOICE ↔ PRODUCT (n:m über RelInvoiceProduct)
+// 🧾 INVOICE ↔ PRODUCT (n:m über RelInvoiceProduct)
 Invoice.belongsToMany(Product, {
     through: RelInvoiceProduct,
     foreignKey: "id_rechnung",
     otherKey: "id_produkt",
     as: "products",
 });
+
 Product.belongsToMany(Invoice, {
     through: RelInvoiceProduct,
     foreignKey: "id_produkt",
     otherKey: "id_rechnung",
     as: "invoices",
+});
+
+// 🔗 Zusätzliche direkte Beziehungen für einfaches Include
+RelInvoiceProduct.belongsTo(Invoice, {
+    foreignKey: "id_rechnung",
+    as: "invoice",
+});
+RelInvoiceProduct.belongsTo(Product, {
+    foreignKey: "id_produkt",
+    as: "product",
+});
+
+Invoice.hasMany(RelInvoiceProduct, {
+    foreignKey: "id_rechnung",
+    as: "productRelations", // ✅ anderer Alias, kein Konflikt
+});
+
+Product.hasMany(RelInvoiceProduct, {
+    foreignKey: "id_produkt",
+    as: "invoiceRelations",
 });
 
 // ======================================================

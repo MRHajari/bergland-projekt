@@ -36,6 +36,16 @@
                 <span class="tooltip-text tooltip-bottom">Meine Buchungen</span>
             </a>
         </li>
+
+        <!-- Meine Bestellungen -->
+        <li class="nav-item" [class.collapsed]="isCollapsed">
+            <a routerLink="/my-orders" routerLinkActive="active">
+                <i class="fa-solid fa-bag-shopping"></i>
+                @if (!isCollapsed) { <span class="label">Meine Bestellungen</span> }
+                <span class="tooltip-text tooltip-bottom">Meine Bestellungen</span>
+            </a>
+        </li>
+
     </ul>
 
     <!-- 🔹 Admin-Bereich -->

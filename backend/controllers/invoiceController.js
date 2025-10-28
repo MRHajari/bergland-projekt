@@ -14,9 +14,9 @@ exports.createInvoice = async (req, res) => {
         const { id_person, produkte } = req.body;
 
         if (!id_person || !produkte || produkte.length === 0) {
-            return res
-                .status(400)
-                .json({ message: "id_person und produkte[] sind erforderlich." });
+            return res.status(400).json({
+                message: "id_person und produkte[] sind erforderlich.",
+            });
         }
 
         // Produkte abrufen und Gesamtbetrag berechnen
@@ -28,7 +28,7 @@ exports.createInvoice = async (req, res) => {
             return res.status(400).json({ message: "Keine gültigen Produkte gefunden." });
         }
 
-        const total = items.reduce((sum, p) => sum + p.preis, 0);
+        const total = items.reduce((sum, p) => sum + Number(p.preis), 0);
 
         // Rechnungsnummer generieren (z. B. R-2025-0001)
         const rechnungsNummer = `R-${new Date().getFullYear()}-${Math.floor(
@@ -37,16 +37,17 @@ exports.createInvoice = async (req, res) => {
             .toString()
             .padStart(4, "0")}`;
 
-        // Validierung (optional, falls du sie aktiv nutzen willst)
+        // Validierung
         const { error } = invoiceSchema.validate({
             rechnungs_nr: rechnungsNummer,
             id_person,
             betrag_gesamt: total,
         });
         if (error) {
-            return res
-                .status(400)
-                .json({ message: "Validierungsfehler", details: error.details });
+            return res.status(400).json({
+                message: "Validierungsfehler",
+                details: error.details,
+            });
         }
 
         // Rechnung speichern
@@ -56,7 +57,7 @@ exports.createInvoice = async (req, res) => {
             betrag_gesamt: total,
         });
 
-        // Relationstabelle befüllen (Rechnung ↔ Produkte)
+        // Relationstabelle befüllen
         const rels = produkte.map((id_produkt) => ({
             id_rechnung: invoice.id_rechnung,
             id_produkt,
@@ -78,12 +79,10 @@ exports.listInvoices = async (req, res) => {
     try {
         const invoices = await Invoice.findAll({
             include: [
-                {
-                    association: "kunde",
-                },
+                { association: "kunde" },
                 {
                     model: RelInvoiceProduct,
-                    as: "products",
+                    as: "productRelations", // ✅ Korrekt — entspricht index.js
                     include: [{ model: Product, as: "product" }],
                 },
             ],
@@ -97,17 +96,16 @@ exports.listInvoices = async (req, res) => {
     }
 };
 
+
 // 🔹 3️⃣ Einzelne Rechnung mit Produkten abrufen
 exports.getInvoice = async (req, res) => {
     try {
         const invoice = await Invoice.findByPk(req.params.id, {
             include: [
-                {
-                    association: "kunde",
-                },
+                { association: "kunde" },
                 {
                     model: RelInvoiceProduct,
-                    as: "products",
+                    as: "productRelations",
                     include: [{ model: Product, as: "product" }],
                 },
             ],
@@ -128,7 +126,6 @@ exports.getInvoice = async (req, res) => {
 exports.markAsPaid = async (req, res) => {
     try {
         const invoice = await Invoice.findByPk(req.params.id);
-
         if (!invoice) {
             return res.status(404).json({ message: "Rechnung nicht gefunden." });
         }
@@ -158,7 +155,7 @@ exports.createInvoiceFromProducts = async (req, res) => {
                 .json({ message: "id_person und items[] sind erforderlich." });
         }
 
-        // ✅ Produkte abrufen
+        // Produkte abrufen
         const productIds = items.map((i) => i.id_produkt);
         const products = await Product.findAll({
             where: { id_produkt: { [Op.in]: productIds } },
@@ -168,27 +165,27 @@ exports.createInvoiceFromProducts = async (req, res) => {
             return res.status(400).json({ message: "Keine gültigen Produkte gefunden." });
         }
 
-        // 💶 Gesamtbetrag berechnen (Summe aus preis × menge)
+        // Gesamtbetrag berechnen
         const total = items.reduce((sum, i) => {
             const p = products.find((prod) => prod.id_produkt === i.id_produkt);
             return p ? sum + Number(p.preis) * (i.menge || 1) : sum;
         }, 0);
 
-        // 🧾 Rechnungsnummer generieren (z. B. R-2025-0012)
+        // Rechnungsnummer generieren
         const rechnungsNummer = `R-${new Date().getFullYear()}-${Math.floor(
             Math.random() * 10000
         )
             .toString()
             .padStart(4, "0")}`;
 
-        // 🧩 Rechnung speichern
+        // Rechnung speichern
         const invoice = await Invoice.create({
             rechnungs_nr: rechnungsNummer,
             id_person,
             betrag_gesamt: total,
         });
 
-        // 🔗 Relationen speichern (mit Mengen)
+        // Relationen speichern
         const rels = items.map((i) => ({
             id_rechnung: invoice.id_rechnung,
             id_produkt: i.id_produkt,
@@ -203,6 +200,49 @@ exports.createInvoiceFromProducts = async (req, res) => {
         });
     } catch (error) {
         console.error("❌ Fehler beim Erstellen der Rechnung aus Produkten:", error);
+        res.status(500).json({ message: "Interner Serverfehler" });
+    }
+};
+
+// 🔹 Eigene Bestellungen (Rechnungen) eines Benutzers abrufen
+exports.getInvoicesByPerson = async (req, res) => {
+    try {
+        const { id_person } = req.params;
+
+        const invoices = await Invoice.findAll({
+            where: { id_person },
+            include: [
+                {
+                    model: RelInvoiceProduct,
+                    as: "productRelations",
+                    include: [{ model: Product, as: "product" }],
+                },
+            ],
+            order: [["datum", "DESC"]],
+        });
+
+        res.json(invoices);
+    } catch (error) {
+        console.error("❌ Fehler beim Laden der Benutzerrechnungen:", error);
+        res.status(500).json({ message: "Interner Serverfehler" });
+    }
+};
+
+
+// 🔹 5️⃣ Rechnung stornieren / löschen
+exports.deleteInvoice = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const invoice = await Invoice.findByPk(id);
+
+        if (!invoice) {
+            return res.status(404).json({ message: "Rechnung nicht gefunden." });
+        }
+
+        await invoice.destroy();
+        res.json({ message: "🗑️ Rechnung wurde erfolgreich storniert." });
+    } catch (error) {
+        console.error("❌ Fehler beim Löschen der Rechnung:", error);
         res.status(500).json({ message: "Interner Serverfehler" });
     }
 };

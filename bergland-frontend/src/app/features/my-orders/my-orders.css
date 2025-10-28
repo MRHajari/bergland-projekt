@@ -1,0 +1,50 @@
+.orders-container {
+    padding: 2rem;
+    background: var(--background-color, #f8f9fa);
+    min-height: 100vh;
+  }
+  
+  h1 {
+    color: var(--primary-color, #1976d2);
+    margin-bottom: 1rem;
+  }
+  
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  }
+  
+  .orders-table th, .orders-table td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+  }
+  
+  .orders-table th {
+    background: var(--primary-color, #1976d2);
+    color: white;
+  }
+  
+  button.danger {
+    background: #d9534f;
+    color: #fff;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  button.danger:hover {
+    background: #b52b27;
+  }
+  
+  .paid { color: green; font-weight: 600; }
+  .open { color: orange; font-weight: 600; }
+  .disabled { color: #999; }
+  .loading, .error { margin-top: 1rem; font-style: italic; }
+  .error { color: #b52b27; }
+  

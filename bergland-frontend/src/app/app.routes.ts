@@ -21,6 +21,8 @@ import { EventsAdmin } from './features/admin/events-admin/events-admin';
 import { UsersAdmin } from './features/admin/users-admin/users-admin';
 import { AccommodationsAdmin } from './features/admin/accommodations-admin/accommodations-admin';
 import { MyBookings } from './features/my-bookings/my-bookings';
+import { MyOrders } from './features/my-orders/my-orders';
+
 
 
 // 🔹 Layouts
@@ -60,11 +62,14 @@ export const routes: Routes = [
 
       // 🧾 Meine Anmeldungen
       { path: 'my-registrations', component: MyRegistrations, canActivate: [authGuard] },
-
+  
       // 🏨 Unterkünfte (Benutzer)
       { path: 'accommodations/:id', component: AccommodationDetail, canActivate: [authGuard] },
 
       { path: 'my-bookings', component: MyBookings },
+
+      // 💳 Meine Bestellungen (neu!)
+{ path: 'my-orders', component: MyOrders, canActivate: [authGuard] },
 
 
       // ⚙️ Adminbereich

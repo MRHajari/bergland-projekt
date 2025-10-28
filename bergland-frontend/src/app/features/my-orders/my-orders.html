@@ -1,0 +1,46 @@
+<div class="orders-container">
+    <h1>📦 Meine Bestellungen</h1>
+
+    @if (loading()) {
+    <p class="loading">⏳ Bestellungen werden geladen...</p>
+    } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+    } @else if (invoices().length === 0) {
+    <p>📭 Du hast noch keine Bestellungen.</p>
+    } @else {
+    <table class="orders-table">
+        <thead>
+            <tr>
+                <th>Rechnungsnummer</th>
+                <th>Datum</th>
+                <th>Gesamt (€)</th>
+                <th>Status</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (inv of invoices(); track inv.id_rechnung) {
+            <tr>
+                <td>{{ inv.rechnungs_nr }}</td>
+                <td>{{ inv.datum | date:'dd.MM.yyyy' }}</td>
+                <td>{{ inv.betrag_gesamt | number:'1.2-2' }}</td>
+                <td>
+                    @if (inv.ist_bezahlt) {
+                    <span class="paid">💰 Bezahlt</span>
+                    } @else {
+                    <span class="open">🕓 Offen</span>
+                    }
+                </td>
+                <td>
+                    @if (!inv.ist_bezahlt) {
+                    <button class="danger" (click)="cancelOrder(inv)">Stornieren</button>
+                    } @else {
+                    <span class="disabled">–</span>
+                    }
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+    }
+</div>

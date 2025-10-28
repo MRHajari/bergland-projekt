@@ -74,4 +74,15 @@ export class InvoiceService {
   removeProduct(invoiceId: string, productId: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${invoiceId}/products/${productId}`);
   }
+
+  /** 👤 Alle Rechnungen eines Benutzers abrufen */
+getByPerson(personId: string): Observable<Invoice[]> {
+  return this.http.get<Invoice[]>(`${this.baseUrl}/by-person/${personId}`);
+}
+
+/** ❌ Bestellung stornieren */
+cancelInvoice(id: string): Observable<any> {
+  return this.http.delete(`${this.baseUrl}/${id}`);
+}
+
 }
