@@ -1,6 +1,5 @@
-<!-- frontend/src/app/features/auth/register/register.html -->
 <div class="register-page">
-    <div class="register-card">
+    <div class="register-card wide">
         <div class="logo">
             <img src="assets/logo.svg" alt="Pfälzer Bergland Logo" />
         </div>
@@ -8,35 +7,72 @@
         <h2>Registrieren</h2>
 
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-            <label>Vorname</label>
-            <input type="text" formControlName="first_name" placeholder="Dein Vorname" />
-            @if (registerForm.get('first_name')?.invalid && registerForm.get('first_name')?.touched) {
-            <div class="error">Vorname erforderlich</div>
-            }
+            <div class="form-grid">
+                <div>
+                    <label>Vorname *</label>
+                    <input type="text" formControlName="first_name" placeholder="Dein Vorname" />
+                    @if (registerForm.get('first_name')?.invalid && registerForm.get('first_name')?.touched) {
+                    <div class="error">Vorname erforderlich</div>
+                    }
+                </div>
 
-            <label>Nachname</label>
-            <input type="text" formControlName="last_name" placeholder="Dein Nachname" />
-            @if (registerForm.get('last_name')?.invalid && registerForm.get('last_name')?.touched) {
-            <div class="error">Nachname erforderlich</div>
-            }
+                <div>
+                    <label>Nachname *</label>
+                    <input type="text" formControlName="last_name" placeholder="Dein Nachname" />
+                    @if (registerForm.get('last_name')?.invalid && registerForm.get('last_name')?.touched) {
+                    <div class="error">Nachname erforderlich</div>
+                    }
+                </div>
 
-            <label>Geburtsdatum</label>
-            <input type="date" formControlName="birth_date" />
-            @if (registerForm.get('birth_date')?.invalid && registerForm.get('birth_date')?.touched) {
-            <div class="error">Geburtsdatum erforderlich</div>
-            }
+                <div>
+                    <label>Geburtsdatum *</label>
+                    <input type="date" formControlName="birth_date" />
+                    @if (registerForm.get('birth_date')?.invalid && registerForm.get('birth_date')?.touched) {
+                    <div class="error">Geburtsdatum erforderlich</div>
+                    }
+                </div>
 
-            <label>Email</label>
-            <input type="email" formControlName="email" placeholder="Deine Email" />
-            @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
-            <div class="error">Bitte gültige Email eingeben</div>
-            }
+                <div>
+                    <label>Telefon</label>
+                    <input type="text" formControlName="phone" placeholder="+49 157..." />
+                </div>
 
-            <label>Passwort</label>
-            <input type="password" formControlName="password" placeholder="Dein Passwort" />
-            @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
-            <div class="error">Passwort min. 6 Zeichen</div>
-            }
+                <div>
+                    <label>Straße & Hausnummer</label>
+                    <input type="text" formControlName="street" placeholder="z. B. Spinozastraße 18" />
+                </div>
+
+                <div>
+                    <label>PLZ</label>
+                    <input type="text" formControlName="postal_code" placeholder="z. B. 67663" />
+                </div>
+
+                <div>
+                    <label>Ort</label>
+                    <input type="text" formControlName="city" placeholder="z. B. Kaiserslautern" />
+                </div>
+
+                <div>
+                    <label>Land</label>
+                    <input type="text" formControlName="country" />
+                </div>
+
+                <div class="full">
+                    <label>Email *</label>
+                    <input type="email" formControlName="email" placeholder="Deine Email" />
+                    @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+                    <div class="error">Bitte gültige Email eingeben</div>
+                    }
+                </div>
+
+                <div class="full">
+                    <label>Passwort *</label>
+                    <input type="password" formControlName="password" placeholder="Dein Passwort" />
+                    @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+                    <div class="error">Passwort min. 6 Zeichen</div>
+                    }
+                </div>
+            </div>
 
             <button type="submit" class="primary" [disabled]="loading">
                 @if (loading) { Lade... } @else { Registrieren }

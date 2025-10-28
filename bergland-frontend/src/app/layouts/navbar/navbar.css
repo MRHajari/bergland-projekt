@@ -126,6 +126,7 @@
   transition: background 0.2s ease-in-out, transform 0.1s ease-in-out;
   box-sizing: border-box;
   position: relative; /* Tooltip-Anker */
+  margin-bottom: 15px;
 }
 
 .collapse-toggle i {

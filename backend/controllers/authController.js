@@ -30,15 +30,18 @@ const {
 // 🔹 Mailtrap SMTP Transporter einrichten
 // ============================================================
 const transporter = nodemailer.createTransport({
-    host: MAIL_HOST,
-    port: Number(MAIL_PORT),
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.MAIL_PORT),
     auth: {
-        user: MAIL_USER,
-        pass: MAIL_PASS,
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
     },
-    secure: false,
-    tls: { rejectUnauthorized: false },
+    secure: false, // bei Port 587 -> false
+    tls: {
+        rejectUnauthorized: false, // optional für lokale Tests
+    },
 });
+
 
 // ✅ Verbindung testen
 (async () => {
@@ -79,11 +82,22 @@ async function generateRefreshToken(payload) {
 // ============================================================
 exports.register = async (req, res, next) => {
     try {
-        const { error } = registerSchema.validate(req.body);
+        const { error, value } = registerSchema.validate(req.body);
         if (error)
             return res.status(400).json({ error: error.details[0].message });
 
-        const { first_name, last_name, birth_date, email, password } = req.body;
+        const {
+            first_name,
+            last_name,
+            birth_date,
+            email,
+            password,
+            phone,
+            street,
+            postal_code,
+            city,
+            country,
+        } = value;
 
         // 🧩 E-Mail schon vorhanden?
         const existing = await User.findOne({ where: { email } });
@@ -96,9 +110,19 @@ exports.register = async (req, res, next) => {
 
         // ✅ Transaktion: Person & User gemeinsam anlegen
         const result = await sequelize.transaction(async (t) => {
-            // 1️⃣ Person erstellen
+            // 1️⃣ Person erstellen – jetzt mit Adressdaten
             const person = await Person.create(
-                { first_name, last_name, birth_date, email },
+                {
+                    first_name,
+                    last_name,
+                    birth_date,
+                    email,
+                    phone,
+                    street,
+                    postal_code,
+                    city,
+                    country,
+                },
                 { transaction: t }
             );
 
@@ -151,13 +175,18 @@ exports.register = async (req, res, next) => {
                 id: user.id,
                 email: user.email,
                 role: user.role,
-                person_id: person.id, // 🔥 wichtig fürs Frontend
+                person_id: person.id,
             },
             person: {
                 id: person.id,
                 first_name: person.first_name,
                 last_name: person.last_name,
                 email: person.email,
+                phone: person.phone,
+                street: person.street,
+                postal_code: person.postal_code,
+                city: person.city,
+                country: person.country,
             },
         });
     } catch (err) {

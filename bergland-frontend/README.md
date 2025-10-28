@@ -241,8 +241,7 @@ route.service.ts → /api/routes
 product.service.ts → /api/products
 
 
-###### Mailtrap
-https://mailtrap.io/
+
 
 
 

@@ -3,100 +3,87 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: var(--background-color);
-  padding: 1rem;
+  background: var(--background-color, #f7f7f7);
+  padding: 2rem;
 }
 
 .register-card {
-  background: var(--card-color);
+  background: white;
   padding: 2rem;
-  border-radius: var(--border-radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 480px;
   width: 100%;
-  text-align: center;
 }
 
-.register-card h2 {
-  margin-bottom: 1.5rem;
-  color: var(--primary-color);
+.register-card.wide {
+  max-width: 700px;
 }
 
-.register-card .logo {
-  margin-bottom: 1rem;
-}
-
-.register-card .logo img {
-  max-width: 150px;
-  height: auto;
-}
-
-.register-card form {
-  text-align: left;
-}
-
-.register-card label {
-  font-weight: 600;
+.logo img {
   display: block;
-  margin-top: 0.6rem;
-  color: var(--text-color);
+  margin: 0 auto 1rem;
+  width: 100px;
 }
 
-.register-card input {
+h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-grid .full {
+  grid-column: 1 / 3;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+input {
   width: 100%;
-  margin-top: 0.3rem;
-  padding: 0.6rem;
+  padding: 0.5rem 0.6rem;
   border: 1px solid #ccc;
-  border-radius: var(--border-radius);
-  font-size: 0.95rem;
+  border-radius: 6px;
 }
 
-.register-card input:focus {
-  border-color: var(--primary-color);
-  outline: none;
-}
-
-.register-card button {
-  margin-top: 1rem;
+button.primary {
   width: 100%;
-}
-
-.switch {
+  padding: 0.7rem;
   margin-top: 1.5rem;
-}
-
-.switch a {
-  color: var(--primary-color);
+  background-color: var(--primary-color, #007bff);
+  color: white;
   font-weight: bold;
-  text-decoration: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
-.switch a:hover {
-  text-decoration: underline;
+button.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .error {
   color: #d9534f;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   margin-top: 0.2rem;
 }
 
 .success {
   color: #28a745;
-  font-size: 0.9rem;
-  margin-top: 0.2rem;
+  text-align: center;
+  margin-top: 1rem;
 }
 
-@media (max-width: 480px) {
-  .register-card {
-    padding: 1.5rem;
-  }
-
-  .register-card h2 {
-    font-size: 1.3rem;
-  }
-
-  button {
-    font-size: 0.95rem;
-  }
+.switch {
+  text-align: center;
+  margin-top: 1.2rem;
 }
