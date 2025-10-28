@@ -5,6 +5,7 @@ const Product = require("../models/product");
 const RelInvoiceProduct = require("../models/rel_invoice_product");
 const invoiceSchema = require("../validators/invoiceValidator");
 const Person = require("../models/person");
+const { producerAccessed } = require("@angular/core/primitives/signals");
 
 // =========================================================
 // 🧾 RECHNUNGEN (INVOICES) CONTROLLER
@@ -363,76 +364,153 @@ exports.generateInvoicePdf = async (req, res) => {
 
         if (!invoice) return res.status(404).json({ message: "Rechnung nicht gefunden." });
 
+        // 🧾 Absender (Verkäufer)
         const seller = {
-            name: process.env.SELLER_NAME || "Bergland Events",
-            street: process.env.SELLER_STREET || "Spinozastraße 18",
-            zipCity: process.env.SELLER_ZIPCITY || "67663 Kaiserslautern",
-            country: process.env.SELLER_COUNTRY || "Deutschland",
-            email: process.env.SELLER_EMAIL || "info@bergland.local",
-            phone: process.env.SELLER_PHONE || "+49 000 000000",
-            vatId: process.env.SELLER_VATID || "DE123456789",
+            name: "Kreisverwaltung Bürgerbüro Pfälzer Bergland",
+            street: "Trierer Straße 49-51",
+            zipCity: "66869 Kusel",
+            country: "Deutschland",
+            phone: "+49 6381 424 270",
+            fax: "+49 6381 424 280",
+            email: "info@pfaelzerbergland.de",
         };
 
-        // PDF-Antwortheader
+        // 📄 PDF-Header
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `inline; filename="${invoice.rechnungs_nr}.pdf"`);
 
         const doc = new PDFDocument({ margin: 50 });
         doc.pipe(res);
 
-        // Kopf
-        doc.fontSize(20).text("RECHNUNG", { align: "right" });
-        doc.fontSize(10).text(`Rechnungs-Nr.: ${invoice.rechnungs_nr}`, { align: "right" });
-        doc.text(`Datum: ${new Date(invoice.datum).toLocaleDateString("de-DE")}`, { align: "right" });
-        if (invoice.ist_bezahlt)
-            doc.text(`Status: bezahlt am ${invoice.bezahlt_am ? new Date(invoice.bezahlt_am).toLocaleDateString("de-DE") : "-"}`, { align: "right" });
+        // ================================
+        // 🏢 Kopfbereich
+        // ================================
+        doc
+            .fontSize(18)
+            .text("Rechnung", { align: "right", underline: true })
+            .moveDown(0.5);
 
-        doc.moveDown(1.2);
-        doc.fontSize(12).text(`${seller.name}\n${seller.street}\n${seller.zipCity}\n${seller.country}`);
-        doc.text(`E-Mail: ${seller.email}\nTel: ${seller.phone}\nUSt-ID: ${seller.vatId}`);
+        doc
+            .fontSize(10)
+            .text(`Rechnungs-Nr.: ${invoice.rechnungs_nr}`, { align: "right" })
+            .text(`Datum: ${new Date(invoice.datum).toLocaleDateString("de-DE")}`, { align: "right" });
 
-        doc.moveDown(1);
-        const k = invoice.kunde;
-        if (k) {
-            doc.text(`Rechnung an:\n${k.first_name} ${k.last_name}`);
-            if (k.street) doc.text(k.street);
-            if (k.postal_code || k.city)
-                doc.text(`${k.postal_code || ""} ${k.city || ""}`);
-            if (k.country) doc.text(k.country);
+        if (invoice.ist_bezahlt) {
+            const bezahltAm = invoice.bezahlt_am
+                ? new Date(invoice.bezahlt_am).toLocaleDateString("de-DE")
+                : "-";
+            doc.text(`Status: bezahlt am ${bezahltAm}`, { align: "right" });
         }
 
-        // Positionen
+        // ================================
+        // 📍 Absender (links oben)
+        // ================================
         doc.moveDown(1.5);
+        doc
+            .fontSize(12)
+            .text(seller.name)
+            .text(seller.street)
+            .text(seller.zipCity)
+            .text(seller.country)
+            .text(`Telefon: ${seller.phone}`)
+            .text(`Fax: ${seller.fax}`)
+            .text(`E-Mail: ${seller.email}`)
+            .moveDown(1.5);
+
+        // ================================
+        // 👤 Rechnungsempfänger (Kunde)
+        // ================================
+        const k = invoice.kunde;
+        doc
+            .fontSize(12)
+            .text("Rechnung an:", { underline: true })
+            .moveDown(0.3);
+
+        if (k) {
+            doc
+                .text(`${k.first_name || ""} ${k.last_name || ""}`)
+                .text(k.street || "")
+                .text(`${k.postal_code || ""} ${k.city || ""}`)
+                .text(k.country || "")
+                .text(k.phone ? `Telefon: ${k.phone}` : "")
+                .text(k.email ? `E-Mail: ${k.email}` : "");
+        } else {
+            doc.text("Unbekannter Kunde (Daten fehlen)");
+        }
+
+        // ================================
+        // 🧾 Positionen-Tabelle (optimiert)
+        // ================================
+        doc.moveDown(2);
         doc.fontSize(12).text("Positionen:", { underline: true });
         doc.moveDown(0.3);
 
+        const startX = 50;
+        const colArtikel = startX;
+        const colMenge = 300;
+        const colEinzelpreis = 380;
+        const colGesamt = 470;
+
         doc.fontSize(10);
-        doc.text("Artikel", 50);
-        doc.text("Menge", 300, undefined, { width: 60, align: "right" });
-        doc.text("Einzelpreis", 360, undefined, { width: 80, align: "right" });
-        doc.text("Gesamt", 440, undefined, { width: 80, align: "right" });
+        const headerY = doc.y;
+        doc.text("Artikel", colArtikel);
+        doc.text("Menge", colMenge, headerY, { width: 40, align: "right" });
+        doc.text("Einzelpreis", colEinzelpreis, headerY, { width: 60, align: "right" });
+        doc.text("Gesamt", colGesamt, headerY, { width: 60, align: "right" });
         doc.moveDown(0.2);
-        doc.moveTo(50, doc.y).lineTo(520, doc.y).stroke();
+        doc.moveTo(startX, doc.y).lineTo(540, doc.y).stroke();
 
         let sum = 0;
+        let yPos = doc.y + 5;
+        const lineHeight = 16; // Einheitliche Zeilenhöhe
+
         invoice.productRelations.forEach((rel) => {
             const p = rel.product;
             const menge = rel.menge || 1;
             const netto = Number(p.preis) * menge;
             sum += netto;
 
-            doc.moveDown(0.3);
-            doc.text(p.produkt_name, 50);
-            doc.text(String(menge), 300, undefined, { width: 60, align: "right" });
-            doc.text(`${Number(p.preis).toFixed(2)} €`, 360, undefined, { width: 80, align: "right" });
-            doc.text(`${netto.toFixed(2)} €`, 440, undefined, { width: 80, align: "right" });
+            doc.text(p.produkt_name, colArtikel, yPos);
+            doc.text(String(menge), colMenge, yPos, { width: 40, align: "right" });
+            doc.text(`${Number(p.preis).toFixed(2)} €`, colEinzelpreis, yPos, { width: 60, align: "right" });
+            doc.text(`${netto.toFixed(2)} €`, colGesamt, yPos, { width: 60, align: "right", });
+            doc.moveDown(1);
+            yPos += lineHeight;
         });
 
-        doc.moveDown(1);
-        doc.fontSize(12).text(`Gesamtsumme: ${sum.toFixed(2)} €`, { align: "right" });
+        // Linie unter Tabelle
+        doc.moveTo(startX, yPos - 5).lineTo(540, yPos - 5).stroke();
+        doc.moveDown(1.5);
 
+        // ================================
+        // 💶 Gesamtsumme & Fußtext
+        // ================================
+
+        // Linie über der Gesamtsumme
+        doc.moveTo(startX, yPos - 3).lineTo(540, yPos - 3).stroke();
+
+        // Gesamtsumme exakt unter "Gesamt" ausrichten
+        doc
+            .fontSize(12)
+            .font("Helvetica-Bold")
+            .text(`Gesamtsumme: ${sum.toFixed(2)} €`, colGesamt - 100, yPos + 10, {
+                width: 160,
+                align: "right",
+            })
+            .font("Helvetica");
+
+        // 🧩 Cursor zurücksetzen, bevor neuer Text folgt
         doc.moveDown(2);
-        doc.fontSize(10).text("Vielen Dank für Ihre Teilnahme am Bergland-Event!", { align: "center" });
+        doc.x = startX;
+
+        // Fußtext mittig und leicht eingerückt
+        doc
+            .fontSize(10)
+            .text("Vielen Dank für Ihre Teilnahme am Bergland-Event!", {
+                align: "center",
+                width: 400,
+            });
+
 
         doc.end();
     } catch (error) {
@@ -440,3 +518,4 @@ exports.generateInvoicePdf = async (req, res) => {
         res.status(500).json({ message: "Interner Serverfehler beim PDF-Export" });
     }
 };
+
