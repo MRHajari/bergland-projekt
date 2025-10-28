@@ -1,0 +1,88 @@
+<div class="admin-container">
+    <h1>🧾 Rechnungen verwalten</h1>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab-buttons">
+            <button [class.active]="currentTab === 'offen'" (click)="switchTab('offen')">
+                🕓 Offene Rechnungen
+            </button>
+            <button [class.active]="currentTab === 'bezahlt'" (click)="switchTab('bezahlt')">
+                💶 Archiv (Bezahlt)
+            </button>
+        </div>
+
+        <!-- 🔍 Suchleiste rechts -->
+        <div class="search-bar">
+            <input type="text" placeholder="🔍 Nach Rechnungs-Nr., Datum oder Person suchen..." [ngModel]="searchTerm()"
+                (ngModelChange)="searchTerm.set($event)" />
+            @if (searchTerm()) {
+            <button class="clear-btn" (click)="searchTerm.set('')">✖</button>
+            }
+        </div>
+    </div>
+
+
+    <!-- Archiv-Filter -->
+    @if (currentTab === 'bezahlt') {
+    <div class="filter-bar">
+        <label>Monat:</label>
+        <select [(ngModel)]="selectedMonth">
+            <option value="">Alle</option>
+            @for (m of getMonthList(); track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+            }
+        </select>
+
+        <label>Jahr:</label>
+        <input type="number" [(ngModel)]="selectedYear" min="2020" max="2100" />
+        <button (click)="applyArchiveFilter()">🔍 Filtern</button>
+    </div>
+    }
+
+    <!-- Tabellenbereich -->
+    @if (loading()) {
+    <p>⏳ Lade Rechnungen...</p>
+    } @else if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+    } @else if (filteredInvoices().length === 0) {
+    <p>Keine Rechnungen gefunden.</p>
+    } @else {
+    <table class="invoice-table">
+        <thead>
+            <tr>
+                <th>Rechnungs-Nr.</th>
+                <th>Datum</th>
+                <th>Person</th>
+                <th>Betrag (€)</th>
+                <th>Status</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (inv of filteredInvoices(); track inv.id_rechnung) {
+            <tr>
+                <td>{{ inv.rechnungs_nr }}</td>
+                <td>{{ inv.datum | date: 'dd.MM.yyyy' }}</td>
+                <td>{{ inv.kunde?.first_name }} {{ inv.kunde?.last_name }}</td>
+                <td>{{ inv.betrag_gesamt | number: '1.2-2' }}</td>
+                <td>
+                    @if (inv.ist_bezahlt) {
+                    <span class="status paid">Bezahlt</span>
+                    } @else {
+                    <span class="status open">Offen</span>
+                    }
+                </td>
+                <td>
+                    <button (click)="printInvoice(inv)">🖨️ Drucken</button>
+                    @if (!inv.ist_bezahlt) {
+                    <button class="primary" (click)="markAsPaid(inv)">💰 Bezahlt</button>
+                    }
+                    <button class="danger" (click)="deleteInvoice(inv)">🗑️ Löschen</button>
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+    }
+</div>

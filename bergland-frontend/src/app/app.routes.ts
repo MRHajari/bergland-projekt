@@ -22,6 +22,7 @@ import { UsersAdmin } from './features/admin/users-admin/users-admin';
 import { AccommodationsAdmin } from './features/admin/accommodations-admin/accommodations-admin';
 import { MyBookings } from './features/my-bookings/my-bookings';
 import { MyOrders } from './features/my-orders/my-orders';
+import { InvoicesAdmin } from './features/admin/invoices-admin/invoices-admin';
 
 
 
@@ -69,7 +70,8 @@ export const routes: Routes = [
       { path: 'my-bookings', component: MyBookings },
 
       // 💳 Meine Bestellungen (neu!)
-{ path: 'my-orders', component: MyOrders, canActivate: [authGuard] },
+      { path: 'my-orders', component: MyOrders, canActivate: [authGuard] },
+
 
 
       // ⚙️ Adminbereich
@@ -83,6 +85,8 @@ export const routes: Routes = [
           { path: 'events/:id/registrations', loadComponent: () => import('./features/admin/events-admin/event-registrations-admin/event-registrations-admin.js').then(m => m.EventRegistrationsAdmin) },
           { path: 'users', component: UsersAdmin },
           { path: 'accommodations', component: AccommodationsAdmin },
+          { path: 'invoices', component: InvoicesAdmin },
+
         ],
       },
     ],

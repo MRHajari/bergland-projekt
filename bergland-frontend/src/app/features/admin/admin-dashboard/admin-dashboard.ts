@@ -15,5 +15,6 @@ export class AdminDashboard {
     { title: '🎫 Events verwalten', route: '/admin/events' },
     { title: '🏨 Unterkünfte verwalten', route: '/admin/accommodations' },
     { title: '🛍️ Produkte verwalten', route: '/admin/products' },
+    { title: '🧾 Rechnungen verwalten', route: '/admin/invoices' },
   ];
 }
