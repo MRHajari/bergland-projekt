@@ -1,18 +1,25 @@
 <section class="events-page">
-    <h2 class="page-title">🏔️ Kommende Events</h2>
+    <h2 class="page-title">
+        <i class="fa-solid fa-mountain-sun me-2"></i> Kommende Events
+    </h2>
 
     @if (loading) {
-    <div class="loading">⏳ Events werden geladen...</div>
+    <div class="loading">
+        <i class="fa-solid fa-spinner fa-spin me-2"></i> Events werden geladen...
+    </div>
     } @else if (errorMessage) {
-    <div class="error">{{ errorMessage }}</div>
+    <div class="error">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
+    </div>
     } @else {
     <div class="event-grid">
         @for (event of events; track event.id) {
         <article class="event-card">
             <header>
-                <h3>{{ event.name }}</h3>
+                <h3><i class="fa-solid fa-flag-checkered me-2"></i> {{ event.name }}</h3>
                 <p class="date">
-                    📅 {{ event.start_date }}
+                    <i class="fa-solid fa-calendar-days me-2"></i>
+                    {{ event.start_date }}
                     @if (event.end_date && event.start_date !== event.end_date) {
                     – {{ event.end_date }}
                     }
@@ -23,17 +30,26 @@
 
             @if (event.registration_deadline) {
             <p class="deadline">
-                ⏰ Anmeldung bis: <strong>{{ event.registration_deadline }}</strong>
+                <i class="fa-solid fa-clock me-2"></i>
+                Anmeldung bis:
+                <strong>{{ event.registration_deadline }}</strong>
             </p>
             }
 
             <div class="stats">
-                <p>🗓️ Lauftage: <strong>{{ event.relay_count }}</strong></p>
-                <p>👥 Anmeldungen: <strong>{{ event.registration_count }}</strong></p>
+                <p>
+                    <i class="fa-solid fa-person-running me-2"></i>
+                    Lauftage: <strong>{{ event.relay_count }}</strong>
+                </p>
+                <p>
+                    <i class="fa-solid fa-users me-2"></i>
+                    Anmeldungen: <strong>{{ event.registration_count }}</strong>
+                </p>
             </div>
 
             <footer>
                 <button class="details-btn" [routerLink]="['/event-registration', event.id]">
+                    <i class="fa-solid fa-circle-info me-2"></i>
                     Details ansehen und anmelden
                 </button>
             </footer>

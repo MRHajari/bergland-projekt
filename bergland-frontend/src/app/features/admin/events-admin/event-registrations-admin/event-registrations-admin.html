@@ -4,9 +4,12 @@
 <section class="event-details-card wide" *ngIf="event">
     <header class="event-header">
         <div class="event-title-block">
-            <h1>{{ event?.name }}</h1>
+            <h1>
+                <i class="fa-solid fa-mountain-sun me-2"></i> {{ event?.name }}
+            </h1>
             <p class="event-dates">
-                📅 {{ event?.start_date | date: 'dd.MM.yyyy' }}
+                <i class="fa-solid fa-calendar-days me-2"></i>
+                {{ event?.start_date | date: 'dd.MM.yyyy' }}
                 @if (event?.end_date && event?.end_date !== event?.start_date) {
                 – {{ event?.end_date | date: 'dd.MM.yyyy' }}
                 }
@@ -15,25 +18,29 @@
 
         @if (event?.registration_deadline) {
         <p class="event-deadline">
-            ⏰ Anmeldung bis:
+            <i class="fa-solid fa-clock me-2"></i>
+            Anmeldung bis:
             <strong>{{ event.registration_deadline | date: 'dd.MM.yyyy' }}</strong>
         </p>
         }
     </header>
 
-    <p class="event-description">{{ event?.description }}</p>
+    <p class="event-description">
+        <i class="fa-solid fa-align-left me-2"></i> {{ event?.description }}
+    </p>
 </section>
 
 <!-- ================================
            👥 REGISTRIERUNGEN (pro Benutzer)
            ================================ -->
-
 <section class="event-details-card wide">
-
     <header class="event-info-header">
         <div class="event-title-block">
-            <h2>👥 Registrierungen (nach Benutzer)</h2>
-            <p class="event-dates">Alle Benutzer, die sich für dieses Event angemeldet haben.</p>
+            <h2><i class="fa-solid fa-users me-2"></i> Registrierungen (nach Benutzer)</h2>
+            <p class="event-dates">
+                <i class="fa-solid fa-circle-info me-2"></i>
+                Alle Benutzer, die sich für dieses Event angemeldet haben.
+            </p>
         </div>
 
         <div class="event-search">
@@ -52,23 +59,24 @@
             <!-- 👤 ANMELDER -->
             <div class="user-info">
                 <h3>
-                    👤
+                    <i class="fa-solid fa-user me-2"></i>
                     {{ reg.registered_by_person?.first_name || 'Unbekannt' }}
                     {{ reg.registered_by_person?.last_name || '' }}
                 </h3>
                 <p class="email">
+                    <i class="fa-solid fa-envelope me-2"></i>
                     {{ reg.registered_by_person?.email || '' }}
                 </p>
             </div>
 
             <!-- 📞 META-DATEN -->
             <div class="registration-meta">
-                <p><strong>📞</strong> {{ reg.phone_number || '–' }}</p>
-                <p><strong>🚗</strong> {{ reg.license_plate || '–' }}</p>
-                <p><strong>🏁 Startnr.:</strong> {{ reg.start_number || '–' }}</p>
-                <p><strong>🥗 Verpflegung:</strong> {{ reg.catering_type || '–' }}</p>
-                <p><strong>💬 Wünsche:</strong> {{ reg.wishes || '–' }}</p>
-                <p><strong>🏃‍♂️ Verein:</strong> {{ reg.club || '–' }}</p>
+                <p><i class="fa-solid fa-phone me-2"></i> {{ reg.phone_number || '–' }}</p>
+                <p><i class="fa-solid fa-car me-2"></i> {{ reg.license_plate || '–' }}</p>
+                <p><i class="fa-solid fa-flag-checkered me-2"></i> Startnr.: {{ reg.start_number || '–' }}</p>
+                <p><i class="fa-solid fa-utensils me-2"></i> Verpflegung: {{ reg.catering_type || '–' }}</p>
+                <p><i class="fa-solid fa-comment-dots me-2"></i> Wünsche: {{ reg.wishes || '–' }}</p>
+                <p><i class="fa-solid fa-person-running me-2"></i> Verein: {{ reg.club || '–' }}</p>
             </div>
 
             <!-- 🔘 STATUS -->
@@ -76,17 +84,17 @@
                 <label class="status-radio yellow">
                     <input type="radio" name="status-{{ reg.id }}" value="in_auswahl"
                         [checked]="reg.status === 'in_auswahl'" (change)="updateStatus(reg, 'in_auswahl')" />
-                    In Auswahl
+                    <i class="fa-solid fa-hourglass-half me-1"></i> In Auswahl
                 </label>
                 <label class="status-radio green">
                     <input type="radio" name="status-{{ reg.id }}" value="bestätigt"
                         [checked]="reg.status === 'bestätigt'" (change)="updateStatus(reg, 'bestätigt')" />
-                    Bestätigt
+                    <i class="fa-solid fa-circle-check me-1"></i> Bestätigt
                 </label>
                 <label class="status-radio red">
                     <input type="radio" name="status-{{ reg.id }}" value="abgelehnt"
                         [checked]="reg.status === 'abgelehnt'" (change)="updateStatus(reg, 'abgelehnt')" />
-                    Abgelehnt
+                    <i class="fa-solid fa-xmark me-1"></i> Abgelehnt
                 </label>
             </div>
         </header>
@@ -118,11 +126,15 @@
             </table>
         </div>
         } @else {
-        <p class="no-participants">Keine Teilnehmer registriert.</p>
+        <p class="no-participants">
+            <i class="fa-solid fa-user-slash me-2"></i> Keine Teilnehmer registriert.
+        </p>
         }
     </div>
     }
     } @else {
-    <p class="no-participants">Keine Registrierungen gefunden.</p>
+    <p class="no-participants">
+        <i class="fa-solid fa-users-slash me-2"></i> Keine Registrierungen gefunden.
+    </p>
     }
 </section>

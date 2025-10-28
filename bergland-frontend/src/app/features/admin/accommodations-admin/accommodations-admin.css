@@ -132,6 +132,7 @@ button.danger:hover {
   font-weight: 500;
   margin-bottom: 0.3rem;
   color: #333;
+  
 }
 
 .form-item input {
@@ -139,6 +140,7 @@ button.danger:hover {
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 0.9rem;
+ 
 }
 
 .form-actions {
@@ -155,6 +157,14 @@ input[type='checkbox'] {
 input[type='number'] {
   width: 80px;
 }
+/* .list-section .user-table td input[type="number"] {
+  display: block;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  width: 80%;
+  text-align: center;
+} */
+
 
 
 .events-cell {
@@ -270,3 +280,4 @@ input[type='number'] {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+

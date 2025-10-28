@@ -1,19 +1,24 @@
 <div class="event-registration-container">
     @if (loading) {
-    <p class="loading">⏳ Event wird geladen...</p>
+    <p class="loading">
+        <i class="fa-solid fa-spinner fa-spin me-2"></i> Event wird geladen...
+    </p>
     } @else if (errorMessage) {
-    <p class="error">{{ errorMessage }}</p>
+    <p class="error">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
+    </p>
     } @else {
 
     <!-- ================================
-             🏔️ EVENT-DETAILS SEKTION
-             ================================ -->
+               EVENT-DETAILS SEKTION
+               ================================ -->
     <section class="event-details-card wide">
         <header class="event-header">
             <div class="event-title-block">
                 <h1>{{ event?.name }}</h1>
                 <p class="event-dates">
-                    📅 {{ event?.start_date | date: 'dd.MM.yyyy' }}
+                    <i class="fa-solid fa-calendar-days me-2"></i>
+                    {{ event?.start_date | date: 'dd.MM.yyyy' }}
                     @if (event?.end_date && event?.end_date !== event?.start_date) {
                     – {{ event?.end_date | date: 'dd.MM.yyyy' }}
                     }
@@ -22,7 +27,8 @@
 
             @if (event?.registration_deadline) {
             <p class="event-deadline">
-                ⏰ Anmeldung bis:
+                <i class="fa-solid fa-clock me-2"></i>
+                Anmeldung bis:
                 <strong>{{ event.registration_deadline | date: 'dd.MM.yyyy' }}</strong>
             </p>
             }
@@ -33,14 +39,20 @@
         }
 
         <div class="event-meta-grid">
-            <div class="meta-item">🗺️ <strong>Routen:</strong> <span>{{ event?.routes?.length || 0 }}</span></div>
-            <div class="meta-item">🧭 <strong>Staffeln:</strong> <span>{{ event?.squadrons?.length || 0 }}</span></div>
             <div class="meta-item">
-                👥 <strong>Anmeldungen:</strong>
+                <i class="fa-solid fa-route me-2"></i> <strong>Routen:</strong>
+                <span>{{ event?.routes?.length || 0 }}</span>
+            </div>
+            <div class="meta-item">
+                <i class="fa-solid fa-compass me-2"></i> <strong>Staffeln:</strong>
+                <span>{{ event?.squadrons?.length || 0 }}</span>
+            </div>
+            <div class="meta-item">
+                <i class="fa-solid fa-users me-2"></i> <strong>Anmeldungen:</strong>
                 <span>{{ event?.eventRegistrations?.length || 0 }}</span>
             </div>
             <div class="meta-item">
-                🏨 <strong>Unterkünfte:</strong>
+                <i class="fa-solid fa-hotel me-2"></i> <strong>Unterkünfte:</strong>
                 <span>{{ event?.occupancies?.length || 0 }}</span>
             </div>
         </div>
@@ -49,19 +61,20 @@
     <hr class="section-divider" />
 
     <!-- ================================
-             📝 ANMELDUNG SEKTION
-             ================================ -->
+               ANMELDUNG SEKTION
+               ================================ -->
     <section class="registration-grid">
-        <!-- 🔹 Linke Spalte -->
+        <!-- Linke Spalte -->
         <div class="left-form" [formGroup]="registrationForm">
-            <h3 class="form-row">📋 Event-Anmeldung</h3>
+            <h3 class="form-row">
+                <i class="fa-solid fa-clipboard-list me-2"></i> Event-Anmeldung
+            </h3>
 
             <div class="form-group form-row">
                 <label for="phone_number">Handynummer</label>
                 <input id="phone_number" type="text" formControlName="phone_number"
                     placeholder="z. B. +49 170 1234567" />
             </div>
-
 
             <div class="form-row">
                 <label>KFZ-Kennzeichen</label>
@@ -108,13 +121,13 @@
             </div>
         </div>
 
-        <!-- 🔹 Rechte Spalte -->
+        <!-- Rechte Spalte -->
         <div class="right-form">
             <div [formGroup]="registrationForm">
-                <h3>👤 Teilnehmer</h3>
+                <h3><i class="fa-solid fa-user me-2"></i> Teilnehmer</h3>
 
-                <div class="form-row ">
-                    <div class="lbl-margin-top "></div>
+                <div class="form-row">
+                    <div class="lbl-margin-top"></div>
                     <label>Teilnahme-Art</label>
                     <select formControlName="teilnahme_art">
                         <option value="einzeln">Einzeln</option>
@@ -135,13 +148,13 @@
 
                 <div class="form-row">
                     <button type="button" class="btn secondary" (click)="toggleNewSquadronForm()">
-                        + Neue Staffel anlegen
+                        <i class="fa-solid fa-plus me-2"></i> Neue Staffel anlegen
                     </button>
                 </div>
 
                 @if (showNewSquadronForm) {
                 <div class="nested-form" [formGroup]="squadronForm">
-                    <h4>🧭 Neue Staffel</h4>
+                    <h4><i class="fa-solid fa-compass me-2"></i> Neue Staffel</h4>
                     <div class="form-row">
                         <label>Name</label>
                         <input formControlName="name" />
@@ -150,14 +163,15 @@
                         <label>Beschreibung</label>
                         <input formControlName="description" />
                     </div>
-                    <button type="button" class="btn add-person-btn" (click)="createSquadron()">Erstellen</button>
+                    <button type="button" class="btn add-person-btn" (click)="createSquadron()">
+                        <i class="fa-solid fa-check me-2"></i> Erstellen
+                    </button>
                 </div>
                 }
                 }
             </div>
 
-
-            <!-- 👥 Personenformular -->
+            <!-- Personenformular -->
             <form [formGroup]="personForm">
                 <div class="form-row lbl-margin-top">
                     <label>Bestehende Person auswählen</label>
@@ -171,7 +185,7 @@
 
                 <p class="or-line">ODER neue Person erfassen</p>
 
-                <!-- 👤 Basisdaten -->
+                <!-- Basisdaten -->
                 <div class="form-row"><label>Vorname</label><input formControlName="first_name" /></div>
                 <div class="form-row"><label>Nachname</label><input formControlName="last_name" /></div>
                 <div class="form-row">
@@ -187,8 +201,10 @@
                     <input formControlName="phone" type="tel" placeholder="+49 170 1234567" />
                 </div>
 
-                <!-- 🏠 Adressdaten -->
-                <h4 class="address-heading">🏠 Adresse</h4>
+                <!-- Adressdaten -->
+                <h4 class="address-heading">
+                    <i class="fa-solid fa-house me-2"></i> Adresse
+                </h4>
                 <div class="form-row">
                     <label>Straße / Hausnummer</label>
                     <input formControlName="street" placeholder="z. B. Spinozastraße 18" />
@@ -206,36 +222,32 @@
                     <input formControlName="country" placeholder="z. B. Deutschland" />
                 </div>
 
-
                 <div class="checkbox-row">
                     <input type="checkbox" id="includeSelf" (change)="toggleSelfRegistration($event)"
                         [checked]="isSelfAlreadyAdded" />
                     <label for="includeSelf">Mich selbst als Teilnehmer hinzufügen</label>
                 </div>
 
-
-
-
-                <button type="button" class="btn add-person-btn" (click)="addPerson()">Person hinzufügen</button>
+                <button type="button" class="btn add-person-btn" (click)="addPerson()">
+                    <i class="fa-solid fa-user-plus me-2"></i> Person hinzufügen
+                </button>
             </form>
-
-
         </div>
     </section>
 
-    <!-- 🧍 Personenliste – neue Box unterhalb -->
+    <!-- Personenliste – neue Box unterhalb -->
     <section class="person-list-box">
-        <h3>👥 Angemeldete Personen</h3>
+        <h3><i class="fa-solid fa-users me-2"></i> Angemeldete Personen</h3>
         <ul class="person-list scrollable">
             @for (p of addedPersons; track p.id) {
             <li>
-                ✅
+                <i class="fa-solid fa-circle-check me-2"></i>
                 <span *ngIf="p.squadronName" class="squadron-label">
-                    🧭 {{ p.squadronName }}
+                    <i class="fa-solid fa-compass me-1"></i> {{ p.squadronName }}
                 </span>
                 {{ p.first_name }} {{ p.last_name }}
                 <button type="button" class="btn small danger" title="Person löschen" (click)="removePerson(p.id)">
-                    🗑️
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </li>
             }
@@ -245,11 +257,11 @@
     <hr class="section-divider" />
 
     <!-- ================================
-     🏨 MEINE GEBUCHTEN UNTERKÜNFTE
-     ================================ -->
+           MEINE GEBUCHTEN UNTERKÜNFTE
+           ================================ -->
     @if (bookedAccommodations.length > 0) {
     <section class="booked-accommodations">
-        <h3>🏨 Meine gebuchten Unterkünfte</h3>
+        <h3><i class="fa-solid fa-hotel me-2"></i> Meine gebuchten Unterkünfte</h3>
         <ul>
             @for (b of bookedAccommodations; track b.id) {
             <li>
@@ -258,35 +270,43 @@
                 <span>({{ b.accommodation?.city }})</span>
                 }
                 –
-                🛏️ {{ b.single_beds || 0 }} Einzel,
-                🛌 {{ b.double_beds || 0 }} Doppel,
-                🧍 {{ b.multi_beds || 0 }} Mehrbett
+                <i class="fa-solid fa-bed me-1"></i> {{ b.single_beds || 0 }} Einzel,
+                <i class="fa-solid fa-bed me-1"></i> {{ b.double_beds || 0 }} Doppel,
+                <i class="fa-solid fa-users me-1"></i> {{ b.multi_beds || 0 }} Mehrbett
             </li>
             }
         </ul>
     </section>
     }
 
-
     <hr class="section-divider" />
 
     <!-- ================================
-             🔘 BUTTON-LEISTE
-             ================================ -->
+               BUTTON-LEISTE
+               ================================ -->
     <section class="button-bar">
         @if (!isRegistered) {
-        <button class="btn primary" (click)="registerAll()">Jetzt anmelden</button>
+        <button class="btn primary" (click)="registerAll()">
+            <i class="fa-solid fa-circle-check me-2"></i> Jetzt anmelden
+        </button>
         } @else {
-        <button class="btn primary" (click)="updateRegistration()">Speichern</button>
+        <button class="btn primary" (click)="updateRegistration()">
+            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
+        </button>
         }
 
         @if (isRegistered) {
-        <button class="btn secondary" (click)="goToAccommodation()">Unterkunft buchen</button>
-        <button class="btn danger" (click)="cancelRegistration()">❌ Anmeldung stornieren</button>
+        <button class="btn secondary" (click)="goToAccommodation()">
+            <i class="fa-solid fa-bed me-2"></i> Unterkunft buchen
+        </button>
+        <button class="btn danger" (click)="cancelRegistration()">
+            <i class="fa-solid fa-xmark me-2"></i> Anmeldung stornieren
+        </button>
         }
 
-        <button class="btn neutral" (click)="goToMyRegistrations()">Meine Anmeldungen</button>
+        <button class="btn neutral" (click)="goToMyRegistrations()">
+            <i class="fa-solid fa-list-check me-2"></i> Meine Anmeldungen
+        </button>
     </section>
-
     }
 </div>

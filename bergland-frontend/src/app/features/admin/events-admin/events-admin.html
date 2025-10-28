@@ -1,52 +1,58 @@
 <div class="admin-container">
-    <h1>🎫 Events verwalten</h1>
+    <h1><i class="fa-solid fa-ticket me-2"></i> Events verwalten</h1>
 
     @if (loading) {
-    <p class="loading">⏳ Lade Events...</p>
+    <p class="loading">
+        <i class="fa-solid fa-spinner fa-spin me-2"></i> Lade Events...
+    </p>
     } @else if (errorMessage) {
-    <p class="error">{{ errorMessage }}</p>
+    <p class="error">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
+    </p>
     } @else {
 
     <!-- Neues Event -->
     <section class="form-section">
-        <h2>➕ Neues Event hinzufügen</h2>
+        <h2><i class="fa-solid fa-circle-plus me-2"></i> Neues Event hinzufügen</h2>
 
         <form (ngSubmit)="addEvent()" class="event-form">
             <div class="form-group">
-                <label>Name:</label>
+                <label><i class="fa-solid fa-heading me-2"></i> Name:</label>
                 <input type="text" [(ngModel)]="newEvent.name" name="name" placeholder="Eventname" required />
             </div>
 
             <div class="form-group">
-                <label>Beschreibung:</label>
+                <label><i class="fa-solid fa-align-left me-2"></i> Beschreibung:</label>
                 <textarea [(ngModel)]="newEvent.description" name="description" rows="2"
                     placeholder="Kurze Beschreibung..."></textarea>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Startdatum:</label>
+                    <label><i class="fa-solid fa-calendar-day me-2"></i> Startdatum:</label>
                     <input type="date" [(ngModel)]="newEvent.start_date" name="start_date" />
                 </div>
 
                 <div class="form-group">
-                    <label>Enddatum:</label>
+                    <label><i class="fa-solid fa-calendar-check me-2"></i> Enddatum:</label>
                     <input type="date" [(ngModel)]="newEvent.end_date" name="end_date" />
                 </div>
 
                 <div class="form-group">
-                    <label>Anmeldeschluss:</label>
+                    <label><i class="fa-solid fa-clock me-2"></i> Anmeldeschluss:</label>
                     <input type="date" [(ngModel)]="newEvent.registration_deadline" name="registration_deadline" />
                 </div>
             </div>
 
-            <button type="submit" class="primary">Hinzufügen</button>
+            <button type="submit" class="primary">
+                <i class="fa-solid fa-plus me-2"></i> Hinzufügen
+            </button>
         </form>
     </section>
 
     <!-- Event-Liste -->
     <section class="list-section">
-        <h2>📅 Bestehende Events</h2>
+        <h2><i class="fa-solid fa-calendar-days me-2"></i> Bestehende Events</h2>
 
         <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Events suchen (Name oder Beschreibung)..."
             class="search-input" />
@@ -61,11 +67,10 @@
                     <th>Zeitraum</th>
                     <th>Anmeldeschluss</th>
                     <th>Anmeldungen</th>
-                    <th>Unterkünfte</th> <!-- 🏨 Neue Spalte -->
+                    <th>Unterkünfte</th>
                     <th>Aktionen</th>
                 </tr>
             </thead>
-
 
             <tbody>
                 @for (e of pagedEvents; track e.id) {
@@ -73,9 +78,9 @@
                     <td>
                         @if (editingEvent?.id === e.id) {
                         <div class="edit-grid">
-                            <label>Name:</label>
+                            <label><i class="fa-solid fa-heading me-2"></i> Name:</label>
                             <input [(ngModel)]="editingEvent.name" />
-                            <label>Beschreibung:</label>
+                            <label><i class="fa-solid fa-align-left me-2"></i> Beschreibung:</label>
                             <textarea [(ngModel)]="editingEvent.description" rows="1"></textarea>
                         </div>
                         } @else {
@@ -110,19 +115,30 @@
                         }
                         @if (!e.accommodations?.length) {
                         <small>–</small>
-
                         }
                     </td>
 
                     <td class="button-group">
                         @if (editingEvent?.id === e.id) {
-                        <button class="primary" (click)="saveEvent()">Speichern</button>
-                        <button (click)="cancelEdit()">Abbrechen</button>
+                        <button class="primary" (click)="saveEvent()">
+                            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
+                        </button>
+                        <button (click)="cancelEdit()">
+                            <i class="fa-solid fa-xmark me-2"></i> Abbrechen
+                        </button>
                         } @else {
-                        <button class="secondary" (click)="editEvent(e)">Bearbeiten</button>
-                        <button class="danger" (click)="deleteEvent(e.id, e.name)">Löschen</button>
-                        <button class="details" (click)="viewRegistrations(e.id)">📋 Anmeldungen</button>
-                        <button class="secondary" (click)="openAccommodationModal(e)">🏨 Unterkünfte</button>
+                        <button class="secondary" (click)="editEvent(e)">
+                            <i class="fa-solid fa-pen me-2"></i> Bearbeiten
+                        </button>
+                        <button class="danger" (click)="deleteEvent(e.id, e.name)">
+                            <i class="fa-solid fa-trash me-2"></i> Löschen
+                        </button>
+                        <button class="details" (click)="viewRegistrations(e.id)">
+                            <i class="fa-solid fa-list-check me-2"></i> Anmeldungen
+                        </button>
+                        <button class="secondary" (click)="openAccommodationModal(e)">
+                            <i class="fa-solid fa-hotel me-2"></i> Unterkünfte
+                        </button>
                         }
                     </td>
                 </tr>
@@ -131,9 +147,13 @@
         </table>
 
         <div class="pagination">
-            <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
+            <button (click)="page = page - 1" [disabled]="page === 1">
+                <i class="fa-solid fa-chevron-left me-1"></i> Zurück
+            </button>
             <span>Seite {{ page }} / {{ totalPages }}</span>
-            <button (click)="page = page + 1" [disabled]="page === totalPages">▶️ Weiter</button>
+            <button (click)="page = page + 1" [disabled]="page === totalPages">
+                Weiter <i class="fa-solid fa-chevron-right ms-1"></i>
+            </button>
         </div>
         }
     </section>
@@ -146,8 +166,11 @@
     <div class="modal-backdrop" (click)="closeAccommodationModal()"></div>
 
     <div class="modal">
-        <h2>🏨 Unterkünfte zuordnen</h2>
-        <p>Wähle die Unterkünfte aus, die diesem Event zugeordnet werden sollen.</p>
+        <h2><i class="fa-solid fa-hotel me-2"></i> Unterkünfte zuordnen</h2>
+        <p>
+            <i class="fa-solid fa-circle-info me-2"></i>
+            Wähle die Unterkünfte aus, die diesem Event zugeordnet werden sollen.
+        </p>
 
         <div class="modal-list">
             @for (acc of accommodations; track acc.id) {
@@ -155,7 +178,7 @@
                 <input type="checkbox" [checked]="eventOccupancies[acc.id]"
                     (change)="toggleAccommodation(acc.id, $event.target.checked)" />
                 <div class="accommodation-info">
-                    <strong>{{ acc.name }}</strong>
+                    <strong><i class="fa-solid fa-bed me-1"></i> {{ acc.name }}</strong>
                     <span class="city">– {{ acc.city }}</span>
                     <span class="details">
                         (EZ: {{ acc.single_rooms }}, DZ: {{ acc.double_rooms }}, MBZ: {{ acc.multi_bed_rooms }})
@@ -166,8 +189,13 @@
         </div>
 
         <div class="modal-actions">
-            <button class="primary" (click)="saveAccommodationAssignments()">💾 Speichern</button>
-            <button class="secondary" (click)="closeAccommodationModal()">Abbrechen</button>
+            <button class="primary" (click)="saveAccommodationAssignments()">
+                <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
+            </button>
+            <button class="secondary" (click)="closeAccommodationModal()">
+                <i class="fa-solid fa-xmark me-2"></i> Abbrechen
+            </button>
         </div>
     </div>
     }
+</div>

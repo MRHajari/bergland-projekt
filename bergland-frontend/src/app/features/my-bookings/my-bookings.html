@@ -1,40 +1,60 @@
 <div class="my-bookings-container">
     @if (loading()) {
-    <p>⏳ Lade deine Buchungen...</p>
+    <p>
+        <i class="fa-solid fa-spinner fa-spin me-2"></i>
+        Lade deine Buchungen...
+    </p>
     } @else if (errorMessage()) {
-    <p class="error">{{ errorMessage() }}</p>
+    <p class="error">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+        {{ errorMessage() }}
+    </p>
     } @else if (groupedBookings().length === 0) {
-    <p class="empty-message">📭 Du hast noch keine Buchungen vorgenommen.</p>
+    <p class="empty-message">
+        <i class="fa-solid fa-inbox me-2"></i>
+        Du hast noch keine Buchungen vorgenommen.
+    </p>
     } @else {
     <div class="header-lbl">
-        <h1>📦 Meine gebuchten Unterkünfte</h1>
+        <h1>
+            <i class="fa-solid fa-box-open me-2"></i>
+            Meine gebuchten Unterkünfte
+        </h1>
     </div>
-
 
     @for (group of groupedBookings(); track group.eventId) {
     <div class="event-card">
         <header class="event-header">
-            <h2>🏔️ {{ group.event?.name || 'Unbekanntes Event' }}</h2>
-            <span class="dates">{{ getEventDates(group.event) }}</span>
+            <h2>
+                <i class="fa-solid fa-mountain-sun me-2"></i>
+                {{ group.event?.name || 'Unbekanntes Event' }}
+            </h2>
+            <span class="dates">
+                <i class="fa-solid fa-calendar-days me-1"></i>
+                {{ getEventDates(group.event) }}
+            </span>
         </header>
-
 
         <ul class="booking-list">
             @for (b of group.bookings; track b.id) {
             <li>
-                🏨 <strong>{{ b.accommodation?.name }}</strong>
+                <i class="fa-solid fa-hotel me-2"></i>
+                <strong>{{ b.accommodation?.name }}</strong>
                 <span class="city">({{ b.accommodation?.city }})</span> —
-                <span>Einzel: {{ b.single_beds || 0 }}, Doppel: {{ b.double_beds || 0 }}, Mehrbett: {{ b.multi_beds || 0
-                    }}</span>
+                <span>
+                    Einzel: {{ b.single_beds || 0 }},
+                    Doppel: {{ b.double_beds || 0 }},
+                    Mehrbett: {{ b.multi_beds || 0 }}
+                </span>
             </li>
             }
         </ul>
 
         <footer>
             <button class="secondary" (click)="goToBooking(group.eventId, group.bookings[0].event_registration_id)">
-                ✏️ Buchungen bearbeiten
+                <i class="fa-solid fa-pen-to-square me-2"></i>
+                Buchungen bearbeiten
             </button>
-
         </footer>
     </div>
     }

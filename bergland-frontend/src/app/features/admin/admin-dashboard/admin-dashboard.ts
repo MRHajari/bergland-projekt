@@ -7,14 +7,14 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './admin-dashboard.html',
-  styleUrls: ['./admin-dashboard.css']
+  styleUrls: ['./admin-dashboard.css'],
 })
 export class AdminDashboard {
   sections = [
-    { title: '👥 Benutzerverwaltung', route: '/admin/users' },
-    { title: '🎫 Events verwalten', route: '/admin/events' },
-    { title: '🏨 Unterkünfte verwalten', route: '/admin/accommodations' },
-    { title: '🛍️ Produkte verwalten', route: '/admin/products' },
-    { title: '🧾 Rechnungen verwalten', route: '/admin/invoices' },
+    { title: 'Benutzerverwaltung', route: '/admin/users', icon: 'fa-solid fa-users' },
+    { title: 'Events verwalten', route: '/admin/events', icon: 'fa-solid fa-ticket' },
+    { title: 'Unterkünfte', route: '/admin/accommodations', icon: 'fa-solid fa-hotel' },
+    { title: 'Produkte verwalten', route: '/admin/products', icon: 'fa-solid fa-boxes-stacked' },
+    { title: 'Rechnungen verwalten', route: '/admin/invoices', icon: 'fa-solid fa-file-invoice' },
   ];
 }

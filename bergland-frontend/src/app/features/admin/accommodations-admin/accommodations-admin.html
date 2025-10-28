@@ -1,17 +1,23 @@
 <div class="admin-container">
-    <h1>🏠 Unterkünfte verwalten</h1>
+    <h1><i class="fa-solid fa-house me-2"></i> Unterkünfte verwalten</h1>
 
     @if (loading) {
-    <p class="loading">⏳ Unterkünfte werden geladen...</p>
+    <p class="loading">
+        <i class="fa-solid fa-spinner fa-spin me-2"></i> Unterkünfte werden geladen...
+    </p>
     } @else if (errorMessage) {
-    <p class="error">{{ errorMessage }}</p>
+    <p class="error">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
+    </p>
     } @else {
 
     <!-- ====================================================== -->
     <!-- 🏡 Neue Unterkunft hinzufügen -->
     <!-- ====================================================== -->
     <section class="form-section">
-        <h2>➕ Neue Unterkunft hinzufügen</h2>
+        <h2>
+            <i class="fa-solid fa-circle-plus me-2"></i> Neue Unterkunft hinzufügen
+        </h2>
         <form (ngSubmit)="addAccommodation()">
             <div class="form-grid two-columns">
                 <div class="form-item">
@@ -55,7 +61,9 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="primary">Hinzufügen</button>
+                    <button type="submit" class="primary">
+                        <i class="fa-solid fa-plus me-2"></i> Hinzufügen
+                    </button>
                 </div>
             </div>
         </form>
@@ -66,7 +74,7 @@
     <!-- ====================================================== -->
     @if (selectedAccommodation === null) {
     <section class="list-section">
-        <h2>📋 Bestehende Unterkünfte</h2>
+        <h2><i class="fa-solid fa-list me-2"></i> Bestehende Unterkünfte</h2>
         <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Unterkünfte suchen..." class="search-input" />
 
         @if (filteredAccommodations.length === 0) {
@@ -145,11 +153,19 @@
 
                     <td>
                         @if (editingAccommodation && editingAccommodation.id === a.id) {
-                        <button class="primary" (click)="saveAccommodation()">Speichern</button>
-                        <button (click)="cancelEdit()">Abbrechen</button>
+                        <button class="primary" (click)="saveAccommodation()">
+                            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
+                        </button>
+                        <button (click)="cancelEdit()">
+                            <i class="fa-solid fa-xmark me-2"></i> Abbrechen
+                        </button>
                         } @else {
-                        <button class="secondary" (click)="editAccommodation(a)">Bearbeiten</button>
-                        <button class="danger" (click)="deleteAccommodation(a.id || '', a.name)">Löschen</button>
+                        <button class="secondary" (click)="editAccommodation(a)">
+                            <i class="fa-solid fa-pen me-2"></i> Bearbeiten
+                        </button>
+                        <button class="danger" (click)="deleteAccommodation(a.id || '', a.name)">
+                            <i class="fa-solid fa-trash me-2"></i> Löschen
+                        </button>
                         }
                     </td>
                 </tr>
@@ -158,9 +174,13 @@
         </table>
 
         <div class="pagination">
-            <button (click)="page = page - 1" [disabled]="page === 1">◀️</button>
+            <button (click)="page = page - 1" [disabled]="page === 1">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
             <span>Seite {{ page }} / {{ totalPages }}</span>
-            <button (click)="page = page + 1" [disabled]="page === totalPages">▶️</button>
+            <button (click)="page = page + 1" [disabled]="page === totalPages">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
         </div>
         }
     </section>
@@ -170,10 +190,13 @@
     <!-- 🧩 Event-Zuordnungen (Occupancy) -->
     <!-- ====================================================== -->
     <section class="form-section">
-        <h2>🧩 Unterkunft "{{ selectedAccommodation.name }}" → Events zuordnen</h2>
+        <h2>
+            <i class="fa-solid fa-puzzle-piece me-2"></i>
+            Unterkunft "{{ selectedAccommodation.name }}" → Events zuordnen
+        </h2>
 
         @if (events.length === 0) {
-        <p>⚠️ Keine Events vorhanden.</p>
+        <p><i class="fa-solid fa-triangle-exclamation me-2"></i> Keine Events vorhanden.</p>
         } @else {
         <table class="user-table">
             <thead>
@@ -205,8 +228,12 @@
         </table>
 
         <div class="pagination">
-            <button class="primary" (click)="saveEventAssignments()">💾 Speichern</button>
-            <button class="secondary" (click)="cancelSelection()">Abbrechen</button>
+            <button class="primary" (click)="saveEventAssignments()">
+                <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
+            </button>
+            <button class="secondary" (click)="cancelSelection()">
+                <i class="fa-solid fa-xmark me-2"></i> Abbrechen
+            </button>
         </div>
         }
     </section>
@@ -217,27 +244,34 @@
     <!-- 🏨 Buchungsübersicht (Admin) -->
     <!-- ====================================================== -->
     <div class="bookings-admin-container">
-        <h2>🏨 Buchungsübersicht (Admin)</h2>
+        <h2><i class="fa-solid fa-bed me-2"></i> Buchungsübersicht (Admin)</h2>
 
         @if (loading) {
-        <p class="loading">⏳ Buchungen werden geladen...</p>
+        <p class="loading">
+            <i class="fa-solid fa-spinner fa-spin me-2"></i> Buchungen werden geladen...
+        </p>
         } @else if (errorMessage) {
-        <p class="error">{{ errorMessage }}</p>
+        <p class="error">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
+        </p>
         } @else if (allBookings.length === 0) {
         <p>Keine Buchungen vorhanden.</p>
         } @else {
         @for (accommodationName of groupedBookingKeys; track accommodationName) {
         <section class="accommodation-group">
-            <h3>🏠 {{ accommodationName }}</h3>
+            <h3>
+                <i class="fa-solid fa-house me-2"></i> {{ accommodationName }}
+            </h3>
             <p class="acc-location">
-                📍 {{ groupedBookings[accommodationName][0].accommodation?.city || '—' }}
+                <i class="fa-solid fa-location-dot me-2"></i>
+                {{ groupedBookings[accommodationName][0].accommodation?.city || '—' }}
             </p>
 
             <!-- 🧮 Statistik -->
             <div class="acc-stats">
-                <span>🛏️ Gesamt: {{ getTotalBeds(accommodationName) }}</span>
-                <span>📘 Gebucht: {{ getBookedBeds(accommodationName) }}</span>
-                <span>🟢 Frei: {{ getFreeBeds(accommodationName) }}</span>
+                <span><i class="fa-solid fa-bed me-2"></i> Gesamt: {{ getTotalBeds(accommodationName) }}</span>
+                <span><i class="fa-solid fa-book me-2"></i> Gebucht: {{ getBookedBeds(accommodationName) }}</span>
+                <span><i class="fa-solid fa-circle-check me-2"></i> Frei: {{ getFreeBeds(accommodationName) }}</span>
             </div>
 
             <table class="bookings-table">

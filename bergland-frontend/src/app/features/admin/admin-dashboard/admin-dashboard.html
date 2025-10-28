@@ -1,10 +1,11 @@
 <div class="admin-dashboard">
-    <h1>Administration</h1>
-    <p>Wähle einen Bereich zur Verwaltung:</p>
+    <h1><i class="fa-solid fa-gauge-high me-2"></i> Administration</h1>
+    <p><i class="fa-solid fa-gear me-2"></i> Wähle einen Bereich zur Verwaltung:</p>
 
     <div class="cards">
         @for (section of sections; track section.title) {
         <a [routerLink]="section.route" class="admin-card">
+            <i [ngClass]="section.icon + ' me-2'"></i>
             {{ section.title }}
         </a>
         }

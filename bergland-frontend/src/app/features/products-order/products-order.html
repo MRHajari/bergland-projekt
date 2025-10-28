@@ -1,36 +1,61 @@
 <div class="order-container">
-    <h1>🛒 Produkte bestellen</h1>
+    <h1>
+        <i class="fa-solid fa-cart-shopping me-2"></i>
+        Produkte bestellen
+    </h1>
 
     @if (loading()) {
-    <p class="loading">⏳ Lädt...</p>
+    <p class="loading">
+        <i class="fa-solid fa-spinner fa-spin me-2"></i>
+        Lädt...
+    </p>
     } @else {
+    <!-- ✅ Meldungen -->
     <section class="notice" *ngIf="successMessage()">
+        <i class="fa-solid fa-circle-check me-2 text-success"></i>
         {{ successMessage() }}
     </section>
+
     <section class="error" *ngIf="errorMessage()">
+        <i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i>
         {{ errorMessage() }}
     </section>
 
+    <!-- ✅ Produktliste -->
     <section class="card">
         <div class="toolbar">
-            <input class="search" type="text" [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)"
-                placeholder="🔎 Produktname oder Beschreibung..." />
+            <div class="search-group">
+                <i class="fa-solid fa-magnifying-glass me-2 text-muted"></i>
+                <input class="search" type="text" [value]="searchTerm()"
+                    (input)="searchTerm.set($any($event.target).value)"
+                    placeholder="Produktname oder Beschreibung suchen..." />
+            </div>
 
             <div class="total">
-                Gesamt: <strong>{{ total() | number:'1.2-2' }} €</strong>
+                <i class="fa-solid fa-receipt me-2"></i>
+                Gesamt: <strong>{{ total() | number: '1.2-2' }} €</strong>
             </div>
         </div>
 
         @if (filtered().length === 0) {
-        <p>Keine gültigen Produkte gefunden.</p>
+        <p>
+            <i class="fa-solid fa-box-open me-2"></i>
+            Keine gültigen Produkte gefunden.
+        </p>
         } @else {
         <table class="products-table">
             <thead>
                 <tr>
-                    <th>Produkt</th>
-                    <th class="col-desc">Beschreibung</th>
-                    <th class="col-price">Preis</th>
-                    <th class="col-qty">Menge</th>
+                    <th><i class="fa-solid fa-box me-1"></i> Produkt</th>
+                    <th class="col-desc">
+                        <i class="fa-solid fa-align-left me-1"></i> Beschreibung
+                    </th>
+                    <th class="col-price">
+                        <i class="fa-solid fa-euro-sign me-1"></i> Preis
+                    </th>
+                    <th class="col-qty">
+                        <i class="fa-solid fa-sort-numeric-up me-1"></i> Menge
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -38,16 +63,19 @@
                 <tr>
                     <td class="col-name">{{ p.produkt_name }}</td>
                     <td class="col-desc">{{ p.beschreibung || '—' }}</td>
-                    <td class="col-price">{{ p.preis | number:'1.2-2' }} €</td>
+                    <td class="col-price">{{ p.preis | number: '1.2-2' }} €</td>
                     <td class="col-qty">
                         <div class="qty">
-                            <button type="button" (click)="updateQty(p, (p.menge || 0) - 1)">−</button>
+                            <button type="button" title="Weniger" (click)="updateQty(p, (p.menge || 0) - 1)">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
                             <input type="number" min="0" step="1" [value]="p.menge || 0"
                                 (input)="updateQty(p, +$any($event.target).value)" />
-                            <button type="button" (click)="updateQty(p, (p.menge || 0) + 1)">+</button>
+                            <button type="button" title="Mehr" (click)="updateQty(p, (p.menge || 0) + 1)">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
                         </div>
                     </td>
-
                 </tr>
                 }
             </tbody>
@@ -55,7 +83,8 @@
 
         <div class="actions">
             <button class="primary" [disabled]="!anySelected()" (click)="submitOrder()">
-                🧾 Bestellung abschicken
+                <i class="fa-solid fa-file-invoice me-2"></i>
+                Bestellung abschicken
             </button>
         </div>
         }

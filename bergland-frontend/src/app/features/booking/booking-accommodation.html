@@ -1,15 +1,20 @@
 <div class="booking-container">
     @if (loading) {
-    <p>⏳ Lade Daten...</p>
+    <p><i class="fa-solid fa-spinner fa-spin me-2"></i> Lade Daten...</p>
     } @else if (errorMessage) {
-    <p class="error">{{ errorMessage }}</p>
+    <p class="error">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
+    </p>
     } @else {
 
     @if (!eventId) {
-    <h1>📦 Meine Buchungen</h1>
+    <h1><i class="fa-solid fa-box-open me-2"></i> Meine Buchungen</h1>
+
     @if (bookings.length === 0) {
-    <p>Du hast noch keine Buchungen.</p>
-    <button class="primary" (click)="goToEvents()">➡️ Jetzt Event auswählen</button>
+    <p><i class="fa-solid fa-circle-info me-2"></i> Du hast noch keine Buchungen.</p>
+    <button class="primary" (click)="goToEvents()">
+        <i class="fa-solid fa-arrow-right me-2"></i> Jetzt Event auswählen
+    </button>
     } @else {
     <table class="booking-table">
         <thead>
@@ -37,21 +42,33 @@
     }
 
     @if (eventId) {
-    <h1>🏨 Unterkunft für Event <span class="event-name">„{{ event?.name || 'Unbekanntes Event' }}“</span> buchen</h1>
+    <h1>
+        <i class="fa-solid fa-hotel me-2"></i>
+        Unterkunft für Event
+        <span class="event-name">„{{ event?.name || 'Unbekanntes Event' }}“</span> buchen
+    </h1>
 
     @if (accommodations.length === 0) {
-    <p>Keine Unterkünfte für dieses Event gefunden.</p>
+    <p><i class="fa-solid fa-circle-info me-2"></i> Keine Unterkünfte für dieses Event gefunden.</p>
     } @else {
     <div class="accommodation-grid">
         @for (acc of accommodations; track acc.id) {
 
         @if (getBooking(acc.id); as booking) {
         <div class="acc-card selected">
-            <h3>🏨 {{ acc.name }} <span class="badge-booked">✅ Gebucht</span></h3>
-            <p class="location">{{ acc.street }}, {{ acc.postal_code }} {{ acc.city }}</p>
+            <h3>
+                <i class="fa-solid fa-hotel me-2"></i> {{ acc.name }}
+                <span class="badge-booked">
+                    <i class="fa-solid fa-circle-check me-1"></i> Gebucht
+                </span>
+            </h3>
+            <p class="location">
+                <i class="fa-solid fa-location-dot me-2"></i>
+                {{ acc.street }}, {{ acc.postal_code }} {{ acc.city }}
+            </p>
 
             <div class="availability">
-                <p><strong>Verfügbare Zimmer:</strong></p>
+                <p><strong><i class="fa-solid fa-bed me-2"></i> Verfügbare Zimmer:</strong></p>
                 <p>Einzelzimmer: {{ acc.available_single }} / {{ acc.single_beds_total }}</p>
                 <p>Doppelzimmer: {{ acc.available_double }} / {{ acc.double_beds_total }}</p>
                 <p>Mehrbettzimmer: {{ acc.available_multi }} / {{ acc.multi_beds_total }}</p>
@@ -59,29 +76,36 @@
 
             <div class="room-selection">
                 <div class="room-row">
-                    <label>Einzelzimmer:</label>
+                    <label><i class="fa-solid fa-person me-2"></i> Einzelzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_single" min="0" [attr.max]="acc.available_single" />
                 </div>
                 <div class="room-row">
-                    <label>Doppelzimmer:</label>
+                    <label><i class="fa-solid fa-people-pulling me-2"></i> Doppelzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_double" min="0" [attr.max]="acc.available_double" />
                 </div>
                 <div class="room-row">
-                    <label>Mehrbettzimmer:</label>
+                    <label><i class="fa-solid fa-users me-2"></i> Mehrbettzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_multi" min="0" [attr.max]="acc.available_multi" />
                 </div>
             </div>
 
-            <button class="primary" (click)="saveBooking(acc)">💾 Änderungen speichern</button>
-            <button class="secondary delete" (click)="deleteBooking(acc)">🗑️ Buchung löschen</button>
+            <button class="primary" (click)="saveBooking(acc)">
+                <i class="fa-solid fa-floppy-disk me-2"></i> Änderungen speichern
+            </button>
+            <button class="secondary delete" (click)="deleteBooking(acc)">
+                <i class="fa-solid fa-trash me-2"></i> Buchung löschen
+            </button>
         </div>
         } @else {
         <div class="acc-card">
-            <h3>🏨 {{ acc.name }}</h3>
-            <p class="location">{{ acc.street }}, {{ acc.postal_code }} {{ acc.city }}</p>
+            <h3><i class="fa-solid fa-hotel me-2"></i> {{ acc.name }}</h3>
+            <p class="location">
+                <i class="fa-solid fa-location-dot me-2"></i>
+                {{ acc.street }}, {{ acc.postal_code }} {{ acc.city }}
+            </p>
 
             <div class="availability">
-                <p><strong>Verfügbare Zimmer:</strong></p>
+                <p><strong><i class="fa-solid fa-bed me-2"></i> Verfügbare Zimmer:</strong></p>
                 <p>Einzelzimmer: {{ acc.available_single }} / {{ acc.single_beds_total }}</p>
                 <p>Doppelzimmer: {{ acc.available_double }} / {{ acc.double_beds_total }}</p>
                 <p>Mehrbettzimmer: {{ acc.available_multi }} / {{ acc.multi_beds_total }}</p>
@@ -89,20 +113,22 @@
 
             <div class="room-selection">
                 <div class="room-row">
-                    <label>Einzelzimmer:</label>
+                    <label><i class="fa-solid fa-person me-2"></i> Einzelzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_single" min="0" [attr.max]="acc.available_single" />
                 </div>
                 <div class="room-row">
-                    <label>Doppelzimmer:</label>
+                    <label><i class="fa-solid fa-people-pulling me-2"></i> Doppelzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_double" min="0" [attr.max]="acc.available_double" />
                 </div>
                 <div class="room-row">
-                    <label>Mehrbettzimmer:</label>
+                    <label><i class="fa-solid fa-users me-2"></i> Mehrbettzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_multi" min="0" [attr.max]="acc.available_multi" />
                 </div>
             </div>
 
-            <button class="primary" (click)="saveBooking(acc)">Jetzt buchen</button>
+            <button class="primary" (click)="saveBooking(acc)">
+                <i class="fa-solid fa-circle-check me-2"></i> Jetzt buchen
+            </button>
         </div>
         }
         }

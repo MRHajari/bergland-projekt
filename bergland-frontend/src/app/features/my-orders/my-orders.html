@@ -1,41 +1,62 @@
 <div class="orders-container">
-    <h1>📦 Meine Bestellungen</h1>
+    <h1>
+        <i class="fa-solid fa-box-open me-2"></i>
+        Meine Bestellungen
+    </h1>
 
     @if (loading()) {
-    <p class="loading">⏳ Bestellungen werden geladen...</p>
+    <p class="loading">
+        <i class="fa-solid fa-spinner fa-spin me-2"></i>
+        Bestellungen werden geladen...
+    </p>
     } @else if (error()) {
-    <p class="error">{{ error() }}</p>
+    <p class="error">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+        {{ error() }}
+    </p>
     } @else if (invoices().length === 0) {
-    <p>📭 Du hast noch keine Bestellungen.</p>
+    <p class="empty">
+        <i class="fa-solid fa-inbox me-2"></i>
+        Du hast noch keine Bestellungen.
+    </p>
     } @else {
     <table class="orders-table">
         <thead>
             <tr>
-                <th>Rechnungsnummer</th>
-                <th>Datum</th>
-                <th>Gesamt (€)</th>
-                <th>Status</th>
-                <th>Aktionen</th>
+                <th><i class="fa-solid fa-file-invoice me-1"></i> Rechnungsnummer</th>
+                <th><i class="fa-solid fa-calendar-days me-1"></i> Datum</th>
+                <th><i class="fa-solid fa-euro-sign me-1"></i> Gesamt (€)</th>
+                <th><i class="fa-solid fa-circle-info me-1"></i> Status</th>
+                <th><i class="fa-solid fa-gear me-1"></i> Aktionen</th>
             </tr>
         </thead>
         <tbody>
             @for (inv of invoices(); track inv.id_rechnung) {
             <tr>
                 <td>{{ inv.rechnungs_nr }}</td>
-                <td>{{ inv.datum | date:'dd.MM.yyyy' }}</td>
-                <td>{{ inv.betrag_gesamt | number:'1.2-2' }}</td>
+                <td>{{ inv.datum | date: 'dd.MM.yyyy' }}</td>
+                <td>{{ inv.betrag_gesamt | number: '1.2-2' }}</td>
                 <td>
                     @if (inv.ist_bezahlt) {
-                    <span class="paid">💰 Bezahlt</span>
+                    <span class="paid">
+                        <i class="fa-solid fa-circle-check me-1 text-success"></i>
+                        Bezahlt
+                    </span>
                     } @else {
-                    <span class="open">🕓 Offen</span>
+                    <span class="open">
+                        <i class="fa-regular fa-clock me-1 text-warning"></i>
+                        Offen
+                    </span>
                     }
                 </td>
                 <td>
                     @if (!inv.ist_bezahlt) {
-                    <button class="danger" (click)="cancelOrder(inv)">Stornieren</button>
+                    <button class="danger" (click)="cancelOrder(inv)">
+                        <i class="fa-solid fa-ban me-2"></i>
+                        Stornieren
+                    </button>
                     } @else {
-                    <span class="disabled">–</span>
+                    <span class="disabled text-muted">–</span>
                     }
                 </td>
             </tr>

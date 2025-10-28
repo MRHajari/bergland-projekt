@@ -1,23 +1,30 @@
 <div class="admin-container">
-    <h1>👥 Benutzerverwaltung</h1>
+    <h1><i class="fa-solid fa-users me-2"></i> Benutzerverwaltung</h1>
 
-    <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Benutzer suchen (Name oder Email)..."
-        class="search-input" />
+    <div class="search-input-wrapper">
+        <i class="fa-solid fa-magnifying-glass me-2"></i>
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Benutzer suchen (Name oder Email)..."
+            class="search-input" />
+    </div>
 
     @if (loading) {
-    <p class="loading">⏳ Benutzer werden geladen...</p>
+    <p class="loading">
+        <i class="fa-solid fa-spinner fa-spin me-2"></i> Benutzer werden geladen...
+    </p>
     } @else if (errorMessage) {
-    <p class="error">{{ errorMessage }}</p>
+    <p class="error">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
+    </p>
     } @else if (users.length === 0) {
-    <p>Keine Benutzer gefunden.</p>
+    <p><i class="fa-solid fa-circle-info me-2"></i> Keine Benutzer gefunden.</p>
     } @else {
 
     <!-- 🔹 Admins -->
     <section class="list-section">
-        <h2>🛡️ Admin Benutzer</h2>
+        <h2><i class="fa-solid fa-user-shield me-2"></i> Admin Benutzer</h2>
 
         @if (adminUsers.length === 0) {
-        <p>Keine Admin-Benutzer vorhanden.</p>
+        <p><i class="fa-solid fa-user-xmark me-2"></i> Keine Admin-Benutzer vorhanden.</p>
         } @else {
         <table class="user-table admin-table">
             <thead>
@@ -46,8 +53,12 @@
                         </select>
                     </td>
                     <td>
-                        <button class="primary" (click)="saveUser(u)">Speichern</button>
-                        <button class="danger" (click)="deleteUser(u.id, u.email)">Löschen</button>
+                        <button class="primary" (click)="saveUser(u)">
+                            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
+                        </button>
+                        <button class="danger" (click)="deleteUser(u.id, u.email)">
+                            <i class="fa-solid fa-trash me-2"></i> Löschen
+                        </button>
                     </td>
                 </tr>
                 }
@@ -58,10 +69,10 @@
 
     <!-- 🔹 Normale Benutzer -->
     <section class="list-section">
-        <h2>👤 Normale Benutzer</h2>
+        <h2><i class="fa-solid fa-user me-2"></i> Normale Benutzer</h2>
 
         @if (normalUsers.length === 0) {
-        <p>Keine normalen Benutzer vorhanden.</p>
+        <p><i class="fa-solid fa-user-xmark me-2"></i> Keine normalen Benutzer vorhanden.</p>
         } @else {
         <table class="user-table">
             <thead>
@@ -90,8 +101,12 @@
                         </select>
                     </td>
                     <td>
-                        <button class="primary" (click)="saveUser(u)">Speichern</button>
-                        <button class="danger" (click)="deleteUser(u.id, u.email)">Löschen</button>
+                        <button class="primary" (click)="saveUser(u)">
+                            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
+                        </button>
+                        <button class="danger" (click)="deleteUser(u.id, u.email)">
+                            <i class="fa-solid fa-trash me-2"></i> Löschen
+                        </button>
                     </td>
                 </tr>
                 }
@@ -99,9 +114,13 @@
         </table>
 
         <div class="pagination">
-            <button (click)="page = page - 1" [disabled]="page === 1">◀️ Zurück</button>
+            <button (click)="page = page - 1" [disabled]="page === 1">
+                <i class="fa-solid fa-chevron-left me-1"></i> Zurück
+            </button>
             <span>Seite {{ page }} / {{ totalPages }}</span>
-            <button (click)="page = page + 1" [disabled]="page === totalPages">▶️ Weiter</button>
+            <button (click)="page = page + 1" [disabled]="page === totalPages">
+                Weiter <i class="fa-solid fa-chevron-right ms-1"></i>
+            </button>
         </div>
         }
     </section>
