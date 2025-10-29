@@ -128,8 +128,17 @@ private occupancyService = inject(OccupancyService);
 
   saveEvent() {
     if (!this.editingEvent) return;
-
-    this.eventService.update(this.editingEvent.id, this.editingEvent).subscribe({
+  
+    // Stelle sicher, dass alle Felder existieren
+    const payload = {
+      name: this.editingEvent.name || '',
+      description: this.editingEvent.description || '',
+      start_date: this.editingEvent.start_date || new Date().toISOString().split('T')[0],
+      end_date: this.editingEvent.end_date || new Date().toISOString().split('T')[0],
+      registration_deadline: this.editingEvent.registration_deadline || new Date().toISOString().split('T')[0],
+    };
+  
+    this.eventService.update(this.editingEvent.id, payload).subscribe({
       next: () => {
         alert(`💾 Änderungen an "${this.editingEvent.name}" gespeichert.`);
         this.editingEvent = null;
@@ -141,6 +150,7 @@ private occupancyService = inject(OccupancyService);
       }
     });
   }
+  
 
   deleteEvent(id: string, name: string) {
     if (!confirm(`Willst du das Event "${name}" wirklich löschen?`)) return;

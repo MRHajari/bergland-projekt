@@ -10,7 +10,7 @@ const {
     Accommodation,
 } = require("../models");
 
-const { validateEvent } = require("../validators/eventValidator");
+const { validateEvent, validateEventUpdate } = require("../validators/eventValidator");
 
 // ============================================================
 // 📋 Alle Events abrufen (mit Unterkünften)
@@ -136,8 +136,9 @@ exports.updateEvent = async (req, res) => {
         if (!event)
             return res.status(404).json({ message: "Event nicht gefunden." });
 
-        const { error, value } = validateEvent(req.body);
+        const { error, value } = validateEventUpdate(req.body);
         if (error) {
+            console.warn("⚠️ Joi-Fehlerdetails:", error.details.map(d => d.message));
             return res.status(400).json({
                 message: "Validierungsfehler",
                 details: error.details.map((d) => d.message),

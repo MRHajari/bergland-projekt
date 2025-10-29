@@ -1,15 +1,32 @@
-// backend/routes/routeRoutes.js
+// backend/routes/bookingRoutes.js
 const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middlewares/authMiddleware");
-const routeController = require("../controllers/routeController");
+const bookingController = require("../controllers/bookingController");
 
-// ⚠️ Reihenfolge wichtig: spezialisierte Routen vor "/:id"
-router.post("/", authenticateToken, routeController.createRoute);
-router.get("/", authenticateToken, routeController.getAllRoutes);
-router.get("/event/:eventId", authenticateToken, routeController.getRoutesByEvent);
-router.get("/:id", authenticateToken, routeController.getRouteById);
-router.put("/:id", authenticateToken, routeController.updateRoute);
-router.delete("/:id", authenticateToken, routeController.deleteRoute);
+// ============================================================
+// Buchungen API
+// ============================================================
+
+// Alle Buchungen (Admin)
+router.get("/", authenticateToken, bookingController.getAllBookings);
+
+// Alle Buchungen eines Benutzers
+router.get("/user/:userId", authenticateToken, bookingController.getBookingsByUser);
+
+// Buchungen nach Registrierung
+router.get("/by-registration/:registrationId", authenticateToken, bookingController.getAllByRegistration);
+
+// Einzelne Buchung
+router.get("/:id", authenticateToken, bookingController.getBookingById);
+
+// Neue Buchung
+router.post("/", authenticateToken, bookingController.createBooking);
+
+// Update
+router.put("/:id", authenticateToken, bookingController.updateBooking);
+
+// Löschen
+router.delete("/:id", authenticateToken, bookingController.deleteBooking);
 
 module.exports = router;
