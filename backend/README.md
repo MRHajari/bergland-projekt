@@ -24,51 +24,52 @@ Backend-API für die **Bergland-App** (Reservierung, Events, Rechnungen, Zahlung
 
 ## 📂 Projektstruktur
 backend/
-├── config/
-│   ├── db.js                    # Sequelize DB-Konfiguration (SQLite)
-│   └── mail.js                  # Mailtrap / SMTP Setup (optional)
+├── config/                                 # ⚙️ Konfigurationen
+│   ├── db.js                               # Sequelize DB-Konfiguration (SQLite)
+│   └── config.js                             # 
 │
-├── controllers/                 # 🎯 Business-Logik / API-Controller
-│   ├── accommodationController.js
-│   ├── addressController.js
-│   ├── authController.js
-│   ├── bookingController.js
-│   ├── eventController.js
-│   ├── eventRegistrationController.js
-│   ├── invoiceController.js
-│   ├── personController.js
-│   ├── productController.js
-│   ├── relayTeamController.js
-│   ├── relPersonAddressController.js
-│   ├── routeController.js
-│   ├── runtimeController.js
-│   ├── squadronController.js
-│   ├── tokenController.js
-│   ├── userController.js
-│   ├── userRegistrationController.js
-│   └── occupancyController.js       # 🏨 Belegung zwischen Unterkunft & Event
+├── controllers/                            # 🎯 Business-Logik / API-Controller
+│   ├── accommodationController.js          # Unterkunft
+│   ├── addressController.js                # Adresse
+│   ├── authController.js                   # Login / Registrierung / JWT
+│   ├── bookingController.js                # Buchungen (Person + Unterkunft + Event)
+│   ├── eventController.js                  # Events (CRUD, Filter, Deadlines)
+│   ├── eventRegistrationController.js      # Event-Anmeldungen (Person ↔ Event)
+│   ├── invoiceController.js                # Rechnungen (Erstellung, PDF, Zahlung)
+│   ├── occupancyController.js              # Belegung (Unterkunft ↔ Event)
+│   ├── personController.js                 # Personenverwaltung
+│   ├── productController.js                # Produkte (Startgebühr, T-Shirt, etc.)
+│   ├── relayTeamController.js              # Staffel / Teams
+│   ├── relPersonAddressController.js       # Verbindung Person ↔ Adresse
+│   ├── routeController.js                  # Routen / Strecken
+│   ├── runtimeController.js                # Laufzeiten / Ergebnisse
+│   ├── squadronController.js               # Gruppen / Teams
+│   ├── tokenController.js                  # JWT Refresh Tokens
+│   ├── userController.js                   # Benutzerverwaltung (Admin & Teilnehmer)
+│   └── userRegistrationController.js       # Registrierung von App-Usern
 │
-├── models/                     # 🧩 Sequelize Models (Datenbanktabellen)
-│   ├── accommodation.js        # Unterkunft
-│   ├── address.js              # Adresse
-│   ├── booking.js              # Buchung (Person + Unterkunft + Event)
-│   ├── event.js                # Event (Name, Datum, Beschreibung …)
-│   ├── eventRegistration.js    # Anmeldung (Person ↔ Event)
-│   ├── invoice.js              # Rechnung
-│   ├── occupancy.js            # Belegung (Unterkunft ↔ Event)
-│   ├── person.js               # Personendaten
-│   ├── product.js              # Produkt (Startgebühr, T-Shirt …)
-│   ├── relay_team.js           # Lauftag (Datum, Event, Strecke)
-│   ├── rel_person_address.js   # Verbindung Person ↔ Adresse
-│   ├── route.js                # Strecke / Route (Distanz, Schwierigkeit)
-│   ├── runtime.js              # Laufzeit pro Teilnehmer
-│   ├── squadron.js             # Staffel-Team
-│   ├── token.js                # JWT / Auth Tokens
-│   ├── user.js                 # Login-Benutzer
-│   ├── userRegistration.js     # Registrierung für die App
-│   └── index.js                # 🔗 Beziehungen aller Models (Associations)
+├── models/                                 # 🧩 Sequelize Models (ORM)
+│   ├── accommodation.js                    # Unterkunft
+│   ├── address.js                          # Adresse
+│   ├── booking.js                          # Buchung
+│   ├── event.js                            # Event
+│   ├── eventRegistration.js                # Anmeldung zu Event
+│   ├── invoice.js                          # Rechnung
+│   ├── occupancy.js                        # Unterkunft ↔ Event
+│   ├── person.js                           # Person
+│   ├── product.js                          # Produkt
+│   ├── relay_team.js                       # Staffel
+│   ├── rel_invoice_product.js              # Verbindung Rechnung ↔ Produkt
+│   ├── rel_person_address.js               # Verbindung Person ↔ Adresse
+│   ├── route.js                            # Strecke / Route
+│   ├── runtime.js                          # Zeitmessung
+│   ├── squadron.js                         # Gruppen
+│   ├── token.js                            # JWT Tokens
+│   ├── user.js                             # Benutzer
+│   ├── userRegistration.js                 # Registrierung
+│   └── index.js                            # 🔗 Beziehungen zwischen allen Models
 │
-├── routes/                     # 🚏 API-Endpunkte
+├── routes/                                 # 🚏 API-Endpunkte (Routing-Ebene)
 │   ├── accommodationRoutes.js
 │   ├── addressRoutes.js
 │   ├── authRoutes.js
@@ -88,24 +89,40 @@ backend/
 │   ├── userRoutes.js
 │   └── userRegistrationRoutes.js
 │
-├── validators/                 # ✅ Express-Validator-Logik (Request Validation)
-│   ├── authValidator.js
-│   ├── bookingValidator.js
-│   ├── eventValidator.js
-│   ├── eventRegistrationValidator.js
-│   ├── invoiceValidator.js
-│   ├── personValidator.js
-│   ├── productValidator.js
-│   └── routeValidator.js
+├── validators/                             # ✅ Joi-Validierungen (Input-Prüfung)
+│   ├── accommodationValidator.js           # Unterkunft validieren
+│   ├── addressValidator.js                 # Adresse
+│   ├── authValidator.js                    # Login / Registrierung
+│   ├── bookingValidator.js                 # Buchung
+│   ├── eventValidator.js                   # Event
+│   ├── eventRegistrationValidator.js       # Event-Anmeldung
+│   ├── invoiceValidator.js                 # Rechnung
+│   ├── occupancyValidator.js               # Belegung
+│   ├── personValidator.js                  # Personendaten
+│   ├── productValidator.js                 # Produkte
+│   ├── relayTeamValidator.js               # Staffel / Team
+│   ├── relPersonAddressValidator.js        # Verbindung Person ↔ Adresse
+│   ├── routeValidator.js                   # Routen
+│   ├── runtimeValidator.js                 # Laufzeiten
+│   ├── squadronValidator.js                # Gruppen / Teams
+│   ├── tokenValidator.js                   # Tokens (optional)
+│   ├── userValidator.js                    # Benutzer (Admin / User)
+│   └── userRegistrationValidator.js        # Registrierung von Benutzern
+│
+├── middlewares/                            # 🧱 Middleware-Schicht
+│   ├── authMiddleware.js                   # JWT-Verifikation
+│   ├── errorHandler.js                     # Globale Fehlerbehandlung
+│   
 │
 ├── db/
-│   └── database.sqlite         # SQLite Datenbank (lokal gespeichert)
+│   └── database.sqlite                     # SQLite Datenbank (lokal)
 │
-├── .env                        # Umgebungsvariablen (z. B. PORT, JWT_SECRET, DB_PATH)
+├── .env                                    # Umgebungsvariablen (PORT, JWT_SECRET, MAIL, etc.)
+├── .gitignore
 ├── package.json
-├── seed.js                     # 🌱 Initiales Seeding (Personen, Events, Buchungen usw.)
-├── server.js                   # 🚀 Express App – startet Server & lädt Routes
-└── README.md                   # Projektdokumentation
+├── seed.js                                 # 🌱 Initialdaten für Tests / lokale Entwicklung
+├── server.js                               # 🚀 Express App – lädt Config, Routes & DB
+└── README.md                               # 📘 Projektdokumentation
 
 
 
