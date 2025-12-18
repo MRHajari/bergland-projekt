@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 
 interface Invoice {
   id_rechnung: string;
@@ -25,6 +27,11 @@ interface Invoice {
 })
 export class InvoicesAdmin implements OnInit {
   private http = inject(HttpClient);
+
+  constructor(
+    private location: Location,
+    private router: Router
+  ) {}
 
   // === Signals ===
   invoices = signal<Invoice[]>([]);
@@ -123,4 +130,12 @@ export class InvoicesAdmin implements OnInit {
       );
     });
   });
+
+  goBack(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/admin']); // Fallback-Route
+    }
+  }
 }

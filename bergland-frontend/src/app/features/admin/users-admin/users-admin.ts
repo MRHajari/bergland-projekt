@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
+import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-users-admin',
@@ -19,7 +21,11 @@ export class UsersAdmin implements OnInit {
   page = 1;
   pageSize = 20;
 
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private location: Location,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadUsers();
@@ -97,5 +103,13 @@ export class UsersAdmin implements OnInit {
         alert('❌ Fehler beim Löschen des Benutzers.');
       }
     });
+  }
+
+  goBack(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/admin']); // Fallback-Route
+    }
   }
 }

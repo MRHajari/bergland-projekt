@@ -151,6 +151,45 @@
     color: green;
     font-size: 0.9rem;
   }
+
+
+
+  /* ================================
+   Back Button (global reusable)
+   ================================ */
+button.back-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+
+  color: var(--secondary-text-on); /* 👈 korrekt */
+  transition: color 0.2s ease;
+}
+
+button.back-btn i {
+  font-size: 0.9rem;
+}
+
+button.back-btn:hover,
+button.back-btn:hover i {
+  color: var(--primary-color);
+}
+
+button.back-btn {
+  background: var(--secondary-color);
+  color: var(--secondary-text-on);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
   
   /* ================================
      Responsiveness

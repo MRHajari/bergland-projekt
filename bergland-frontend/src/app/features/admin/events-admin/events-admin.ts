@@ -7,6 +7,7 @@ import { RegistrationService } from '../../../core/services/user.registration.se
 import { EventRegistrationService } from '../../../core/services/event-registration.service';
 import { AccommodationService } from '../../../core/services/accommodation.service';
 import { OccupancyService } from '../../../core/services/occupancy.service';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-events-admin',
@@ -22,6 +23,8 @@ export class EventsAdmin implements OnInit {
   private router = inject(Router);
   private accommodationService = inject(AccommodationService);
 private occupancyService = inject(OccupancyService);
+private location = inject(Location);
+
 
   events: any[] = [];
   countsMap: Record<string, number> = {};
@@ -285,5 +288,13 @@ getAccommodationNames(event: any): string {
     return Math.ceil(this.filteredEvents.length / this.pageSize);
   }
 
+
+  goBack(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/admin']); // Fallback-Route
+    }
+  }
   
 }

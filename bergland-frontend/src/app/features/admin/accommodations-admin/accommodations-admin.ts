@@ -6,6 +6,8 @@ import { ApiService } from '../../../core/api.service';
 import { EventService, EventInterface } from '../../../core/services/event.service';
 import { OccupancyService, OccupancyInterface } from '../../../core/services/occupancy.service';
 import { BookingService, BookingInterface } from '../../../core/services/booking.service';
+import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-accommodations-admin',
@@ -23,6 +25,12 @@ export class AccommodationsAdmin implements OnInit {
   occupancies: OccupancyInterface[] = [];
   allBookings: BookingInterface[] = [];
   groupedBookings: Record<string, BookingInterface[]> = {};
+
+
+  constructor(
+    private location: Location,
+    private router: Router
+  ) {}
 
   // =====================================================
   // 🔹 Neue Unterkunft
@@ -302,6 +310,14 @@ getFreeBeds(accName: string): number {
   const total = this.getTotalBeds(accName);
   const booked = this.getBookedBeds(accName);
   return Math.max(total - booked, 0);
+}
+
+goBack(): void {
+  if (window.history.length > 1) {
+    this.location.back();
+  } else {
+    this.router.navigate(['/admin']); // Fallback-Route
+  }
 }
 
 }

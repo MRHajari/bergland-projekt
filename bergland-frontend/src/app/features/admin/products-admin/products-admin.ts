@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService, Product } from '../../../core/services/product.service';
+import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-products-admin',
@@ -31,7 +33,10 @@ export class ProductsAdmin implements OnInit {
   page = 1;
   pageSize = 10;
 
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService,
+    private location: Location,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadProducts();
@@ -157,5 +162,13 @@ export class ProductsAdmin implements OnInit {
 
   get totalPages() {
     return Math.ceil(this.filteredProducts.length / this.pageSize);
+  }
+
+  goBack(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/admin']); // Fallback-Route
+    }
   }
 }
