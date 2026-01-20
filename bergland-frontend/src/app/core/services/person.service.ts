@@ -9,6 +9,8 @@ export interface Person {
   first_name: string;
   last_name: string;
   birth_date?: string;
+  
+  gender?: 'm' | 'w' | 'd';
 
   // 📧 Kontakt
   email?: string;

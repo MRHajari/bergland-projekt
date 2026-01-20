@@ -9,8 +9,8 @@ To start a local development server, run:
 ```bash
 ng serve
 ```
-ng serve --host 0.0.0.0 --port 4200
 
+ng serve --host 0.0.0.0 --port 4200
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
@@ -60,8 +60,6 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 
-
-
 # Bergland Frontend
 
 Frontend für die **Bergland-App** (Reservierungen, Events, Rechnungen, Zahlungen, usw.),  
@@ -85,6 +83,7 @@ entwickelt mit **Angular 17**.
 ---
 
 ## 📂 Projektstruktur
+
 frontend/
 ├── src/
 │   ├── app/
@@ -220,15 +219,12 @@ frontend/
 ├── tsconfig.json
 └── README.md
 
-
-
-
 ### 1. Dependencies installieren
-```bash
+
 npm install
 
+#### Services
 
-#### Services 
 auth.service.ts → Login / Register / Refresh
 person.service.ts → /api/persons
 booking.service.ts → /api/bookings
@@ -240,12 +236,8 @@ relay-team.service.ts → /api/relay-teams
 route.service.ts → /api/routes
 product.service.ts → /api/products
 
-
-
-
-
-
 ###### Example: GET /api/events/:id
+
 {
   "id": "a8c42e6e-3d9f-4e3d-97ff-2b9ac1452e62",
   "name": "Pfälzer Trail Run 2025",
@@ -321,7 +313,7 @@ product.service.ts → /api/products
       "participation_type": "einzeln",
       "wishes": "T-Shirt Größe M",
       "liability_accept": true,
-      "status": "in_auswahl",
+      "status": "In Bearbeitung",
       "createdAt": "2025-06-05T12:20:00.000Z"
     }
   ]

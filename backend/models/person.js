@@ -76,6 +76,12 @@ const Person = sequelize.define(
             allowNull: true,
         },
 
+        gender: {
+            type: DataTypes.ENUM('m', 'w', 'd'),
+            allowNull: true,
+            comment: 'Geschlecht der Person',
+        },
+
         // 🧑‍💼 Besitzer / Ersteller (User)
         owner_id: {
             type: DataTypes.UUID,

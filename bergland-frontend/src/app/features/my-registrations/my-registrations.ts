@@ -75,7 +75,7 @@ export class MyRegistrations implements OnInit {
             eventEnd: evt?.end_date || '',
             participantCount: r.participants?.length || 0,
             squadronCount: r.participants?.filter((p) => p.squadron_id)?.length || 0,
-            status: r.status || 'in_auswahl',
+            status: r.status || 'In Bearbeitung',
             wishes: r.wishes || null,
             catering_type: r.catering_type || null,
             license_plate: r.license_plate || null,

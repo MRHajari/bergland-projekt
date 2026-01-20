@@ -82,9 +82,9 @@
             <!-- 🔘 STATUS -->
             <div class="status-controls">
                 <label class="status-radio yellow">
-                    <input type="radio" name="status-{{ reg.id }}" value="in_auswahl"
-                        [checked]="reg.status === 'in_auswahl'" (change)="updateStatus(reg, 'in_auswahl')" />
-                    <i class="fa-solid fa-hourglass-half me-1"></i> In Auswahl
+                    <input type="radio" name="status-{{ reg.id }}" value="In Bearbeitung"
+                        [checked]="reg.status === 'In Bearbeitung'" (change)="updateStatus(reg, 'In Bearbeitung')" />
+                    <i class="fa-solid fa-hourglass-half me-1"></i> In Bearbeitung
                 </label>
                 <label class="status-radio green">
                     <input type="radio" name="status-{{ reg.id }}" value="bestätigt"

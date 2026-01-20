@@ -9,9 +9,7 @@
     </p>
     } @else {
 
-    <!-- ================================
-               EVENT-DETAILS SEKTION
-               ================================ -->
+    <!-- EVENT-DETAILS -->
     <section class="event-details-card wide">
         <header class="event-header">
             <div class="event-title-block">
@@ -60,9 +58,7 @@
 
     <hr class="section-divider" />
 
-    <!-- ================================
-               ANMELDUNG SEKTION
-               ================================ -->
+    <!-- ANMELDUNG -->
     <section class="registration-grid">
         <!-- Linke Spalte -->
         <div class="left-form" [formGroup]="registrationForm">
@@ -82,28 +78,11 @@
             </div>
 
             <div class="form-row">
-                <label>Startnummer</label>
-                <input formControlName="start_number" />
-            </div>
-
-            <div class="form-row">
-                <label>Verpflegung</label>
-                <input formControlName="catering_type" />
-            </div>
-
-            <div class="form-row">
                 <label>Wünsche</label>
                 <input formControlName="wishes" />
             </div>
 
-            <div class="form-row">
-                <label>Geschlecht</label>
-                <select formControlName="gender">
-                    <option value="m">Männlich</option>
-                    <option value="w">Weiblich</option>
-                    <option value="d">Divers</option>
-                </select>
-            </div>
+            <!-- ✅ GESCHLECHT HIER ENTFERNT -->
 
             <div class="form-row">
                 <label>Verein</label>
@@ -181,6 +160,9 @@
                         <option [value]="p.id">{{ p.first_name }} {{ p.last_name }}</option>
                         }
                     </select>
+                    <small class="hint">
+                        Nach Auswahl kannst du Geschlecht & Verpflegung setzen und dann „Person hinzufügen“ klicken.
+                    </small>
                 </div>
 
                 <p class="or-line">ODER neue Person erfassen</p>
@@ -188,14 +170,37 @@
                 <!-- Basisdaten -->
                 <div class="form-row"><label>Vorname</label><input formControlName="first_name" /></div>
                 <div class="form-row"><label>Nachname</label><input formControlName="last_name" /></div>
+
+                <!-- ✅ GESCHLECHT PRO PERSON -->
+                <div class="form-row">
+                    <label>Geschlecht</label>
+                    <select formControlName="gender">
+                        <option value="m">Männlich</option>
+                        <option value="w">Weiblich</option>
+                        <option value="d">Divers</option>
+                    </select>
+                </div>
+
+                <!-- ✅ VERPFLEGUNG PRO TEILNEHMER -->
+                <div class="form-row">
+                    <label>Verpflegung</label>
+                    <select formControlName="catering_type">
+                        <option [ngValue]="null">Keine Verpflegung</option>
+                        <option value="vegetarisch">Vegetarisch</option>
+                        <option value="vegan">Vegan</option>
+                    </select>
+                </div>
+
                 <div class="form-row">
                     <label>Geburtsdatum</label>
                     <input type="date" formControlName="birth_date" />
                 </div>
+
                 <div class="form-row">
                     <label>E-Mail</label>
                     <input formControlName="email" type="email" placeholder="beispiel@mail.de" />
                 </div>
+
                 <div class="form-row">
                     <label>Telefonnummer</label>
                     <input formControlName="phone" type="tel" placeholder="+49 170 1234567" />
@@ -224,7 +229,7 @@
 
                 <div class="checkbox-row">
                     <input type="checkbox" id="includeSelf" (change)="toggleSelfRegistration($event)"
-                        [checked]="isSelfAlreadyAdded" />
+                        [checked]="isSelfAlreadyAdded || selfPending" />
                     <label for="includeSelf">Mich selbst als Teilnehmer hinzufügen</label>
                 </div>
 
@@ -235,17 +240,40 @@
         </div>
     </section>
 
-    <!-- Personenliste – neue Box unterhalb -->
+    <!-- Personenliste -->
     <section class="person-list-box">
         <h3><i class="fa-solid fa-users me-2"></i> Angemeldete Personen</h3>
+
         <ul class="person-list scrollable">
             @for (p of addedPersons; track p.id) {
-            <li>
-                <i class="fa-solid fa-circle-check me-2"></i>
-                <span *ngIf="p.squadronName" class="squadron-label">
-                    <i class="fa-solid fa-compass me-1"></i> {{ p.squadronName }}
-                </span>
-                {{ p.first_name }} {{ p.last_name }}
+            <li class="participant-item">
+                <div class="participant-main">
+                    <i class="fa-solid fa-circle-check me-2"></i>
+
+                    @if (p.squadronName) {
+                    <span class="squadron-label">
+                        <i class="fa-solid fa-compass me-1"></i> {{ p.squadronName }}
+                    </span>
+                    }
+
+                    {{ p.first_name }} {{ p.last_name }}
+
+                    <!-- ✅ Nur Anzeige (keine Auswahl mehr hier) -->
+                    @if (p.catering_type) {
+                    <span class="squadron-label" style="margin-left: 10px;">
+                        <i class="fa-solid fa-utensils me-1"></i>
+                        @if (p.catering_type === 'vegan') {
+                        Vegan
+                        } @else if (p.catering_type === 'vegetarisch') {
+                        Vegetarisch
+                        } @else {
+                        Keine Verpflegung
+                        }
+                    </span>
+
+                    }
+                </div>
+
                 <button type="button" class="btn small danger" title="Person löschen" (click)="removePerson(p.id)">
                     <i class="fa-solid fa-trash"></i>
                 </button>
@@ -256,9 +284,7 @@
 
     <hr class="section-divider" />
 
-    <!-- ================================
-           MEINE GEBUCHTEN UNTERKÜNFTE
-           ================================ -->
+    <!-- MEINE GEBUCHTEN UNTERKÜNFTE -->
     @if (bookedAccommodations.length > 0) {
     <section class="booked-accommodations">
         <h3><i class="fa-solid fa-hotel me-2"></i> Meine gebuchten Unterkünfte</h3>
@@ -281,9 +307,7 @@
 
     <hr class="section-divider" />
 
-    <!-- ================================
-               BUTTON-LEISTE
-               ================================ -->
+    <!-- BUTTONS -->
     <section class="button-bar">
         @if (!isRegistered) {
         <button class="btn primary" (click)="registerAll()">

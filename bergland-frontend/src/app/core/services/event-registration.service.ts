@@ -40,7 +40,7 @@ export interface EventRegistrationInterface {
   wishes?: string | null;
   gender?: 'm' | 'w' | 'd' | null;
   club?: string | null;
-  status?: 'in_auswahl' | 'bestätigt' | 'abgelehnt';
+  status?: 'In Bearbeitung' | 'bestätigt' | 'abgelehnt';
 
   // 🧩 Teilnehmerliste
   participants?: EventRegistrationParticipant[];
@@ -71,7 +71,7 @@ export interface EventRegistrationGroupPayload {
   wishes?: string | null;
   gender?: 'm' | 'w' | 'd' | null;
   club?: string | null;
-  status?: 'in_auswahl' | 'bestätigt' | 'abgelehnt';
+  status?: 'In Bearbeitung' | 'bestätigt' | 'abgelehnt';
   participants: EventRegistrationParticipantPayload[];
 }
 

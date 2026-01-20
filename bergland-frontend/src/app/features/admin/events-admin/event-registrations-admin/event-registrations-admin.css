@@ -170,9 +170,13 @@
 }
 
 .status-radio.yellow {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
   background: #fef9c3;
   color: #92400e;
   border-color: #fde68a;
+  padding: 13px;
 }
 
 .status-radio.green {
@@ -210,3 +214,4 @@
   color: #6b7280;
   padding: 1rem 0;
 }
+

@@ -300,7 +300,7 @@ module.exports = async function runSeed() {
             club: "TV Köln",
             start_number: "P2025-02",
             gender: "w",
-            status: "in_auswahl",
+            status: "In Bearbeitung",
         });
 
         await EventRegistrationParticipant.bulkCreate([
