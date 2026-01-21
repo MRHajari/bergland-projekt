@@ -1,10 +1,9 @@
 const Joi = require("joi");
 
 /**
- * 🧾 EventRegistration Validator (Kopf-Daten)
- * Validiert NUR die Registrierungs-Kopfdaten eines Events.
- * Teilnehmer-spezifische Felder (gender, catering, participation)
- * werden bewusst NICHT hier validiert.
+ * 🧾 EventRegistration Validator (CREATE + UPDATE)
+ * - event_id ist NUR beim CREATE Pflicht
+ * - Beim UPDATE darf event_id fehlen
  */
 const eventRegistrationSchema = Joi.object({
     // ===============================
@@ -12,19 +11,26 @@ const eventRegistrationSchema = Joi.object({
     // ===============================
     event_id: Joi.string()
         .guid({ version: "uuidv4" })
-        .required()
+        .when("$isUpdate", {
+            is: true,
+            then: Joi.optional(),
+            otherwise: Joi.required(),
+        })
         .messages({
             "any.required": "Event-ID ist erforderlich.",
             "string.guid": "Event-ID muss eine gültige UUID sein.",
         }),
 
-    // 👉 Wird im Controller auf registered_by_person_id gemappt
-    user_id: Joi.string()
+    registered_by_person_id: Joi.string()
         .guid({ version: "uuidv4" })
-        .required()
+        .when("$isUpdate", {
+            is: true,
+            then: Joi.optional(),
+            otherwise: Joi.required(),
+        })
         .messages({
-            "any.required": "User-ID ist erforderlich.",
-            "string.guid": "User-ID muss eine gültige UUID sein.",
+            "any.required": "Person-ID ist erforderlich.",
+            "string.guid": "Person-ID muss eine gültige UUID sein.",
         }),
 
     // ===============================
@@ -33,18 +39,13 @@ const eventRegistrationSchema = Joi.object({
     squadron_id: Joi.string()
         .guid({ version: "uuidv4" })
         .allow(null)
-        .optional()
-        .messages({
-            "string.guid": "Squadron-ID muss eine gültige UUID sein.",
-        }),
+        .optional(),
 
     // ===============================
     // 📞 Kopf-Felder
     // ===============================
     phone_number: Joi.string().max(50).allow("", null),
     license_plate: Joi.string().max(20).allow("", null),
-    start_number: Joi.string().max(20).allow("", null),
-
     wishes: Joi.string().max(255).allow("", null),
     club: Joi.string().max(120).allow("", null),
 
@@ -53,17 +54,7 @@ const eventRegistrationSchema = Joi.object({
     // ===============================
     status: Joi.string()
         .valid("In Bearbeitung", "bestätigt", "abgelehnt")
-        .default("In Bearbeitung")
-        .messages({
-            "any.only": "Status muss 'In Bearbeitung', 'bestätigt' oder 'abgelehnt' sein.",
-        }),
-
-    // ===============================
-    // ⚠️ WICHTIG
-    // ===============================
-    // Teilnehmer-Daten (participants[])
-    // werden NICHT hier validiert!
-    // -> event_registration_participant
+        .default("In Bearbeitung"),
 });
 
 module.exports = eventRegistrationSchema;

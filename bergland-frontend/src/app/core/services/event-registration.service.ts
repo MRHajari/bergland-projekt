@@ -222,7 +222,4 @@ getByUser(userId: string): Observable<EventRegistrationInterface[]> {
     })
   );
 }
-
-
- 
 }

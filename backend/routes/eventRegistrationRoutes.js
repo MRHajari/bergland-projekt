@@ -43,6 +43,12 @@ router.put(
     eventRegistrationController.updateRegistration
 );
 
+// ➕ Teilnehmer zu Registrierung hinzufügen
+router.post(
+    "/participant",
+    eventRegistrationController.addParticipant
+);
+
 // ❌ Registrierung löschen
 router.delete(
     "/:id",

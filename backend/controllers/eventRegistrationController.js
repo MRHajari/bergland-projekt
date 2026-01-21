@@ -191,18 +191,24 @@ exports.updateRegistration = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // ✅ UPDATE-spezifische Validierung (OHNE event_id)
         const { error } = eventRegistrationSchema.validate(req.body, {
             abortEarly: false,
             allowUnknown: true,
+            context: { isUpdate: true }, // 🔥 DAS ist der Schlüssel
         });
 
         if (error) {
-            return res.status(400).json({ message: error.details[0].message });
+            return res.status(400).json({
+                message: error.details.map(d => d.message).join(", "),
+            });
         }
 
         const registration = await EventRegistration.findByPk(id);
         if (!registration) {
-            return res.status(404).json({ message: "Registrierung nicht gefunden." });
+            return res.status(404).json({
+                message: "Registrierung nicht gefunden.",
+            });
         }
 
         const {
@@ -224,9 +230,12 @@ exports.updateRegistration = async (req, res) => {
         res.json(registration);
     } catch (err) {
         console.error("❌ Fehler beim Aktualisieren der Registrierung:", err);
-        res.status(500).json({ message: "Fehler beim Aktualisieren der Registrierung." });
+        res.status(500).json({
+            message: "Fehler beim Aktualisieren der Registrierung.",
+        });
     }
 };
+
 
 
 // ============================================================
@@ -298,6 +307,47 @@ exports.getRegistrationsByPerson = async (req, res) => {
         console.error("❌ Fehler beim Laden der Registrierungen der Person:", err);
         res.status(500).json({
             message: "Fehler beim Laden der Registrierungen der Person.",
+        });
+    }
+};
+
+
+// ============================================================
+// ➕ Teilnehmer zu bestehender Registrierung hinzufügen
+// ============================================================
+exports.addParticipant = async (req, res) => {
+    try {
+        const {
+            registration_id,
+            person_id,
+            squadron_id,
+            participation_type,
+            catering_type,
+            gender,
+            staffel_aufnahme,
+        } = req.body;
+
+        if (!registration_id || !person_id) {
+            return res.status(400).json({
+                message: "registration_id und person_id sind erforderlich.",
+            });
+        }
+
+        const participant = await EventRegistrationParticipant.create({
+            registration_id,
+            person_id,
+            squadron_id: squadron_id ?? null,
+            participation_type: participation_type ?? "einzeln",
+            catering_type: catering_type ?? null,
+            gender: gender ?? null,
+            staffel_aufnahme: staffel_aufnahme ?? null,
+        });
+
+        res.status(201).json(participant);
+    } catch (err) {
+        console.error("❌ Fehler beim Hinzufügen eines Teilnehmers:", err);
+        res.status(500).json({
+            message: "Fehler beim Hinzufügen eines Teilnehmers.",
         });
     }
 };
