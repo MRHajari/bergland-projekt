@@ -29,6 +29,9 @@ export class EventRegistrationsAdmin implements OnInit {
   registrations: any[] = [];
   searchTerm: string = '';
   loading = true;
+  editingStartNumber: string | null = null;
+  editingParticipantId: string | null = null;
+
 
   // ======================================================
   // 🚀 Init
@@ -106,4 +109,35 @@ export class EventRegistrationsAdmin implements OnInit {
       return combinedText.includes(term);
     });
   }
+
+  startEditStartNumber(p: any) {
+    this.editingParticipantId = p.id;
+    this.editingStartNumber = p.start_number ?? '';
+  }
+  
+  cancelEditStartNumber() {
+    this.editingParticipantId = null;
+    this.editingStartNumber = null;
+  }
+  
+  async saveStartNumber(p: any) {
+    try {
+      await firstValueFrom(
+        this.registrationService.updateParticipantStartNumber(
+          p.id,
+          this.editingStartNumber?.trim() || null
+        )
+      );
+  
+      // 🔁 Lokal updaten (ohne Reload)
+      p.start_number = this.editingStartNumber?.trim() || null;
+  
+      this.cancelEditStartNumber();
+      console.log('✅ Startnummer aktualisiert');
+    } catch (err) {
+      console.error('❌ Fehler beim Speichern der Startnummer:', err);
+      alert('Fehler beim Speichern der Startnummer');
+    }
+  }
+  
 }

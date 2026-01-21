@@ -36,7 +36,6 @@ router.get(
     eventRegistrationController.getRegistrationsByPerson
 );
 
-
 // ✏️ Registrierung bearbeiten (nur Kopf-Daten)
 router.put(
     "/:id",
@@ -47,6 +46,13 @@ router.put(
 router.post(
     "/participant",
     eventRegistrationController.addParticipant
+);
+
+// ✏️ Startnummer eines Teilnehmers ändern (Admin)
+// PUT /event-registrations/participant/:participantId/start-number
+router.put(
+    "/participant/:participantId/start-number",
+    eventRegistrationController.updateParticipantStartNumber
 );
 
 // ❌ Registrierung löschen

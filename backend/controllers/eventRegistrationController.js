@@ -116,9 +116,6 @@ exports.createGroupRegistration = async (req, res) => {
             });
         }
 
-        // --------------------------------------------------------
-        // 🔹 Registrierung (Kopf)
-        // --------------------------------------------------------
         const registration = await EventRegistration.create(
             {
                 event_id,
@@ -132,9 +129,6 @@ exports.createGroupRegistration = async (req, res) => {
             { transaction: t }
         );
 
-        // --------------------------------------------------------
-        // 🔢 Startnummern-Logik (pro Event fortlaufend)
-        // --------------------------------------------------------
         const lastParticipant = await EventRegistrationParticipant.findOne({
             include: [
                 {
@@ -153,16 +147,13 @@ exports.createGroupRegistration = async (req, res) => {
                 ? lastParticipant.start_number + 1
                 : 1;
 
-        // --------------------------------------------------------
-        // 👥 Teilnehmer anlegen
-        // --------------------------------------------------------
         for (const p of participants) {
             await EventRegistrationParticipant.create(
                 {
                     registration_id: registration.id,
                     person_id: p.person_id,
-                    squadron_id: p.squadron_id || null,
-                    participation_type: p.participation_type || "einzeln",
+                    squadron_id: p.squadron_id ?? null,
+                    participation_type: p.participation_type ?? "einzeln",
                     catering_type: p.catering_type ?? null,
                     start_number: nextStartNumber,
                 },
@@ -191,11 +182,10 @@ exports.updateRegistration = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // ✅ UPDATE-spezifische Validierung (OHNE event_id)
         const { error } = eventRegistrationSchema.validate(req.body, {
             abortEarly: false,
             allowUnknown: true,
-            context: { isUpdate: true }, // 🔥 DAS ist der Schlüssel
+            context: { isUpdate: true },
         });
 
         if (error) {
@@ -235,7 +225,6 @@ exports.updateRegistration = async (req, res) => {
         });
     }
 };
-
 
 
 // ============================================================
@@ -278,6 +267,158 @@ exports.getGroupByEvent = async (req, res) => {
     }
 };
 
+
+// ============================================================
+// ➕ Teilnehmer zu bestehender Registrierung hinzufügen
+//    ➜ Startnummer automatisch fortsetzen
+// ============================================================
+exports.addParticipant = async (req, res) => {
+    const t = await EventRegistrationParticipant.sequelize.transaction();
+
+    try {
+        const {
+            registration_id,
+            person_id,
+            squadron_id,
+            participation_type,
+            catering_type,
+            gender,
+            staffel_aufnahme,
+        } = req.body;
+
+        if (!registration_id || !person_id) {
+            return res.status(400).json({
+                message: "registration_id und person_id sind erforderlich.",
+            });
+        }
+
+        const registration = await EventRegistration.findByPk(registration_id, {
+            transaction: t,
+        });
+
+        if (!registration) {
+            return res.status(404).json({
+                message: "Registrierung nicht gefunden.",
+            });
+        }
+
+        const event_id = registration.event_id;
+
+        const lastParticipant = await EventRegistrationParticipant.findOne({
+            include: [
+                {
+                    model: EventRegistration,
+                    as: "registration",
+                    where: { event_id },
+                    attributes: [],
+                },
+            ],
+            order: [["start_number", "DESC"]],
+            transaction: t,
+        });
+
+        let nextStartNumber =
+            typeof lastParticipant?.start_number === "number"
+                ? lastParticipant.start_number + 1
+                : 1;
+
+        const participant = await EventRegistrationParticipant.create(
+            {
+                registration_id,
+                person_id,
+                squadron_id: squadron_id ?? null,
+                participation_type: participation_type ?? "einzeln",
+                catering_type: catering_type ?? null,
+                gender: gender ?? null,
+                staffel_aufnahme: staffel_aufnahme ?? null,
+                start_number: nextStartNumber,
+            },
+            { transaction: t }
+        );
+
+        await t.commit();
+        res.status(201).json(participant);
+    } catch (err) {
+        await t.rollback();
+        console.error("❌ Fehler beim Hinzufügen eines Teilnehmers:", err);
+        res.status(500).json({
+            message: "Fehler beim Hinzufügen eines Teilnehmers.",
+        });
+    }
+};
+
+
+// ============================================================
+// ✏️ Startnummer eines Teilnehmers ändern (Admin)
+// ============================================================
+exports.updateParticipantStartNumber = async (req, res) => {
+    try {
+        const { participantId } = req.params;
+        const { start_number } = req.body;
+
+        let newStartNumber = null;
+
+        if (start_number !== null && start_number !== undefined && start_number !== "") {
+            const parsed = Number(start_number);
+            if (!Number.isInteger(parsed) || parsed < 1) {
+                return res.status(400).json({
+                    message: "start_number muss eine positive Ganzzahl oder null sein.",
+                });
+            }
+            newStartNumber = parsed;
+        }
+
+        const participant = await EventRegistrationParticipant.findByPk(participantId, {
+            include: [
+                {
+                    model: EventRegistration,
+                    as: "registration",
+                    attributes: ["event_id"],
+                },
+            ],
+        });
+
+        if (!participant) {
+            return res.status(404).json({ message: "Teilnehmer nicht gefunden." });
+        }
+
+        const eventId = participant.registration?.event_id;
+
+        if (newStartNumber !== null && eventId) {
+            const existing = await EventRegistrationParticipant.findOne({
+                where: { start_number: newStartNumber },
+                include: [
+                    {
+                        model: EventRegistration,
+                        as: "registration",
+                        where: { event_id: eventId },
+                        attributes: [],
+                    },
+                ],
+            });
+
+            if (existing && existing.id !== participant.id) {
+                return res.status(409).json({
+                    message: `Startnummer ${newStartNumber} ist für dieses Event bereits vergeben.`,
+                });
+            }
+        }
+
+        await participant.update({ start_number: newStartNumber });
+
+        res.json({
+            message: "Startnummer erfolgreich aktualisiert.",
+            participant,
+        });
+    } catch (err) {
+        console.error("❌ Fehler beim Aktualisieren der Startnummer:", err);
+        res.status(500).json({
+            message: "Fehler beim Aktualisieren der Startnummer.",
+        });
+    }
+};
+
+
 // ============================================================
 // 🔍 Registrierungen nach Person (Ersteller)
 // ============================================================
@@ -310,48 +451,6 @@ exports.getRegistrationsByPerson = async (req, res) => {
         });
     }
 };
-
-
-// ============================================================
-// ➕ Teilnehmer zu bestehender Registrierung hinzufügen
-// ============================================================
-exports.addParticipant = async (req, res) => {
-    try {
-        const {
-            registration_id,
-            person_id,
-            squadron_id,
-            participation_type,
-            catering_type,
-            gender,
-            staffel_aufnahme,
-        } = req.body;
-
-        if (!registration_id || !person_id) {
-            return res.status(400).json({
-                message: "registration_id und person_id sind erforderlich.",
-            });
-        }
-
-        const participant = await EventRegistrationParticipant.create({
-            registration_id,
-            person_id,
-            squadron_id: squadron_id ?? null,
-            participation_type: participation_type ?? "einzeln",
-            catering_type: catering_type ?? null,
-            gender: gender ?? null,
-            staffel_aufnahme: staffel_aufnahme ?? null,
-        });
-
-        res.status(201).json(participant);
-    } catch (err) {
-        console.error("❌ Fehler beim Hinzufügen eines Teilnehmers:", err);
-        res.status(500).json({
-            message: "Fehler beim Hinzufügen eines Teilnehmers.",
-        });
-    }
-};
-
 
 
 // ============================================================

@@ -222,4 +222,24 @@ getByUser(userId: string): Observable<EventRegistrationInterface[]> {
     })
   );
 }
+
+/** ✏️ Startnummer eines Teilnehmers ändern (Admin) */
+updateParticipantStartNumber(
+  participantId: string,
+  startNumber: string | null
+): Observable<any> {
+  return this.api.putCustom(
+    `${this.endpoint}/participant/${participantId}/start-number`,
+    { start_number: startNumber }
+  ).pipe(
+    catchError((err) => {
+      console.error(
+        `❌ Fehler beim Ändern der Startnummer für Teilnehmer ${participantId}:`,
+        err
+      );
+      return throwError(() => err);
+    })
+  );
+}
+
 }

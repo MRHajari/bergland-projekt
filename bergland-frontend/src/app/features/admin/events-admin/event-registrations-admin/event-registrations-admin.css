@@ -215,3 +215,18 @@
   padding: 1rem 0;
 }
 
+table th {
+  text-align: left;
+}
+
+.start-number-input {
+  width: 70px;
+  padding: 4px;
+}
+
+.btn-edit,
+.btn-save,
+.btn-cancel {
+  margin-left: 6px;
+  cursor: pointer;
+}

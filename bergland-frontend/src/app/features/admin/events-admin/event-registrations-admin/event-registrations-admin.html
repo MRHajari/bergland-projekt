@@ -73,8 +73,6 @@
             <div class="registration-meta">
                 <p><i class="fa-solid fa-phone me-2"></i> {{ reg.phone_number || '–' }}</p>
                 <p><i class="fa-solid fa-car me-2"></i> {{ reg.license_plate || '–' }}</p>
-                <p><i class="fa-solid fa-flag-checkered me-2"></i> Startnr.: {{ reg.start_number || '–' }}</p>
-                <p><i class="fa-solid fa-utensils me-2"></i> Verpflegung: {{ reg.catering_type || '–' }}</p>
                 <p><i class="fa-solid fa-comment-dots me-2"></i> Wünsche: {{ reg.wishes || '–' }}</p>
                 <p><i class="fa-solid fa-person-running me-2"></i> Verein: {{ reg.club || '–' }}</p>
             </div>
@@ -110,6 +108,8 @@
                         <th>Nachname</th>
                         <th>E-Mail</th>
                         <th>Staffel</th>
+                        <th>Verpflegung</th>
+                        <th>Startnummer</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -120,6 +120,20 @@
                         <td>{{ p.person?.last_name }}</td>
                         <td>{{ p.person?.email }}</td>
                         <td>{{ p.squadron?.name || '–' }}</td>
+                        <td>{{ p.catering_type || '–' }}</td>
+                        <td>
+                            @if (editingParticipantId === p.id) {
+                            <input type="text" class="start-number-input" [(ngModel)]="editingStartNumber" />
+                            <button class="btn-save" (click)="saveStartNumber(p)">✔</button>
+                            <button class="btn-cancel" (click)="cancelEditStartNumber()">✖</button>
+                            } @else {
+                            <span>{{ p.start_number || '–' }}</span>
+                            <button class="btn-edit" title="Startnummer bearbeiten" (click)="startEditStartNumber(p)">
+                                ✏️
+                            </button>
+                            }
+                        </td>
+
                     </tr>
                     }
                 </tbody>
