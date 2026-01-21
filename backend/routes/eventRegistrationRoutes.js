@@ -30,6 +30,13 @@ router.get(
     eventRegistrationController.getRegistrationById
 );
 
+// 🔍 Registrierungen einer Person abrufen
+router.get(
+    "/person/:personId",
+    eventRegistrationController.getRegistrationsByPerson
+);
+
+
 // ✏️ Registrierung bearbeiten (nur Kopf-Daten)
 router.put(
     "/:id",

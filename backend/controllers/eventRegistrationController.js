@@ -269,6 +269,40 @@ exports.getGroupByEvent = async (req, res) => {
     }
 };
 
+// ============================================================
+// 🔍 Registrierungen nach Person (Ersteller)
+// ============================================================
+exports.getRegistrationsByPerson = async (req, res) => {
+    try {
+        const { personId } = req.params;
+
+        const regs = await EventRegistration.findAll({
+            where: {
+                registered_by_person_id: personId,
+            },
+            include: [
+                {
+                    model: Event,
+                    as: "event",
+                },
+                {
+                    model: EventRegistrationParticipant,
+                    as: "participants",
+                },
+            ],
+            order: [["createdAt", "DESC"]],
+        });
+
+        res.json(regs);
+    } catch (err) {
+        console.error("❌ Fehler beim Laden der Registrierungen der Person:", err);
+        res.status(500).json({
+            message: "Fehler beim Laden der Registrierungen der Person.",
+        });
+    }
+};
+
+
 
 // ============================================================
 // 🗑️ Registrierung löschen
