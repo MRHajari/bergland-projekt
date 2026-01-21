@@ -59,6 +59,9 @@ export interface EventRegistrationParticipantPayload {
   liability_accept?: boolean;
   staffel_aufnahme?: string | null;
   registration_id?: string;
+  start_number?: string | null;
+  catering_type?: string | null;
+  gender?: 'm' | 'w' | 'd' | null;
 }
 
 export interface EventRegistrationGroupPayload {
@@ -66,10 +69,7 @@ export interface EventRegistrationGroupPayload {
   registered_by_person_id: string;
   phone_number?: string | null;
   license_plate?: string | null;
-  start_number?: string | null;
-  catering_type?: string | null;
   wishes?: string | null;
-  gender?: 'm' | 'w' | 'd' | null;
   club?: string | null;
   status?: 'In Bearbeitung' | 'bestätigt' | 'abgelehnt';
   participants: EventRegistrationParticipantPayload[];

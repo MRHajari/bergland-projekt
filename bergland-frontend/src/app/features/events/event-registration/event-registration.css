@@ -411,3 +411,13 @@
 .booked-accommodations li:last-child {
   border-bottom: none;
 }
+
+
+.start-number-badge {
+  margin-left: 10px;
+  padding: 2px 6px;
+  font-size: 0.85em;
+  background: #eef2ff;
+  border-radius: 6px;
+  font-weight: 600;
+}

@@ -1,6 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -20,7 +25,10 @@ type CateringType = 'vegan' | 'vegetarisch' | null;
 type EventParticipantUI = Person & {
   inSquadron?: boolean;
   squadronName?: string | null;
-  catering_type?: CateringType; // ✅ jetzt pro Teilnehmer
+
+  // ✅ pro Teilnehmer
+  catering_type?: CateringType | null;
+  start_number?: number | null;
 };
 
 @Component({
@@ -39,15 +47,15 @@ export class EventRegistration implements OnInit {
 
   bookedAccommodations: BookingInterface[] = [];
 
+  // ✅ wird für removePerson() gebraucht (Backend vs lokal)
   existingRegs: EventRegistrationInterface[] = [];
   existingRegistration: EventRegistrationInterface | null = null;
 
   loading = true;
   errorMessage = '';
   isRegistered = false;
-  createdRegistrationIds: string[] = [];
-  showNewSquadronForm = false;
 
+  showNewSquadronForm = false;
   loggedPersonId: string | null = null;
 
   // ✅ UI-State: "Selbst" wurde ausgewählt, aber noch nicht hinzugefügt
@@ -101,9 +109,11 @@ export class EventRegistration implements OnInit {
   // 🔹 Personen des eingeloggten Users laden
   // ======================================================
   private loadPersons() {
+    // ✅ owner_id in deiner Person-Tabelle ist user.id → also getUserId()
     const ownerId =
-      (this.authService as any)?.currentUserValue?.person_id ||
-      (this.authService as any)?.getPersonId?.() ||
+      this.authService.getUserId?.() ||
+      (this.authService as any)?.currentUserValue?.id ||
+      (this.authService as any)?.currentUserValue?.user_id ||
       null;
 
     if (!ownerId) {
@@ -130,36 +140,38 @@ export class EventRegistration implements OnInit {
 
       if (!userId || !myPersonId) {
         console.warn('⚠️ Kein eingeloggter Benutzer oder keine Person-ID gefunden.');
+        this.loading = false;
         return;
       }
 
-      // 1️⃣ Lade alle Personen des eingeloggten Users
+      // 1️⃣ Personen des Users laden
       const persons = await firstValueFrom(this.personService.getAll(userId));
-      if (!persons || persons.length === 0) {
-        console.warn('⚠️ Keine Personen gefunden, die diesem Benutzer gehören.');
-        return;
-      }
-      this.existingPersons = persons;
+      this.existingPersons = persons || [];
 
-      // 2️⃣ Lade alle Gruppen-Registrierungen für dieses Event
-      const allRegs = await firstValueFrom(this.registrationService.getGroupByEvent(eventId));
+      // 2️⃣ Alle Gruppen-Registrierungen fürs Event laden
+      const allRegs = await firstValueFrom(
+        this.registrationService.getGroupByEvent(eventId)
+      );
 
-      // 3️⃣ Finde die Registrierung, die vom eingeloggten User erstellt wurde
+      // ✅ WICHTIG: damit removePerson() Backend-Datensätze findet
+      this.existingRegs = allRegs || [];
+
+      // 3️⃣ Meine Registrierung finden
       this.existingRegistration =
-        (allRegs || []).find(
+        (this.existingRegs || []).find(
           (r: any) =>
             r.registered_by_person?.id === myPersonId ||
             r.registered_by_person_id === myPersonId
         ) || null;
 
-      // 4️⃣ Wenn keine Registrierung vorhanden → Abbrechen
+      // 4️⃣ Keine Registrierung → UI bleibt offen
       if (!this.existingRegistration) {
         this.isRegistered = false;
         this.loading = false;
         return;
       }
 
-      // 5️⃣ Teilnehmer-Daten laden
+      // 5️⃣ Teilnehmer mappen (inkl. catering + start_number)
       if (this.existingRegistration?.participants?.length) {
         const squadronMap: Record<string, string> = {};
         for (const s of this.squadrons) squadronMap[s.id] = s.name;
@@ -171,20 +183,22 @@ export class EventRegistration implements OnInit {
             ? squadronMap[p.squadron_id] || 'Unbekannte Staffel'
             : null,
 
-          // ✅ Verpflegung pro Teilnehmer (kommt idealerweise aus Participant-Datensatz)
           catering_type: (p.catering_type ?? null) as CateringType,
+          start_number: p.start_number ?? null,
         }));
+
+        console.log('🧪 addedPersons after load:', this.addedPersons);
+
 
         const addedIds = new Set(this.addedPersons.map((p) => p.id));
         this.existingPersons = this.existingPersons.filter((p) => !addedIds.has(p.id!));
       }
 
-      // 6️⃣ Formular füllen (✅ Gender & Catering NICHT mehr auf Registrierungsebene)
+      // 6️⃣ Formular füllen (NUR Kopf-Felder!)
       const r = this.existingRegistration;
       this.registrationForm.patchValue({
         phone_number: r.phone_number || '',
         license_plate: r.license_plate || '',
-        start_number: r.start_number || '',
         wishes: r.wishes || '',
         club: r.club || '',
         status: r.status || 'In Bearbeitung',
@@ -209,16 +223,19 @@ export class EventRegistration implements OnInit {
     this.registrationForm = this.fb.group({
       teilnahme_art: ['einzeln', Validators.required],
       squadron_id: [null],
+
       license_plate: [''],
       phone_number: [''],
-      start_number: [''],
       wishes: [''],
       club: [''],
+
+      // ✅ Backend-Enum!
       status: ['In Bearbeitung'],
+
       liability_accept: [false, Validators.requiredTrue],
     });
 
-    // ✅ Person-Form jetzt mit Gender + Catering (pro Teilnehmer)
+    // ✅ Person + Participant Eingabe (Gender pro Person, Catering pro Teilnehmer)
     this.personForm = this.fb.group({
       person_id: [''],
 
@@ -246,7 +263,7 @@ export class EventRegistration implements OnInit {
   }
 
   // ======================================================
-  // 🔹 Wenn eine vorhandene Person ausgewählt wird → Formular befüllen (NICHT sofort hinzufügen)
+  // 🔹 Bestehende Person auswählen → Formular füllen (NICHT sofort hinzufügen)
   // ======================================================
   async onSelectExistingPerson(e: any): Promise<void> {
     const id = e.target.value;
@@ -259,7 +276,6 @@ export class EventRegistration implements OnInit {
     const person = this.existingPersons.find((p) => p.id === id);
     if (!person) return;
 
-    // ✅ Formular befüllen, user kann Gender + Catering setzen
     this.selfPending = false;
     this.personForm.patchValue({
       person_id: person.id || '',
@@ -278,25 +294,24 @@ export class EventRegistration implements OnInit {
   }
 
   // ======================================================
-  // 🔹 "Mich selbst" auswählen → Formular befüllen, dann über "Person hinzufügen" hinzufügen
+  // 🔹 "Mich selbst" auswählen → Formular füllen (danach über Add hinzufügen)
   // ======================================================
   toggleSelfRegistration(e: any) {
     const checked = e.target.checked;
-
     const personId = this.authService.getPersonId();
+
     if (!personId) {
-      console.warn('⚠️ Keine Person-ID für eingeloggten Benutzer gefunden.');
       alert('❌ Dein Benutzer ist keiner Person zugeordnet.');
       return;
     }
 
-    // Wenn bereits hinzugefügt → Entfernen wie bisher
+    // Wenn bereits hinzugefügt → Entfernen über removePerson()
     if (!checked && this.isSelfAlreadyAdded) {
       this.removePerson(personId);
       return;
     }
 
-    // Wenn Pending → abbrechen
+    // Wenn pending → abbrechen
     if (!checked && this.selfPending) {
       this.selfPending = false;
       this.resetPersonFormDefaults();
@@ -340,52 +355,86 @@ export class EventRegistration implements OnInit {
   // 🔹 Neue Person hinzufügen oder ausgewählte Person übernehmen
   // ======================================================
   async addPerson(): Promise<void> {
-    const v = this.personForm.value;
+  const v = this.personForm.value;
 
-    if (!v.first_name || !v.last_name) {
-      alert('Bitte Vor- und Nachname eingeben.');
-      return;
-    }
+  if (!v.first_name || !v.last_name) {
+    alert('Bitte Vor- und Nachname eingeben.');
+    return;
+  }
 
-    const participationType = this.registrationForm.value.teilnahme_art;
-    const squadronId =
-      participationType === 'staffel' ? this.registrationForm.value.squadron_id : null;
-
-    if (participationType === 'staffel' && !squadronId) {
-      alert('Bitte zuerst eine Staffel auswählen.');
-      return;
-    }
-
-    const squadronName = squadronId
-      ? this.squadrons.find((s) => s.id === squadronId)?.name || 'Unbekannte Staffel'
+  const participationType = this.registrationForm.value.teilnahme_art;
+  const squadronId =
+    participationType === 'staffel'
+      ? this.registrationForm.value.squadron_id
       : null;
 
-    try {
-      const ownerId = this.authService.getUserId();
-      if (!ownerId) {
-        alert('⚠️ Kein eingeloggter Benutzer gefunden.');
+  if (participationType === 'staffel' && !squadronId) {
+    alert('Bitte zuerst eine Staffel auswählen.');
+    return;
+  }
+
+  const squadronName = squadronId
+    ? this.squadrons.find((s) => s.id === squadronId)?.name || 'Unbekannte Staffel'
+    : null;
+
+  const ownerId = this.authService.getUserId();
+  if (!ownerId) {
+    alert('⚠️ Kein eingeloggter Benutzer gefunden.');
+    return;
+  }
+
+  const first = v.first_name.trim();
+  const last = v.last_name.trim();
+  const selectedPersonId = (v.person_id || '').trim();
+
+  let person: Person | null = null;
+
+  try {
+    // ======================================================
+    // 🔹 FALL A: Bestehende Person (NUR wenn person_id gesetzt!)
+    // ======================================================
+    if (selectedPersonId) {
+      person =
+        this.existingPersons.find((p) => p.id === selectedPersonId) ||
+        (await firstValueFrom(this.personService.getById(selectedPersonId)));
+
+      if (!person?.id) {
+        alert('❌ Ausgewählte Person konnte nicht geladen werden.');
         return;
       }
 
-      const first = (v.first_name || '').trim();
-      const last = (v.last_name || '').trim();
-      const selectedPersonId = (v.person_id || '').trim();
+      const updatePayload: Partial<Person> = {
+        first_name: first,
+        last_name: last,
+        birth_date: v.birth_date || undefined,
+        gender: v.gender || 'm',
+        email: v.email || undefined,
+        phone: v.phone || undefined,
+        street: v.street || undefined,
+        postal_code: v.postal_code || undefined,
+        city: v.city || undefined,
+        country: v.country || 'Deutschland',
+      };
 
-      let person: Person;
+      await firstValueFrom(this.personService.update(person.id, updatePayload));
+      person = { ...person, ...updatePayload };
+    }
 
-      // ✅ Fall A: bestehende Person ausgewählt (person_id gesetzt)
-      if (selectedPersonId) {
-        person =
-          this.existingPersons.find((p) => p.id === selectedPersonId) ||
-          (await firstValueFrom(this.personService.getById(selectedPersonId)));
+    // ======================================================
+    // 🔹 FALL B: Neue Person (NUR wenn KEINE person_id!)
+    // ======================================================
+    if (!selectedPersonId) {
+      const allPersons = await firstValueFrom(this.personService.getAll(ownerId));
+      const existingPerson = (allPersons || []).find(
+        (p) =>
+          p.first_name.toLowerCase() === first.toLowerCase() &&
+          p.last_name.toLowerCase() === last.toLowerCase()
+      );
 
-        if (!person?.id) {
-          alert('❌ Ausgewählte Person konnte nicht geladen werden.');
-          return;
-        }
-
-        // Optional: Person updaten (wenn Service update existiert)
-        const updatePayload: Partial<Person> = {
+      if (existingPerson) {
+        person = existingPerson;
+      } else {
+        const newPerson: Person = {
           first_name: first,
           last_name: last,
           birth_date: v.birth_date || undefined,
@@ -396,103 +445,55 @@ export class EventRegistration implements OnInit {
           postal_code: v.postal_code || undefined,
           city: v.city || undefined,
           country: v.country || 'Deutschland',
+          owner_id: ownerId,
         };
 
-        const ps: any = this.personService as any;
-        if (typeof ps.update === 'function') {
-          try {
-            await firstValueFrom(ps.update(person.id, updatePayload));
-          } catch (err) {
-            console.warn('⚠️ Person-Update fehlgeschlagen (weiter ohne Update).', err);
-          }
+        const created = await firstValueFrom(this.personService.create(newPerson));
+        if (!created?.id) {
+          alert('❌ Person konnte nicht korrekt angelegt werden.');
+          return;
         }
-
-        person = { ...person, ...updatePayload };
-      } else {
-        // ✅ Fall B: Neue Person oder Duplikat über Name finden
-        const allPersons = await firstValueFrom(this.personService.getAll(ownerId));
-        const existingPerson = allPersons.find(
-          (p) =>
-            p.first_name.toLowerCase() === first.toLowerCase() &&
-            p.last_name.toLowerCase() === last.toLowerCase()
-        );
-
-        if (existingPerson) {
-          person = existingPerson;
-
-          // Optional: Update auch hier
-          const updatePayload: Partial<Person> = {
-            birth_date: v.birth_date || undefined,
-            gender: v.gender || 'm',
-            email: v.email || undefined,
-            phone: v.phone || undefined,
-            street: v.street || undefined,
-            postal_code: v.postal_code || undefined,
-            city: v.city || undefined,
-            country: v.country || 'Deutschland',
-          };
-
-          const ps: any = this.personService as any;
-          if (typeof ps.update === 'function' && person.id) {
-            try {
-              await firstValueFrom(ps.update(person.id, updatePayload));
-            } catch (err) {
-              console.warn('⚠️ Person-Update fehlgeschlagen (weiter ohne Update).', err);
-            }
-          }
-
-          person = { ...person, ...updatePayload };
-        } else {
-          const newPerson: Person = {
-            first_name: first,
-            last_name: last,
-            birth_date: v.birth_date || undefined,
-            gender: v.gender || 'm',
-            email: v.email || undefined,
-            phone: v.phone || undefined,
-            street: v.street || undefined,
-            postal_code: v.postal_code || undefined,
-            city: v.city || undefined,
-            country: v.country || 'Deutschland',
-            owner_id: ownerId,
-          };
-
-          const created = await firstValueFrom(this.personService.create(newPerson));
-          if (!created?.id) {
-            alert('❌ Person konnte nicht korrekt angelegt werden.');
-            return;
-          }
-          person = created;
-        }
+        person = created;
       }
-
-      // ✅ Doppelt hinzufügen verhindern
-      const alreadyAdded = this.addedPersons.some((p) => p.id === person.id);
-      if (alreadyAdded) {
-        alert(`${first} ${last} wurde bereits hinzugefügt.`);
-        return;
-      }
-
-      // ✅ Person lokal als Teilnehmer hinzufügen – inkl. Catering pro Person
-      this.addedPersons.push({
-        ...person,
-        inSquadron: !!squadronId,
-        squadronName,
-        catering_type: (v.catering_type ?? null) as CateringType,
-      });
-
-      // ✅ Aus Dropdown entfernen
-      this.existingPersons = this.existingPersons.filter((ep) => ep.id !== person.id);
-
-      // ✅ selfPending zurücksetzen wenn es die eigene Person war
-      if (person.id === this.loggedPersonId) this.selfPending = false;
-
-      this.resetPersonFormDefaults();
-    } catch (err) {
-      console.error('❌ Fehler beim Hinzufügen der Person:', err);
-      alert('Fehler beim Hinzufügen der Person.');
     }
+
+    if (!person?.id) {
+      alert('❌ Interner Fehler: Person konnte nicht ermittelt werden.');
+      return;
+    }
+
+    // ======================================================
+    // 🔹 Doppelt hinzufügen verhindern
+    // ======================================================
+    if (this.addedPersons.some((p) => p.id === person!.id)) {
+      alert(`${person.first_name} ${person.last_name} wurde bereits hinzugefügt.`);
+      return;
+    }
+
+    // ======================================================
+    // 🔹 Lokal hinzufügen
+    // ======================================================
+    this.addedPersons.push({
+      ...person,
+      inSquadron: !!squadronId,
+      squadronName,
+      catering_type: v.catering_type ?? null,
+      start_number: null,
+    });
+
+    this.existingPersons = this.existingPersons.filter((ep) => ep.id !== person!.id);
+
+    if (person.id === this.loggedPersonId) {
+      this.selfPending = false;
+    }
+
+    this.resetPersonFormDefaults();
+  } catch (err) {
+    console.error('❌ Fehler beim Hinzufügen der Person:', err);
+    alert('Fehler beim Hinzufügen der Person.');
   }
+}
+
 
   private resetPersonFormDefaults(): void {
     this.personForm.reset({
@@ -512,7 +513,7 @@ export class EventRegistration implements OnInit {
   }
 
   // ======================================================
-  // 🔹 Person aus Event-Registrierung entfernen
+  // 🔹 Person entfernen (Backend oder lokal)
   // ======================================================
   async removePerson(personId?: string) {
     if (!personId) return;
@@ -525,9 +526,11 @@ export class EventRegistration implements OnInit {
 
     const removed = this.addedPersons.find((p) => p.id === personId) || null;
 
-    // Prüfen, ob die Person über Backend-Teilnehmer existiert
-    const reg = this.existingRegs?.find(
-      (r) => r.event_id === eventId && r.participants?.some((p) => p.person_id === personId)
+    // ✅ passende Registrierung in existingRegs suchen (Backend)
+    const reg = (this.existingRegs || []).find(
+      (r: any) =>
+        r.event_id === eventId &&
+        r.participants?.some((pp: any) => pp.person_id === personId)
     );
 
     // ✅ Nur lokal
@@ -542,7 +545,7 @@ export class EventRegistration implements OnInit {
     if (!confirm('Willst du diese Person wirklich aus der Registrierung entfernen?')) return;
 
     try {
-      const participant = reg.participants?.find((p) => p.person_id === personId);
+      const participant = reg.participants?.find((pp: any) => pp.person_id === personId);
       if (!participant?.id) {
         console.warn('⚠️ Kein Teilnehmer-Datensatz für diese Person gefunden.');
         return;
@@ -551,14 +554,19 @@ export class EventRegistration implements OnInit {
       await firstValueFrom(this.registrationService.deleteParticipant(participant.id));
 
       this.addedPersons = this.addedPersons.filter((p) => p.id !== personId);
-      this.existingRegs = this.existingRegs.map((r) => ({
+
+      // ✅ existingRegs aktualisieren
+      this.existingRegs = this.existingRegs.map((r: any) => ({
         ...r,
-        participants: r.participants?.filter((p) => p.person_id !== personId),
+        participants: r.participants?.filter((pp: any) => pp.person_id !== personId),
       }));
 
       if (removed && !this.existingPersons.some((ep) => ep.id === removed.id)) {
         this.existingPersons.push(removed);
       }
+
+      // ✅ Nach dem Entfernen neu laden (um Startnummern etc. konsistent zu halten)
+      await this.loadExistingRegistration(eventId);
     } catch (err) {
       console.error('❌ Fehler beim Entfernen der Person:', err);
       alert('❌ Entfernen fehlgeschlagen – siehe Konsole für Details.');
@@ -602,7 +610,7 @@ export class EventRegistration implements OnInit {
   }
 
   // ======================================================
-  // 🔹 Registrierung (nur 1x pro User + Event, mit allen Teilnehmern)
+  // 🔹 Registrierung erstellen (mit Teilnehmern)
   // ======================================================
   async registerAll(): Promise<void> {
     if (!this.event?.id) return alert('❌ Event fehlt.');
@@ -626,7 +634,6 @@ export class EventRegistration implements OnInit {
         registered_by_person_id: personId,
         phone_number: this.registrationForm.value.phone_number || null,
         license_plate: this.registrationForm.value.license_plate || null,
-        start_number: this.registrationForm.value.start_number || null,
         wishes: this.registrationForm.value.wishes || null,
         club: this.registrationForm.value.club || null,
         status: this.registrationForm.value.status || 'In Bearbeitung',
@@ -639,19 +646,22 @@ export class EventRegistration implements OnInit {
               : null,
           participation_type: this.registrationForm.value.teilnahme_art,
           liability_accept: this.registrationForm.value.liability_accept,
-
-          // ✅ Verpflegung pro Teilnehmer (Backend muss das unterstützen)
           catering_type: p.catering_type ?? null,
-        })) as any, // ✅ falls Service-Typen noch nicht angepasst
+        })) as any,
       };
 
-      const created = await firstValueFrom(this.registrationService.createGroupRegistration(payload));
+      const created = await firstValueFrom(
+        this.registrationService.createGroupRegistration(payload)
+      );
 
       const newReg = (created as any)?.registration || created;
       if (newReg?.id) {
-        this.existingRegistration = newReg;
+        this.existingRegistration = newReg as any;
         this.isRegistered = true;
         alert('✅ Anmeldung erfolgreich erstellt!');
+
+        // ✅ WICHTIG: neu laden → Participant IDs + Startnummern kommen vom Backend
+        await this.loadExistingRegistration(this.event.id);
       } else {
         alert('❌ Unerwartete Antwort vom Server – keine Registrierung-ID.');
       }
@@ -662,7 +672,7 @@ export class EventRegistration implements OnInit {
   }
 
   // ======================================================
-  // 🔹 Registrierung updaten ODER fehlende Personen anlegen
+  // 🔹 Registrierung updaten / Teilnehmer ergänzen
   // ======================================================
   async updateRegistration(): Promise<void> {
     if (!this.event?.id) return alert('❌ Event-ID fehlt.');
@@ -674,14 +684,13 @@ export class EventRegistration implements OnInit {
         return;
       }
 
-      // 1️⃣ Falls keine bestehende Registrierung → neue anlegen
+      // 1️⃣ Falls keine Registrierung → neu anlegen
       if (!this.existingRegistration) {
         const payload: EventRegistrationGroupPayload = {
           event_id: this.event.id,
           registered_by_person_id: personId,
           phone_number: this.registrationForm.value.phone_number || null,
           license_plate: this.registrationForm.value.license_plate || null,
-          start_number: this.registrationForm.value.start_number || null,
           wishes: this.registrationForm.value.wishes || null,
           club: this.registrationForm.value.club || null,
           status: this.registrationForm.value.status || 'In Bearbeitung',
@@ -698,20 +707,30 @@ export class EventRegistration implements OnInit {
           })) as any,
         };
 
-        const created = await firstValueFrom(this.registrationService.createGroupRegistration(payload));
-        if ((created as any)?.id) {
-          this.existingRegistration = created as any;
+        const created = await firstValueFrom(
+          this.registrationService.createGroupRegistration(payload)
+        );
+
+        const newReg = (created as any)?.registration || created;
+        if (newReg?.id) {
+          this.existingRegistration = newReg as any;
+          this.isRegistered = true;
+          alert('✅ Registrierung erfolgreich angelegt!');
+
+          // ✅ neu laden → Startnummern/IDs
+          await this.loadExistingRegistration(this.event.id);
         }
-        this.isRegistered = true;
-        alert('✅ Registrierung erfolgreich angelegt!');
         return;
       }
 
-      // 2️⃣ Falls Registrierung existiert → Teilnehmer hinzufügen oder Headerdaten updaten
+      // 2️⃣ Teilnehmer hinzufügen, die noch nicht im Backend sind
       const regId = this.existingRegistration.id!;
-      const existingParticipantIds = this.existingRegistration.participants?.map((p: any) => p.person_id) || [];
+      const existingParticipantIds =
+        (this.existingRegistration.participants as any[])?.map((pp: any) => pp.person_id) || [];
 
-      const newParticipants = this.addedPersons.filter((p) => !existingParticipantIds.includes(p.id!));
+      const newParticipants = this.addedPersons.filter(
+        (p) => !existingParticipantIds.includes(p.id!)
+      );
 
       for (const p of newParticipants) {
         const participantPayload = {
@@ -729,20 +748,22 @@ export class EventRegistration implements OnInit {
         await firstValueFrom(this.registrationService.addParticipant(participantPayload as any));
       }
 
-      // 3️⃣ Header-Daten aktualisieren (✅ kein Gender/Catering mehr)
+      // 3️⃣ Header-Daten updaten
       const headerUpdate: Partial<EventRegistrationInterface> = {
         phone_number: this.registrationForm.value.phone_number || null,
         license_plate: this.registrationForm.value.license_plate || null,
-        start_number: this.registrationForm.value.start_number || null,
         wishes: this.registrationForm.value.wishes || null,
         club: this.registrationForm.value.club || null,
         status: this.registrationForm.value.status || 'In Bearbeitung',
       };
 
-      const updated = await firstValueFrom(this.registrationService.update(regId, headerUpdate));
-      this.existingRegistration = updated;
+      await firstValueFrom(this.registrationService.update(regId, headerUpdate));
+
       this.isRegistered = true;
       alert('✅ Registrierung erfolgreich aktualisiert!');
+
+      // ✅ neu laden → Startnummern/Teilnehmerliste konsistent
+      await this.loadExistingRegistration(this.event.id);
     } catch (err) {
       console.error('❌ Fehler beim Aktualisieren oder Anlegen:', err);
       alert('❌ Fehler beim Aktualisieren der Anmeldung.');
@@ -794,12 +815,14 @@ export class EventRegistration implements OnInit {
     try {
       await firstValueFrom(this.registrationService.delete(this.existingRegistration.id!));
 
+      // UI zurücksetzen
       this.isRegistered = false;
       this.existingRegistration = null;
+      this.existingRegs = [];
       this.addedPersons = [];
-      this.createdRegistrationIds = [];
 
       alert('✅ Deine Anmeldung wurde erfolgreich storniert.');
+      this.loadPersons();
     } catch (err) {
       console.error('❌ Fehler beim Stornieren:', err);
       alert('Fehler beim Stornieren der Anmeldung.');
@@ -808,8 +831,11 @@ export class EventRegistration implements OnInit {
 
   private async loadBookingsForRegistration(): Promise<void> {
     if (!this.existingRegistration?.id) return;
+
     try {
-      const bookings = await firstValueFrom(this.bookingService.getAllByRegistration(this.existingRegistration.id));
+      const bookings = await firstValueFrom(
+        this.bookingService.getAllByRegistration(this.existingRegistration.id)
+      );
       this.bookedAccommodations = bookings || [];
     } catch (err: any) {
       if (err.status === 404) {

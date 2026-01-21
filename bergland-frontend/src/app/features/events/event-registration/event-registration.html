@@ -256,10 +256,18 @@
                     </span>
                     }
 
-                    {{ p.first_name }} {{ p.last_name }}
+                    <strong>{{ p.first_name }} {{ p.last_name }}</strong>
 
-                    <!-- ✅ Nur Anzeige (keine Auswahl mehr hier) -->
-                    @if (p.catering_type) {
+                    <!-- 🏁 Startnummer -->
+                    @if (p.start_number !== null && p.start_number !== undefined) {
+                    <span class="squadron-label" style="margin-left: 10px;">
+                        <i class="fa-solid fa-flag-checkered me-1"></i>
+                        Startnummer {{ p.start_number }}
+                    </span>
+                    }
+
+
+                    <!-- 🍽️ Verpflegung -->
                     <span class="squadron-label" style="margin-left: 10px;">
                         <i class="fa-solid fa-utensils me-1"></i>
                         @if (p.catering_type === 'vegan') {
@@ -270,8 +278,6 @@
                         Keine Verpflegung
                         }
                     </span>
-
-                    }
                 </div>
 
                 <button type="button" class="btn small danger" title="Person löschen" (click)="removePerson(p.id)">

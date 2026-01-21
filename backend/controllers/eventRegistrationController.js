@@ -14,6 +14,7 @@ const eventRegistrationSchema = require("../validators/eventRegistrationValidato
 // 🎟️ EventRegistration Controller
 // ============================================================
 
+
 // ============================================================
 // 📋 Alle Anmeldungen abrufen
 // ============================================================
@@ -36,12 +37,14 @@ exports.getAllRegistrations = async (req, res) => {
             ],
             order: [["createdAt", "DESC"]],
         });
+
         res.json(regs);
     } catch (err) {
         console.error("❌ Fehler beim Laden der Event-Registrierungen:", err);
         res.status(500).json({ message: "Fehler beim Laden der Event-Registrierungen." });
     }
 };
+
 
 // ============================================================
 // 🔍 Einzelne Anmeldung nach ID
@@ -69,7 +72,7 @@ exports.getRegistrationById = async (req, res) => {
                         {
                             model: Squadron,
                             as: "squadron",
-                            attributes: ["id", "name", "start_number"],
+                            attributes: ["id", "name"],
                         },
                     ],
                 },
@@ -87,8 +90,10 @@ exports.getRegistrationById = async (req, res) => {
     }
 };
 
+
 // ============================================================
 // ➕ Neue Gruppen-Registrierung erstellen
+//    ➜ Startnummern automatisch pro Event
 // ============================================================
 exports.createGroupRegistration = async (req, res) => {
     const t = await EventRegistration.sequelize.transaction();
@@ -101,7 +106,6 @@ exports.createGroupRegistration = async (req, res) => {
             license_plate,
             wishes,
             club,
-            start_number,
             status,
             participants,
         } = req.body;
@@ -112,7 +116,9 @@ exports.createGroupRegistration = async (req, res) => {
             });
         }
 
-        // 🔹 Registrierung (Kopf) anlegen
+        // --------------------------------------------------------
+        // 🔹 Registrierung (Kopf)
+        // --------------------------------------------------------
         const registration = await EventRegistration.create(
             {
                 event_id,
@@ -121,13 +127,35 @@ exports.createGroupRegistration = async (req, res) => {
                 license_plate,
                 wishes,
                 club,
-                start_number,
                 status,
             },
             { transaction: t }
         );
 
-        // 🔹 Teilnehmer anlegen (inkl. Verpflegung!)
+        // --------------------------------------------------------
+        // 🔢 Startnummern-Logik (pro Event fortlaufend)
+        // --------------------------------------------------------
+        const lastParticipant = await EventRegistrationParticipant.findOne({
+            include: [
+                {
+                    model: EventRegistration,
+                    as: "registration",
+                    where: { event_id },
+                    attributes: [],
+                },
+            ],
+            order: [["start_number", "DESC"]],
+            transaction: t,
+        });
+
+        let nextStartNumber =
+            typeof lastParticipant?.start_number === "number"
+                ? lastParticipant.start_number + 1
+                : 1;
+
+        // --------------------------------------------------------
+        // 👥 Teilnehmer anlegen
+        // --------------------------------------------------------
         for (const p of participants) {
             await EventRegistrationParticipant.create(
                 {
@@ -135,12 +163,13 @@ exports.createGroupRegistration = async (req, res) => {
                     person_id: p.person_id,
                     squadron_id: p.squadron_id || null,
                     participation_type: p.participation_type || "einzeln",
-
-                    // ✅ HIER DER ENTSCHEIDENDE FIX
                     catering_type: p.catering_type ?? null,
+                    start_number: nextStartNumber,
                 },
                 { transaction: t }
             );
+
+            nextStartNumber++;
         }
 
         await t.commit();
@@ -148,9 +177,12 @@ exports.createGroupRegistration = async (req, res) => {
     } catch (err) {
         await t.rollback();
         console.error("❌ Fehler beim Erstellen der Gruppen-Registrierung:", err);
-        res.status(500).json({ message: "Fehler beim Erstellen der Gruppen-Registrierung." });
+        res.status(500).json({
+            message: "Fehler beim Erstellen der Gruppen-Registrierung.",
+        });
     }
 };
+
 
 // ============================================================
 // ✏️ Registrierung (nur Kopf-Daten) aktualisieren
@@ -161,7 +193,7 @@ exports.updateRegistration = async (req, res) => {
 
         const { error } = eventRegistrationSchema.validate(req.body, {
             abortEarly: false,
-            allowUnknown: true, // wichtig: Teilnehmer-Felder werden ignoriert
+            allowUnknown: true,
         });
 
         if (error) {
@@ -178,7 +210,6 @@ exports.updateRegistration = async (req, res) => {
             license_plate,
             wishes,
             club,
-            start_number,
             status,
         } = req.body;
 
@@ -187,7 +218,6 @@ exports.updateRegistration = async (req, res) => {
             license_plate,
             wishes,
             club,
-            start_number,
             status,
         });
 
@@ -197,6 +227,7 @@ exports.updateRegistration = async (req, res) => {
         res.status(500).json({ message: "Fehler beim Aktualisieren der Registrierung." });
     }
 };
+
 
 // ============================================================
 // 📦 Registrierungen eines Events mit Teilnehmern
@@ -223,7 +254,7 @@ exports.getGroupByEvent = async (req, res) => {
                         {
                             model: Squadron,
                             as: "squadron",
-                            attributes: ["id", "name", "start_number"],
+                            attributes: ["id", "name"],
                         },
                     ],
                 },
@@ -237,6 +268,7 @@ exports.getGroupByEvent = async (req, res) => {
         res.status(500).json({ message: "Fehler beim Laden der Gruppen." });
     }
 };
+
 
 // ============================================================
 // 🗑️ Registrierung löschen

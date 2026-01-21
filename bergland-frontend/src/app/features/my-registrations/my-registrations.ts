@@ -1,11 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { EventRegistrationService, EventRegistrationInterface } from '../../core/services/event-registration.service';
+import { EventRegistrationService } from '../../core/services/event-registration.service';
 import { EventService } from '../../core/services/event.service';
-import { PersonService } from '../../core/services/person.service';
-import { SquadronService } from '../../core/services/squadron.service';
 import { AuthService } from '../../core/auth.service';
+import { firstValueFrom } from 'rxjs';
+
 
 @Component({
   selector: 'app-my-registrations',
@@ -35,39 +35,39 @@ export class MyRegistrations implements OnInit {
 
   private registrationService = inject(EventRegistrationService);
   private eventService = inject(EventService);
-  private personService = inject(PersonService);
-  private squadronService = inject(SquadronService);
   private authService = inject(AuthService);
   private router = inject(Router);
 
   ngOnInit(): void {
-    const userId = this.authService.getUserId();
-    if (!userId) {
-      this.errorMessage = '❌ Kein Benutzer eingeloggt.';
+    const personId = this.authService.getPersonId();
+    if (!personId) {
+      this.errorMessage = '❌ Keine Person eingeloggt.';
       this.loading = false;
       return;
     }
-
-    console.log('👤 Benutzer-ID:', userId);
-
-    this.registrationService.getByUser(userId).subscribe({
+  
+    console.log('👤 Person-ID:', personId);
+  
+    this.registrationService.getByPerson(personId).subscribe({
       next: async (regs) => {
         console.log('📋 Registrierungen geladen:', regs);
-
+  
         if (!regs || regs.length === 0) {
           this.loading = false;
           return;
         }
-
+  
         // 🔹 Event-IDs extrahieren
         const eventIds = [...new Set(regs.map((r) => r.event_id))];
+  
         const events = await Promise.all(
-          eventIds.map((id) => this.eventService.getById(id).toPromise())
+          eventIds.map((id) => firstValueFrom(this.eventService.getById(id)))
         );
-
-        // 🔹 Zusammenführen
+        
+  
         this.registrations = regs.map((r) => {
           const evt = events.find((e) => e?.id === r.event_id);
+  
           return {
             eventId: r.event_id,
             eventName: evt?.name || 'Unbekanntes Event',
@@ -83,7 +83,7 @@ export class MyRegistrations implements OnInit {
             phone_number: r.phone_number || null,
           };
         });
-
+  
         this.loading = false;
       },
       error: (err) => {
@@ -93,6 +93,7 @@ export class MyRegistrations implements OnInit {
       },
     });
   }
+  
 
   // ======================================================
   // 🔹 Bearbeiten
@@ -113,20 +114,21 @@ export class MyRegistrations implements OnInit {
       alert('❌ Ungültige Event-ID.');
       return;
     }
+  
     if (!confirm('⚠️ Willst du deine Anmeldung wirklich stornieren?')) return;
-
-    const userId = this.authService.getUserId();
-    if (!userId) return;
-
-    this.registrationService.getByUser(userId).subscribe({
+  
+    const personId = this.authService.getPersonId();
+    if (!personId) return;
+  
+    this.registrationService.getByPerson(personId).subscribe({
       next: (regs) => {
         const reg = regs.find((r) => r.event_id === eventId);
         if (!reg?.id) {
           alert('⚠️ Keine Registrierung gefunden.');
           return;
         }
-
-        this.registrationService.delete(reg.id!).subscribe({
+  
+        this.registrationService.delete(reg.id).subscribe({
           next: () => {
             this.registrations = this.registrations.filter(
               (r) => r.eventId !== eventId
@@ -139,7 +141,11 @@ export class MyRegistrations implements OnInit {
           },
         });
       },
-      error: (err) => console.error('❌ Fehler beim Laden der Registrierungen:', err),
+      error: (err) => {
+        console.error('❌ Fehler beim Laden der Registrierungen:', err);
+        alert('❌ Fehler beim Laden der Registrierungen.');
+      },
     });
   }
+  
 }
