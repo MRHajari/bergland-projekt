@@ -16,7 +16,6 @@ router.get("/", accommodationController.getAllAccommodations);
 
 // ======================================================
 // 🏨 Unterkünfte nach Event-ID (inkl. Verfügbarkeit)
-// Muss VOR /:id stehen, sonst wird "by-event" als ID erkannt!
 // ======================================================
 router.get(
     "/by-event/:eventId",

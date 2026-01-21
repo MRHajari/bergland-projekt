@@ -4,11 +4,6 @@ const sequelize = require("../config/db");
 /**
  * 🏨 Booking Model
  * Repräsentiert eine Unterkunftsbuchung im Rahmen einer Event-Registrierung.
- * Eine Buchung gehört:
- *  - zu einer EventRegistration (fachlich)
- *  - zu einem Event (zur Admin-Auswertung)
- *  - zu einem User (wer gebucht hat)
- *  - zu einer Unterkunft (z. B. Hotel)
  */
 const Booking = sequelize.define(
     "booking",
@@ -26,28 +21,30 @@ const Booking = sequelize.define(
             comment: "Referenz zur EventRegistration (onDelete: CASCADE)",
         },
 
-        // 🔗 Direkte Verbindung zum Event (für Admin-Auswertung)
+        // 🔗 Direkte Verbindung zum Event
         event_id: {
             type: DataTypes.UUID,
             allowNull: false,
-            comment: "Referenz zum Event (automatisch aus EventRegistration gesetzt)",
+            comment: "Referenz zum Event",
         },
 
         // 👤 Wer hat die Buchung erstellt
         user_id: {
             type: DataTypes.UUID,
             allowNull: false,
-            comment: "Referenz zum User (JWT-Authentifizierung)",
+            comment: "Referenz zum User",
         },
 
-        // 🏨 Unterkunft (z. B. Haus am See)
+        // 🏨 Unterkunft
         accommodation_id: {
             type: DataTypes.UUID,
             allowNull: false,
             comment: "Referenz zur gebuchten Unterkunft",
         },
 
-        // 🛏️ Anzahl gebuchter Betten
+        // =====================================================
+        // 🛏️ Anzahl gebuchter Betten (LEGACY)
+        // =====================================================
         single_beds: {
             type: DataTypes.INTEGER,
             defaultValue: 0,
@@ -58,10 +55,24 @@ const Booking = sequelize.define(
             defaultValue: 0,
             validate: { min: 0 },
         },
-        multi_beds: {
+
+        quad_beds: {
             type: DataTypes.INTEGER,
             defaultValue: 0,
             validate: { min: 0 },
+            comment: "4-Bett-Zimmer",
+        },
+        quint_beds: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+            validate: { min: 0 },
+            comment: "5-Bett-Zimmer",
+        },
+        sext_beds: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+            validate: { min: 0 },
+            comment: "6-Bett-Zimmer",
         },
     },
     {
@@ -72,29 +83,25 @@ const Booking = sequelize.define(
 );
 
 // ============================================================
-// 🔗 ASSOCIATIONS
+// 🔗 ASSOCIATIONS (UNVERÄNDERT)
 // ============================================================
 Booking.associate = (models) => {
-    // 🔹 Eine Buchung gehört zu einer EventRegistration
     Booking.belongsTo(models.EventRegistration, {
         as: "eventRegistration",
         foreignKey: "event_registration_id",
         onDelete: "CASCADE",
     });
 
-    // 🔹 Eine Buchung gehört zu einem Event
     Booking.belongsTo(models.Event, {
         as: "event",
         foreignKey: "event_id",
     });
 
-    // 🔹 Eine Buchung gehört zu einem User (wer gebucht hat)
     Booking.belongsTo(models.User, {
         as: "user",
         foreignKey: "user_id",
     });
 
-    // 🔹 Eine Buchung gehört zu einer Unterkunft
     Booking.belongsTo(models.Accommodation, {
         as: "accommodation",
         foreignKey: "accommodation_id",

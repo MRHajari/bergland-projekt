@@ -1,313 +1,328 @@
 <div class="admin-container">
+
+    <!-- ================= BACK BUTTON ================= -->
     <button class="back-btn" (click)="goBack()">
         <i class="fa-solid fa-arrow-left me-2"></i>
         Zurück
     </button>
 
-    <h1><i class="fa-solid fa-house me-2"></i> Unterkünfte verwalten</h1>
+    <h1>
+        <i class="fa-solid fa-house me-2"></i>
+        Unterkünfte verwalten
+    </h1>
 
+    <!-- ================= LOADING / ERROR / CONTENT ================= -->
     @if (loading) {
+
     <p class="loading">
-        <i class="fa-solid fa-spinner fa-spin me-2"></i> Unterkünfte werden geladen...
+        <i class="fa-solid fa-spinner fa-spin me-2"></i>
+        Unterkünfte werden geladen...
     </p>
+
     } @else if (errorMessage) {
+
     <p class="error">
-        <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+        {{ errorMessage }}
     </p>
+
     } @else {
 
-    <!-- ====================================================== -->
-    <!-- 🏡 Neue Unterkunft hinzufügen -->
-    <!-- ====================================================== -->
-    <section class="form-section">
-        <h2>
-            <i class="fa-solid fa-circle-plus me-2"></i> Neue Unterkunft hinzufügen
-        </h2>
-        <form (ngSubmit)="addAccommodation()">
-            <div class="form-grid two-columns">
-                <div class="form-item">
-                    <label>Name:</label>
-                    <input [(ngModel)]="newAccommodation.name" name="name" required />
-                </div>
+    <!-- 🔒 WICHTIG: EIN Root-Wrapper -->
+    <div class="admin-content">
 
-                <div class="form-item">
-                    <label>Straße / Nr.:</label>
-                    <input [(ngModel)]="newAccommodation.street" name="street" />
-                </div>
+        <!-- ====================================================== -->
+        <!-- 🏡 Neue Unterkunft hinzufügen -->
+        <!-- ====================================================== -->
+        <section class="form-section">
+            <h2>
+                <i class="fa-solid fa-circle-plus me-2"></i>
+                Neue Unterkunft hinzufügen
+            </h2>
 
-                <div class="form-item">
-                    <label>PLZ:</label>
-                    <input [(ngModel)]="newAccommodation.postal_code" name="postal_code" />
-                </div>
+            <form (ngSubmit)="addAccommodation()">
+                <div class="form-grid two-columns">
 
-                <div class="form-item">
-                    <label>Ort:</label>
-                    <input [(ngModel)]="newAccommodation.city" name="city" />
-                </div>
+                    <div class="form-item">
+                        <label>Name:</label>
+                        <input [(ngModel)]="newAccommodation.name" name="name" required />
+                    </div>
 
-                <div class="form-item">
-                    <label>Land:</label>
-                    <input [(ngModel)]="newAccommodation.country" name="country" />
-                </div>
+                    <div class="form-item">
+                        <label>Straße / Nr.:</label>
+                        <input [(ngModel)]="newAccommodation.street" name="street" />
+                    </div>
 
-                <div class="form-item">
-                    <label>Einzelzimmer:</label>
-                    <input type="number" [(ngModel)]="newAccommodation.single_rooms" name="single_rooms" />
-                </div>
+                    <div class="form-item">
+                        <label>PLZ:</label>
+                        <input [(ngModel)]="newAccommodation.postal_code" name="postal_code" />
+                    </div>
 
-                <div class="form-item">
-                    <label>Doppelzimmer:</label>
-                    <input type="number" [(ngModel)]="newAccommodation.double_rooms" name="double_rooms" />
-                </div>
+                    <div class="form-item">
+                        <label>Ort:</label>
+                        <input [(ngModel)]="newAccommodation.city" name="city" />
+                    </div>
 
-                <div class="form-item">
-                    <label>Mehrbettzimmer:</label>
-                    <input type="number" [(ngModel)]="newAccommodation.multi_bed_rooms" name="multi_bed_rooms" />
-                </div>
+                    <div class="form-item">
+                        <label>Land:</label>
+                        <input [(ngModel)]="newAccommodation.country" name="country" />
+                    </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="primary">
-                        <i class="fa-solid fa-plus me-2"></i> Hinzufügen
-                    </button>
-                </div>
-            </div>
-        </form>
-    </section>
+                    <div class="form-item">
+                        <label>Einzelzimmer:</label>
+                        <input type="number" [(ngModel)]="newAccommodation.single_rooms" name="single_rooms" min="0" />
+                    </div>
 
-    <!-- ====================================================== -->
-    <!-- 📋 Bestehende Unterkünfte -->
-    <!-- ====================================================== -->
-    @if (selectedAccommodation === null) {
-    <section class="list-section">
-        <h2><i class="fa-solid fa-list me-2"></i> Bestehende Unterkünfte</h2>
-        <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Unterkünfte suchen..." class="search-input" />
+                    <div class="form-item">
+                        <label>Doppelzimmer:</label>
+                        <input type="number" [(ngModel)]="newAccommodation.double_rooms" name="double_rooms" min="0" />
+                    </div>
 
-        @if (filteredAccommodations.length === 0) {
-        <p>Keine passenden Unterkünfte gefunden.</p>
-        } @else {
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Ort</th>
-                    <th>EZ</th>
-                    <th>DZ</th>
-                    <th>MBZ</th>
-                    <th>Events</th>
-                    <th>Aktionen</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (a of pagedAccommodations; track a.id) {
-                <tr>
-                    <td>
-                        @if (editingAccommodation && editingAccommodation.id === a.id) {
-                        <input [(ngModel)]="editingAccommodation.name" name="edit_name_{{a.id}}" />
-                        } @else {
-                        {{ a.name }}
-                        }
-                    </td>
 
-                    <td>
-                        @if (editingAccommodation && editingAccommodation.id === a.id) {
-                        <input [(ngModel)]="editingAccommodation.city" name="edit_city_{{a.id}}" />
-                        } @else {
-                        {{ a.city }}
-                        }
-                    </td>
+                    <div class="form-item">
+                        <label>4-Bett-Zimmer:</label>
+                        <input type="number" [(ngModel)]="newAccommodation.quad_rooms" name="quad_rooms" min="0" />
+                    </div>
 
-                    <!-- ✅ NEU: EZ / DZ / MBZ jetzt bearbeitbar -->
-                    <td>
-                        @if (editingAccommodation && editingAccommodation.id === a.id) {
-                        <input type="number" [(ngModel)]="editingAccommodation.single_rooms" name="edit_single_{{a.id}}"
-                            min="0" class="small-input" />
-                        } @else {
-                        {{ a.single_rooms }}
-                        }
-                    </td>
+                    <div class="form-item">
+                        <label>5-Bett-Zimmer:</label>
+                        <input type="number" [(ngModel)]="newAccommodation.quint_rooms" name="quint_rooms" min="0" />
+                    </div>
 
-                    <td>
-                        @if (editingAccommodation && editingAccommodation.id === a.id) {
-                        <input type="number" [(ngModel)]="editingAccommodation.double_rooms" name="edit_double_{{a.id}}"
-                            min="0" class="small-input" />
-                        } @else {
-                        {{ a.double_rooms }}
-                        }
-                    </td>
+                    <div class="form-item">
+                        <label>6-Bett-Zimmer:</label>
+                        <input type="number" [(ngModel)]="newAccommodation.sext_rooms" name="sext_rooms" min="0" />
+                    </div>
 
-                    <td>
-                        @if (editingAccommodation && editingAccommodation.id === a.id) {
-                        <input type="number" [(ngModel)]="editingAccommodation.multi_bed_rooms"
-                            name="edit_multi_{{a.id}}" min="0" class="small-input" />
-                        } @else {
-                        {{ a.multi_bed_rooms }}
-                        }
-                    </td>
-
-                    <td>
-                        <div class="events-cell">
-                            @if (a.occupancies && a.occupancies.length > 0) {
-                            @for (o of a.occupancies; track o.id) {
-                            <span class="event-tag">{{ o.event?.name }}</span>
-                            }
-                            } @else {
-                            <span class="no-event">–</span>
-                            }
-                        </div>
-                    </td>
-
-                    <td>
-                        @if (editingAccommodation && editingAccommodation.id === a.id) {
-                        <button class="primary" (click)="saveAccommodation()">
-                            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
+                    <div class="form-actions">
+                        <button type="submit" class="primary">
+                            <i class="fa-solid fa-plus me-2"></i>
+                            Hinzufügen
                         </button>
-                        <button (click)="cancelEdit()">
-                            <i class="fa-solid fa-xmark me-2"></i> Abbrechen
-                        </button>
-                        } @else {
-                        <button class="secondary" (click)="editAccommodation(a)">
-                            <i class="fa-solid fa-pen me-2"></i> Bearbeiten
-                        </button>
-                        <button class="danger" (click)="deleteAccommodation(a.id || '', a.name)">
-                            <i class="fa-solid fa-trash me-2"></i> Löschen
-                        </button>
-                        }
-                    </td>
-                </tr>
-                }
-            </tbody>
-        </table>
+                    </div>
 
-        <div class="pagination">
-            <button (click)="page = page - 1" [disabled]="page === 1">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <span>Seite {{ page }} / {{ totalPages }}</span>
-            <button (click)="page = page + 1" [disabled]="page === totalPages">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </div>
-        }
-    </section>
-    } @else {
-
-    <!-- ====================================================== -->
-    <!-- 🧩 Event-Zuordnungen (Occupancy) -->
-    <!-- ====================================================== -->
-    <section class="form-section">
-        <h2>
-            <i class="fa-solid fa-puzzle-piece me-2"></i>
-            Unterkunft "{{ selectedAccommodation.name }}" → Events zuordnen
-        </h2>
-
-        @if (events.length === 0) {
-        <p><i class="fa-solid fa-triangle-exclamation me-2"></i> Keine Events vorhanden.</p>
-        } @else {
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>Event</th>
-                    <th>Aktiv</th>
-                    <th>EZ</th>
-                    <th>DZ</th>
-                    <th>MBZ</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (e of eventAssignments; track e.event_id) {
-                <tr>
-                    <td>{{ e.event_name }}</td>
-                    <td><input type="checkbox" [(ngModel)]="e.assigned" /></td>
-                    <td>
-                        <input type="number" [(ngModel)]="e.single_beds_total" [disabled]="!e.assigned" min="0" />
-                    </td>
-                    <td>
-                        <input type="number" [(ngModel)]="e.double_beds_total" [disabled]="!e.assigned" min="0" />
-                    </td>
-                    <td>
-                        <input type="number" [(ngModel)]="e.multi_beds_total" [disabled]="!e.assigned" min="0" />
-                    </td>
-                </tr>
-                }
-            </tbody>
-        </table>
-
-        <div class="pagination">
-            <button class="primary" (click)="saveEventAssignments()">
-                <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
-            </button>
-            <button class="secondary" (click)="cancelSelection()">
-                <i class="fa-solid fa-xmark me-2"></i> Abbrechen
-            </button>
-        </div>
-        }
-    </section>
-    }
-    }
-
-    <!-- ====================================================== -->
-    <!-- 🏨 Buchungsübersicht (Admin) -->
-    <!-- ====================================================== -->
-    <div class="bookings-admin-container">
-        <h2><i class="fa-solid fa-bed me-2"></i> Buchungsübersicht (Admin)</h2>
-
-        @if (loading) {
-        <p class="loading">
-            <i class="fa-solid fa-spinner fa-spin me-2"></i> Buchungen werden geladen...
-        </p>
-        } @else if (errorMessage) {
-        <p class="error">
-            <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
-        </p>
-        } @else if (allBookings.length === 0) {
-        <p>Keine Buchungen vorhanden.</p>
-        } @else {
-        @for (accommodationName of groupedBookingKeys; track accommodationName) {
-        <section class="accommodation-group">
-            <h3>
-                <i class="fa-solid fa-house me-2"></i> {{ accommodationName }}
-            </h3>
-            <p class="acc-location">
-                <i class="fa-solid fa-location-dot me-2"></i>
-                {{ groupedBookings[accommodationName][0].accommodation?.city || '—' }}
-            </p>
-
-            <!-- 🧮 Statistik -->
-            <div class="acc-stats">
-                <span><i class="fa-solid fa-bed me-2"></i> Gesamt: {{ getTotalBeds(accommodationName) }}</span>
-                <span><i class="fa-solid fa-book me-2"></i> Gebucht: {{ getBookedBeds(accommodationName) }}</span>
-                <span><i class="fa-solid fa-circle-check me-2"></i> Frei: {{ getFreeBeds(accommodationName) }}</span>
-            </div>
-
-            <table class="bookings-table">
-                <thead>
-                    <tr>
-                        <th>Event</th>
-                        <th>Benutzer</th>
-                        <th>Einzel</th>
-                        <th>Doppel</th>
-                        <th>Mehrbett</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (b of groupedBookings[accommodationName]; track b.id) {
-                    <tr>
-                        <td>{{ b.eventRegistration?.event?.name || '—' }}</td>
-                        <td>
-                            {{ b.user?.person?.first_name || '' }}
-                            {{ b.user?.person?.last_name || '' }}
-                            <br />
-                            <small>{{ b.user?.email }}</small>
-                        </td>
-                        <td>{{ b.single_beds || 0 }}</td>
-                        <td>{{ b.double_beds || 0 }}</td>
-                        <td>{{ b.multi_beds || 0 }}</td>
-                    </tr>
-                    }
-                </tbody>
-            </table>
+                </div>
+            </form>
         </section>
+
+        <!-- ====================================================== -->
+        <!-- 📋 Bestehende Unterkünfte -->
+        <!-- ====================================================== -->
+        @if (selectedAccommodation === null) {
+        <div class="list-wrapper">
+            <section class="list-section">
+
+                <h2>
+                    <i class="fa-solid fa-list me-2"></i>
+                    Bestehende Unterkünfte
+                </h2>
+
+                <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Unterkünfte suchen..."
+                    class="search-input" />
+
+                @if (filteredAccommodations.length === 0) {
+
+                <p>Keine passenden Unterkünfte gefunden.</p>
+
+                } @else {
+
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Ort</th>
+                            <th>EZ</th>
+                            <th>DZ</th>
+                            <th>4BZ</th>
+                            <th>5BZ</th>
+                            <th>6BZ</th>
+                            <th>Events</th>
+                            <th>Aktionen</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (a of pagedAccommodations; track a.id) {
+                        <tr>
+                            <!-- Name -->
+                            <td>
+                                @if (editingAccommodation && editingAccommodation.id === a.id) {
+                                <input [(ngModel)]="editingAccommodation.name" name="edit_name_{{a.id}}" />
+                                } @else {
+                                {{ a.name }}
+                                }
+                            </td>
+
+                            <!-- Ort -->
+                            <td>
+                                @if (editingAccommodation && editingAccommodation.id === a.id) {
+                                <input [(ngModel)]="editingAccommodation.city" name="edit_city_{{a.id}}" />
+                                } @else {
+                                {{ a.city }}
+                                }
+                            </td>
+
+                            <!-- EZ -->
+                            <td>
+                                @if (editingAccommodation && editingAccommodation.id === a.id) {
+                                <input type="number" [(ngModel)]="editingAccommodation.single_rooms"
+                                    name="edit_single_{{a.id}}" min="0" class="small-input" />
+                                } @else {
+                                {{ a.single_rooms || 0 }}
+                                }
+                            </td>
+
+                            <!-- DZ -->
+                            <td>
+                                @if (editingAccommodation && editingAccommodation.id === a.id) {
+                                <input type="number" [(ngModel)]="editingAccommodation.double_rooms"
+                                    name="edit_double_{{a.id}}" min="0" class="small-input" />
+                                } @else {
+                                {{ a.double_rooms || 0 }}
+                                }
+                            </td>
+
+                            <!-- 4BZ -->
+                            <td>
+                                @if (editingAccommodation && editingAccommodation.id === a.id) {
+                                <input type="number" [(ngModel)]="editingAccommodation.quad_rooms"
+                                    name="edit_quad_{{a.id}}" min="0" class="small-input" />
+                                } @else {
+                                {{ a.quad_rooms || 0 }}
+                                }
+                            </td>
+
+                            <!-- 5BZ -->
+                            <td>
+                                @if (editingAccommodation && editingAccommodation.id === a.id) {
+                                <input type="number" [(ngModel)]="editingAccommodation.quint_rooms"
+                                    name="edit_quint_{{a.id}}" min="0" class="small-input" />
+                                } @else {
+                                {{ a.quint_rooms || 0 }}
+                                }
+                            </td>
+
+                            <!-- 6BZ -->
+                            <td>
+                                @if (editingAccommodation && editingAccommodation.id === a.id) {
+                                <input type="number" [(ngModel)]="editingAccommodation.sext_rooms"
+                                    name="edit_sext_{{a.id}}" min="0" class="small-input" />
+                                } @else {
+                                {{ a.sext_rooms || 0 }}
+                                }
+                            </td>
+
+                            <!-- Events -->
+                            <td>
+                                <div class="events-cell">
+                                    @if (a.occupancies && a.occupancies.length > 0) {
+                                    @for (o of a.occupancies; track o.id) {
+                                    <span class="event-tag">{{ o.event?.name }}</span>
+                                    }
+                                    } @else {
+                                    <span class="no-event">–</span>
+                                    }
+                                </div>
+                            </td>
+
+                            <!-- Aktionen -->
+                            <td>
+                                @if (editingAccommodation && editingAccommodation.id === a.id) {
+                                <button class="primary" (click)="saveAccommodation()">
+                                    <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
+                                </button>
+                                <button (click)="cancelEdit()">
+                                    <i class="fa-solid fa-xmark me-2"></i> Abbrechen
+                                </button>
+                                } @else {
+                                <button class="secondary" (click)="editAccommodation(a)">
+                                    <i class="fa-solid fa-pen me-2"></i> Bearbeiten
+                                </button>
+                                <button class="danger" (click)="deleteAccommodation(a.id || '', a.name)">
+                                    <i class="fa-solid fa-trash me-2"></i> Löschen
+                                </button>
+                                }
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+
+                </table>
+
+                }
+
+            </section>
+        </div>
         }
-        }
+
+        <!-- ====================================================== -->
+        <!-- 🏨 Buchungsübersicht (Admin) -->
+        <!-- ====================================================== -->
+        <section class="bookings-admin-container">
+
+            <h2>
+                <i class="fa-solid fa-bed me-2"></i>
+                Buchungsübersicht (Admin)
+            </h2>
+
+            @for (accommodationName of groupedBookingKeys; track accommodationName) {
+
+            <section class="accommodation-group">
+
+                <h3>
+                    <i class="fa-solid fa-house me-2"></i>
+                    {{ accommodationName }}
+                </h3>
+
+                <div class="acc-stats">
+                    <span>Gesamt: {{ getTotalBeds(accommodationName) }}</span>
+                    <span>Gebucht: {{ getBookedBeds(accommodationName) }}</span>
+                    <span>Frei: {{ getFreeBeds(accommodationName) }}</span>
+                </div>
+
+                <table class="bookings-table">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Benutzer</th>
+                            <th>EZ</th>
+                            <th>DZ</th>
+                            <th>4BZ</th>
+                            <th>5BZ</th>
+                            <th>6BZ</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (b of groupedBookings[accommodationName]; track b.id) {
+                        <tr>
+                            <td>{{ b.eventRegistration?.event?.name || '—' }}</td>
+                            <td>{{ b.user?.email }}</td>
+                            <td>{{ b.single_beds || 0 }}</td>
+                            <td>{{ b.double_beds || 0 }}</td>
+                            <td>{{ b.quad_beds || 0 }}</td>
+                            <td>{{ b.quint_beds || 0 }}</td>
+                            <td>{{ b.sext_beds || 0 }}</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+
+            </section>
+            }
+
+        </section>
+
+        <!-- ====================================================== -->
+        <!-- © COPYRIGHT -->
+        <!-- ====================================================== -->
+        <footer class="admin-footer">
+            <span>
+                © {{ currentYear }} Your Company Name · Admin Panel
+            </span>
+        </footer>
+
     </div>
+    }
+
 </div>

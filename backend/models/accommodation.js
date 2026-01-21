@@ -10,20 +10,71 @@ const Accommodation = sequelize.define(
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        name: { type: DataTypes.STRING, allowNull: false }, // unterkunft_name
-        street: { type: DataTypes.STRING, allowNull: false }, // straße_und_hausnr
-        postal_code: { type: DataTypes.STRING, allowNull: false }, // plz
-        city: { type: DataTypes.STRING, allowNull: false }, // ort
-        country: { type: DataTypes.STRING, allowNull: false },
 
-        // 🛏️ Kapazitäten
-        single_rooms: { type: DataTypes.INTEGER, defaultValue: 0, comment: "Anzahl Einzelzimmer" }, // anz_ez
-        double_rooms: { type: DataTypes.INTEGER, defaultValue: 0, comment: "Anzahl Doppelzimmer" }, // anz_dz
-        multi_bed_rooms: { type: DataTypes.INTEGER, defaultValue: 0, comment: "Anzahl Mehrbettzimmer" }, // anz_mbz
-        total_beds: { type: DataTypes.INTEGER, defaultValue: 0, comment: "Gesamtanzahl Betten" }, // anz_betten_mbz
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        street: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        postal_code: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        city: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        country: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
 
-        // 🟢 Optional: Beschreibung
-        description: { type: DataTypes.TEXT, allowNull: true },
+        // =====================================================
+        // 🛏️ Kapazitäten (LEGACY + NEU)
+        // =====================================================
+
+        // 🔹 Bestehende Felder – NICHT anfassen
+        single_rooms: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+            comment: "Anzahl Einzelzimmer",
+        },
+        double_rooms: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+            comment: "Anzahl Doppelzimmer",
+        },
+        quad_rooms: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+            comment: "Anzahl 4-Bett-Zimmer",
+        },
+        quint_rooms: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+            comment: "Anzahl 5-Bett-Zimmer",
+        },
+        sext_rooms: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+            comment: "Anzahl 6-Bett-Zimmer",
+        },
+
+        // ⚠️ bleibt vorerst bestehen (wird später sauber berechnet)
+        total_beds: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+            comment: "Gesamtanzahl Betten (Legacy / optional)",
+        },
+
+        // 🟢 Optional
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
     },
     {
         tableName: "accommodation",

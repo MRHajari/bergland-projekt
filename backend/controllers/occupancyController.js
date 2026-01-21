@@ -8,25 +8,31 @@ const occupancySchema = require("../validators/occupancyValidator");
 exports.createOccupancy = async (req, res, next) => {
     try {
         const { error } = occupancySchema.validate(req.body);
-        if (error)
+        if (error) {
             return res.status(400).json({ error: error.details[0].message });
-        console.log("📥 Erstelle neue Belegung mit Daten:", req.body);
+        }
 
-        const payload = {
-            ...req.body,
-            single_beds_total: req.body.single_beds_total || 0,
-            double_beds_total: req.body.double_beds_total || 0,
-            multi_beds_total: req.body.multi_beds_total || 0,
-            single_beds_booked: 0,
-            double_beds_booked: 0,
-            multi_beds_booked: 0,
-        };
+        const occupancy = await Occupancy.create({
+            event_id: req.body.event_id,
+            accommodation_id: req.body.accommodation_id,
 
-        const occupancy = await Occupancy.create(payload);
+            single_rooms_total: req.body.single_rooms_total ?? 0,
+            double_rooms_total: req.body.double_rooms_total ?? 0,
+            quad_rooms_total: req.body.quad_rooms_total ?? 0,
+            quint_rooms_total: req.body.quint_rooms_total ?? 0,
+            sext_rooms_total: req.body.sext_rooms_total ?? 0,
+
+            single_rooms_booked: 0,
+            double_rooms_booked: 0,
+            quad_rooms_booked: 0,
+            quint_rooms_booked: 0,
+            sext_rooms_booked: 0,
+        });
+
         res.status(201).json(occupancy);
     } catch (err) {
         console.error("❌ Fehler beim Erstellen der Belegung:", err);
-        return next(err);
+        next(err);
     }
 };
 
@@ -43,8 +49,7 @@ exports.getAll = async (req, res, next) => {
         });
         res.json(data);
     } catch (err) {
-        console.error("❌ Fehler beim Laden:", err);
-        return next(err);
+        next(err);
     }
 };
 
@@ -53,26 +58,23 @@ exports.getAll = async (req, res, next) => {
 // ============================================================
 exports.getByEvent = async (req, res, next) => {
     try {
-        const data = await Occupancy.findAll({
+        const occupancies = await Occupancy.findAll({
             where: { event_id: req.params.eventId },
             include: [{ model: Accommodation, as: "accommodation" }],
         });
 
-        // 🧮 berechnete Verfügbarkeiten anhängen (zur Sicherheit, falls Virtual nicht in JSON landet)
-        const result = data.map((occ) => ({
+        const result = occupancies.map((occ) => ({
             ...occ.toJSON(),
-            available_single:
-                occ.single_beds_total - occ.single_beds_booked,
-            available_double:
-                occ.double_beds_total - occ.double_beds_booked,
-            available_multi:
-                occ.multi_beds_total - occ.multi_beds_booked,
+            available_single: occ.available_single,
+            available_double: occ.available_double,
+            available_quad: occ.available_quad,
+            available_quint: occ.available_quint,
+            available_sext: occ.available_sext,
         }));
 
         res.json(result);
     } catch (err) {
-        console.error("❌ Fehler beim Laden der Event-Belegung:", err);
-        return next(err);
+        next(err);
     }
 };
 
@@ -82,14 +84,14 @@ exports.getByEvent = async (req, res, next) => {
 exports.update = async (req, res, next) => {
     try {
         const occupancy = await Occupancy.findByPk(req.params.id);
-        if (!occupancy)
-            return res.status(404).json({ error: "Belegung nicht gefunden" });
+        if (!occupancy) {
+            return res.status(404).json({ error: "Belegung nicht gefunden." });
+        }
 
         await occupancy.update(req.body);
         res.json(occupancy);
     } catch (err) {
-        console.error("❌ Fehler beim Aktualisieren:", err);
-        return next(err);
+        next(err);
     }
 };
 
@@ -99,14 +101,14 @@ exports.update = async (req, res, next) => {
 exports.delete = async (req, res, next) => {
     try {
         const occupancy = await Occupancy.findByPk(req.params.id);
-        if (!occupancy)
-            return res.status(404).json({ error: "Belegung nicht gefunden" });
+        if (!occupancy) {
+            return res.status(404).json({ error: "Belegung nicht gefunden." });
+        }
 
         await occupancy.destroy();
-        res.json({ message: "✅ Occupancy gelöscht" });
+        res.json({ message: "Occupancy gelöscht." });
     } catch (err) {
-        console.error("❌ Fehler beim Löschen:", err);
-        return next(err);
+        next(err);
     }
 };
 
@@ -117,57 +119,45 @@ exports.delete = async (req, res, next) => {
 exports.updateAssignments = async (req, res, next) => {
     try {
         const { event_id, assignments } = req.body;
-        if (!event_id)
-            return res.status(400).json({ error: "event_id ist erforderlich" });
+        if (!event_id) {
+            return res.status(400).json({ error: "event_id ist erforderlich." });
+        }
 
-        // Alte Einträge für dieses Event löschen
         await Occupancy.destroy({ where: { event_id } });
 
-        if (Array.isArray(assignments) && assignments.length > 0) {
-            console.log("📦 Eingehende Assignments:", JSON.stringify(assignments, null, 2));
+        const created = [];
 
-            const created = [];
-
+        if (Array.isArray(assignments)) {
             for (const a of assignments) {
-                // 🔍 Unterkunft laden
                 const accommodation = await Accommodation.findByPk(a.accommodation_id);
-                console.log(`🔍 Unterkunft geladen für ID ${a.accommodation_id}:`, accommodation ? accommodation.toJSON() : null);
+                if (!accommodation) continue;
 
-                if (!accommodation) {
-                    console.warn(`⚠️ Unterkunft ${a.accommodation_id} nicht gefunden – übersprungen`);
-                    continue;
-                }
-
-                // 📊 Belegungseintrag mit Werten aus Unterkunft
                 const occ = await Occupancy.create({
                     event_id,
-                    accommodation_id: a.accommodation_id,
-                    single_beds_total: accommodation.single_rooms ?? 0,
-                    double_beds_total: accommodation.double_rooms ?? 0,
-                    multi_beds_total: accommodation.multi_bed_rooms ?? 0,
-                    single_beds_booked: 0,
-                    double_beds_booked: 0,
-                    multi_beds_booked: 0,
+                    accommodation_id: accommodation.id,
+
+                    single_rooms_total: accommodation.single_rooms,
+                    double_rooms_total: accommodation.double_rooms,
+                    quad_rooms_total: accommodation.quad_rooms,
+                    quint_rooms_total: accommodation.quint_rooms,
+                    sext_rooms_total: accommodation.sext_rooms,
+
+                    single_rooms_booked: 0,
+                    double_rooms_booked: 0,
+                    quad_rooms_booked: 0,
+                    quint_rooms_booked: 0,
+                    sext_rooms_booked: 0,
                 });
 
                 created.push(occ);
             }
-
-            return res.status(200).json({
-                message: "✅ Zuordnungen gespeichert",
-                created,
-            });
         }
 
-        return res.status(200).json({
-            message: "✅ Alle Zuordnungen entfernt (leer übermittelt)",
-        });
+        res.json({ message: "Zuordnungen gespeichert.", created });
     } catch (err) {
-        console.error("❌ Fehler beim Aktualisieren der Zuordnungen:", err);
-        return next(err);
+        next(err);
     }
 };
-
 
 
 // ============================================================
@@ -175,51 +165,33 @@ exports.updateAssignments = async (req, res, next) => {
 // ============================================================
 exports.getAccommodationsByEvent = async (req, res, next) => {
     try {
-        const eventId = req.params.eventId;
-
         const occupancies = await Occupancy.findAll({
-            where: { event_id: eventId },
-            include: [
-                {
-                    model: Accommodation,
-                    as: "accommodation",
-                    attributes: [
-                        "id",
-                        "name",
-                        "street",
-                        "postal_code",
-                        "city",
-                        "country",
-                        "description",
-                    ],
-                },
-            ],
+            where: { event_id: req.params.eventId },
+            include: [{ model: Accommodation, as: "accommodation" }],
         });
 
-        const accommodations = occupancies.map((occ) => {
-            const acc = occ.accommodation?.toJSON() || {};
+        const result = occupancies.map((occ) => ({
+            ...occ.accommodation.toJSON(),
 
-            return {
-                ...acc,
-                // 🔹 Daten aus occupancy (Gesamt & verfügbar)
-                single_beds_total: occ.single_beds_total,
-                double_beds_total: occ.double_beds_total,
-                multi_beds_total: occ.multi_beds_total,
+            single_rooms_total: occ.single_rooms_total,
+            double_rooms_total: occ.double_rooms_total,
+            quad_rooms_total: occ.quad_rooms_total,
+            quint_rooms_total: occ.quint_rooms_total,
+            sext_rooms_total: occ.sext_rooms_total,
 
-                available_single: Math.max(occ.single_beds_total - occ.single_beds_booked, 0),
-                available_double: Math.max(occ.double_beds_total - occ.double_beds_booked, 0),
-                available_multi: Math.max(occ.multi_beds_total - occ.multi_beds_booked, 0),
+            available_single: occ.available_single,
+            available_double: occ.available_double,
+            available_quad: occ.available_quad,
+            available_quint: occ.available_quint,
+            available_sext: occ.available_sext,
 
-                // 🔹 Referenzen
-                occupancy_id: occ.id,
-                event_id: occ.event_id,
-            };
-        });
+            occupancy_id: occ.id,
+            event_id: occ.event_id,
+        }));
 
-        res.json(accommodations);
+        res.json(result);
     } catch (err) {
-        console.error("❌ Fehler beim Laden der Unterkünfte für Event:", err);
-        return next(err);
+        next(err);
     }
 };
 

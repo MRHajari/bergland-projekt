@@ -17,14 +17,16 @@ import { Router } from '@angular/router';
   styleUrls: ['./accommodations-admin.css'],
 })
 export class AccommodationsAdmin implements OnInit {
-  // =====================================================
-  // 🔹 Datenquellen
-  // =====================================================
+
   accommodations: AccommodationInterface[] = [];
   events: EventInterface[] = [];
   occupancies: OccupancyInterface[] = [];
   allBookings: BookingInterface[] = [];
   groupedBookings: Record<string, BookingInterface[]> = {};
+  page = 1;
+  pageSize = 10;
+  currentYear = new Date().getFullYear();
+  searchTerm = '';
 
 
   constructor(
@@ -33,7 +35,7 @@ export class AccommodationsAdmin implements OnInit {
   ) {}
 
   // =====================================================
-  // 🔹 Neue Unterkunft
+  // 🔹 Neue Unterkunft (ERWEITERT)
   // =====================================================
   newAccommodation: Partial<AccommodationInterface> = {
     name: '',
@@ -43,50 +45,40 @@ export class AccommodationsAdmin implements OnInit {
     country: 'Deutschland',
     single_rooms: 0,
     double_rooms: 0,
-    multi_bed_rooms: 0,
+    quad_rooms: 0,
+    quint_rooms: 0,
+    sext_rooms: 0,
   };
 
-  // =====================================================
-  // 🔹 Auswahl + Zuordnung
-  // =====================================================
   selectedAccommodation: AccommodationInterface | null = null;
   editingAccommodation: AccommodationInterface | null = null;
+
   eventAssignments: {
     event_id: string;
     event_name: string;
     single_beds_total: number;
     double_beds_total: number;
-    multi_beds_total: number;
+    quad_beds_total: number;
+    quint_beds_total: number;
+    sext_beds_total: number;
     assigned: boolean;
   }[] = [];
 
-  // =====================================================
-  // 🔹 Zustände
-  // =====================================================
   loading = false;
   errorMessage: string | null = null;
 
-  // =====================================================
-  // 🔹 Services
-  // =====================================================
   private accommodationService = inject(AccommodationService);
   private api = inject(ApiService);
   private eventService = inject(EventService);
   private occupancyService = inject(OccupancyService);
   private bookingService = inject(BookingService);
 
-  // =====================================================
-  // 🚀 Lifecycle
-  // =====================================================
   ngOnInit(): void {
     this.loadAccommodations();
     this.loadEvents();
     this.loadAllBookings();
   }
 
-  // =====================================================
-  // 🏠 Unterkünfte laden
-  // =====================================================
   loadAccommodations(): void {
     this.loading = true;
     this.accommodationService.getAll().subscribe({
@@ -94,27 +86,19 @@ export class AccommodationsAdmin implements OnInit {
         this.accommodations = data || [];
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Fehler beim Laden der Unterkünfte:', err);
+      error: () => {
         this.errorMessage = '❌ Fehler beim Laden der Unterkünfte.';
         this.loading = false;
       },
     });
   }
 
-  // =====================================================
-  // 🎯 Events laden
-  // =====================================================
   loadEvents(): void {
     this.eventService.getAll().subscribe({
       next: (data) => (this.events = data || []),
-      error: (err) => console.error('Fehler beim Laden der Events:', err),
     });
   }
 
-  // =====================================================
-  // ➕ Neue Unterkunft hinzufügen
-  // =====================================================
   addAccommodation(): void {
     if (!this.newAccommodation.name?.trim()) {
       alert('❗ Bitte gib einen Namen ein.');
@@ -124,28 +108,29 @@ export class AccommodationsAdmin implements OnInit {
     this.accommodationService.create(this.newAccommodation).subscribe({
       next: () => {
         alert(`✅ Unterkunft "${this.newAccommodation.name}" hinzugefügt.`);
-        this.newAccommodation = {
-          name: '',
-          street: '',
-          postal_code: '',
-          city: '',
-          country: 'Deutschland',
-          single_rooms: 0,
-          double_rooms: 0,
-          multi_bed_rooms: 0,
-        };
+        this.resetNewAccommodation();
         this.loadAccommodations();
       },
-      error: (err) => {
-        console.error('Fehler beim Erstellen:', err);
-        alert('❌ Fehler beim Erstellen der Unterkunft.');
-      },
+      error: () => alert('❌ Fehler beim Erstellen.'),
     });
   }
 
-  // =====================================================
-  // 🧱 Unterkunft bearbeiten
-  // =====================================================
+  private resetNewAccommodation(): void {
+    this.newAccommodation = {
+      name: '',
+      street: '',
+      postal_code: '',
+      city: '',
+      country: 'Deutschland',
+      single_rooms: 0,
+      double_rooms: 0,
+      quad_rooms: 0,
+      quint_rooms: 0,
+      sext_rooms: 0,
+    };
+  }
+  
+
   editAccommodation(acc: AccommodationInterface): void {
     this.editingAccommodation = { ...acc };
   }
@@ -157,13 +142,9 @@ export class AccommodationsAdmin implements OnInit {
       .update(this.editingAccommodation.id!, this.editingAccommodation)
       .subscribe({
         next: () => {
-          alert(`💾 Änderungen gespeichert für "${this.editingAccommodation!.name}".`);
+          alert(`💾 Änderungen gespeichert.`);
           this.editingAccommodation = null;
           this.loadAccommodations();
-        },
-        error: (err) => {
-          console.error('Fehler beim Speichern:', err);
-          alert('❌ Fehler beim Speichern der Unterkunft.');
         },
       });
   }
@@ -173,102 +154,55 @@ export class AccommodationsAdmin implements OnInit {
   }
 
   deleteAccommodation(id: string, name: string): void {
-    if (!confirm(`Willst du "${name}" wirklich löschen?`)) return;
+    if (!confirm(`"${name}" wirklich löschen?`)) return;
 
     this.accommodationService.delete(id).subscribe({
-      next: () => {
-        alert(`🗑️ Unterkunft "${name}" gelöscht.`);
-        this.loadAccommodations();
-      },
-      error: (err) => {
-        console.error('Fehler beim Löschen:', err);
-        alert('❌ Fehler beim Löschen.');
-      },
+      next: () => this.loadAccommodations(),
     });
   }
 
   // =====================================================
-  // 💾 Zuordnungen speichern (Occupancy)
+  // 🧮 NEUE Statistik (KOMPATIBEL)
   // =====================================================
-  saveEventAssignments(): void {
-    if (!this.selectedAccommodation) return;
 
-    const payload = this.eventAssignments
-      .filter((e) => e.assigned)
-      .map((e) => ({
-        event_id: e.event_id,
-        single_beds_total: e.single_beds_total,
-        double_beds_total: e.double_beds_total,
-        multi_beds_total: e.multi_beds_total,
-      }));
+  getTotalBeds(accName: string): number {
+    const acc = this.accommodations.find(a => a.name === accName);
+    if (!acc) return 0;
 
-    this.api
-      .post('occupancies/updateAssignments', {
-        accommodation_id: this.selectedAccommodation.id,
-        assignments: payload,
-      })
-      .subscribe({
-        next: () => {
-          alert('💾 Zuordnungen erfolgreich gespeichert.');
-          this.selectedAccommodation = null;
-          this.loadAccommodations();
-        },
-        error: (err) => {
-          console.error('Fehler beim Speichern der Zuordnungen:', err);
-          alert('❌ Fehler beim Speichern.');
-        },
-      });
-  }
-
-  // =====================================================
-  // ❌ Auswahl abbrechen
-  // =====================================================
-  cancelSelection(): void {
-    this.selectedAccommodation = null;
-  }
-
-  // =====================================================
-  // 🔍 Such- & Paginierungs-Helper
-  // =====================================================
-  searchTerm = '';
-  page = 1;
-  pageSize = 10;
-
-  get filteredAccommodations(): AccommodationInterface[] {
-    if (!this.accommodations?.length) return [];
-    if (!this.searchTerm.trim()) return this.accommodations;
-    const term = this.searchTerm.toLowerCase();
-    return this.accommodations.filter(
-      (a) =>
-        a.name?.toLowerCase().includes(term) ||
-        a.city?.toLowerCase().includes(term) ||
-        a.postal_code?.includes(term)
+    return (
+      (acc.single_rooms || 0) * 1 +
+      (acc.double_rooms || 0) * 2 +
+      (acc.quad_rooms || 0) * 4 +
+      (acc.quint_rooms || 0) * 5 +
+      (acc.sext_rooms || 0) * 6
     );
   }
 
-  get pagedAccommodations(): AccommodationInterface[] {
-    const start = (this.page - 1) * this.pageSize;
-    return this.filteredAccommodations.slice(start, start + this.pageSize);
+  getBookedBeds(accName: string): number {
+    const bookings = this.groupedBookings[accName] || [];
+    let total = 0;
+
+    for (const b of bookings) {
+      total +=
+        (b.single_beds || 0) * 1 +
+        (b.double_beds || 0) * 2 +
+        (b.quad_beds || 0) * 4 +
+        (b.quint_beds || 0) * 5 +
+        (b.sext_beds || 0) * 6;
+    }
+
+    return total;
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.filteredAccommodations.length / this.pageSize);
+  getFreeBeds(accName: string): number {
+    return Math.max(this.getTotalBeds(accName) - this.getBookedBeds(accName), 0);
   }
 
-  // =====================================================
-  // 📋 Buchungen laden + gruppieren
-  // =====================================================
   loadAllBookings(): void {
     this.bookingService.getAll().subscribe({
       next: (data) => {
         this.allBookings = data || [];
         this.groupBookingsByAccommodation();
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('❌ Fehler beim Laden der Buchungen:', err);
-        this.errorMessage = '❌ Buchungen konnten nicht geladen werden.';
-        this.loading = false;
       },
     });
   }
@@ -276,48 +210,39 @@ export class AccommodationsAdmin implements OnInit {
   private groupBookingsByAccommodation(): void {
     this.groupedBookings = {};
     for (const booking of this.allBookings) {
-      const accName = booking.accommodation?.name || 'Unbekannte Unterkunft';
+      const accName = booking.accommodation?.name || 'Unbekannt';
       if (!this.groupedBookings[accName]) this.groupedBookings[accName] = [];
       this.groupedBookings[accName].push(booking);
     }
   }
 
-  // ✅ Sicherer Getter für Template
   get groupedBookingKeys(): string[] {
-    return this.groupedBookings ? Object.keys(this.groupedBookings) : [];
+    return Object.keys(this.groupedBookings);
   }
 
-  // =====================================================
-// 🧮 Statistik-Funktionen pro Unterkunft
-// =====================================================
 
-getTotalBeds(accName: string): number {
-  const acc = this.accommodations.find(a => a.name === accName);
-  if (!acc) return 0;
-  return (acc.single_rooms || 0) + (acc.double_rooms || 0) * 2 + (acc.multi_bed_rooms || 0) * 3;
-}
-
-getBookedBeds(accName: string): number {
-  const bookings = this.groupedBookings[accName] || [];
-  let total = 0;
-  for (const b of bookings) {
-    total += (b.single_beds || 0) + (b.double_beds || 0) * 2 + (b.multi_beds || 0) * 3;
+  get pagedAccommodations(): AccommodationInterface[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.accommodations.slice(start, start + this.pageSize);
   }
-  return total;
-}
 
-getFreeBeds(accName: string): number {
-  const total = this.getTotalBeds(accName);
-  const booked = this.getBookedBeds(accName);
-  return Math.max(total - booked, 0);
-}
+  // ✅ Gefilterte Unterkünfte (AOT-sicher)
+  get filteredAccommodations(): AccommodationInterface[] {
+    if (!this.searchTerm.trim()) {
+      return this.accommodations;
+    }
 
-goBack(): void {
-  if (window.history.length > 1) {
-    this.location.back();
-  } else {
-    this.router.navigate(['/admin']); // Fallback-Route
+    const term = this.searchTerm.toLowerCase();
+    return this.accommodations.filter(acc =>
+      acc.name?.toLowerCase().includes(term) ||
+      acc.city?.toLowerCase().includes(term)
+    );
   }
-}
 
+  
+  goBack(): void {
+    window.history.length > 1
+      ? this.location.back()
+      : this.router.navigate(['/admin']);
+  }
 }

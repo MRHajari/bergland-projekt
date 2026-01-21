@@ -5,7 +5,7 @@ const { bookingSchema, bookingUpdateSchema } = require("../validators/bookingVal
 
 
 // ============================================================
-// ➕ Neue Buchung erstellen (mehrere Unterkünfte pro Registrierung erlaubt)
+// ➕ Neue Buchung erstellen
 // ============================================================
 exports.createBooking = async (req, res, next) => {
     const t = await Booking.sequelize.transaction();
@@ -18,92 +18,64 @@ exports.createBooking = async (req, res, next) => {
         const {
             event_registration_id,
             accommodation_id,
-            single_beds,
-            double_beds,
-            multi_beds,
+            single_beds = 0,
+            double_beds = 0,
+            quad_beds = 0,
+            quint_beds = 0,
+            sext_beds = 0,
         } = req.body;
 
         const userId = req.user?.id;
-        if (!userId)
-            return res.status(401).json({ error: "Nicht autorisiert." });
+        if (!userId) return res.status(401).json({ error: "Nicht autorisiert." });
 
-        if (!event_registration_id || !accommodation_id) {
-            return res.status(400).json({
-                error:
-                    "❌ event_registration_id und accommodation_id sind erforderlich.",
-            });
-        }
-
-        // 🔍 Registrierung prüfen
         const registration = await EventRegistration.findByPk(event_registration_id);
         if (!registration) {
-            return res
-                .status(404)
-                .json({ error: "❌ Die angegebene EventRegistration existiert nicht." });
+            return res.status(404).json({ error: "EventRegistration nicht gefunden." });
         }
 
-        const eventId = registration.event_id;
-
-        // 🏨 Unterkunft prüfen
-        const accommodation = await Accommodation.findByPk(accommodation_id);
-        if (!accommodation)
-            return res.status(404).json({ error: "Unterkunft nicht gefunden." });
-
-        // ⚠️ Doppelte Buchung für dieselbe Unterkunft vermeiden
-        const existing = await Booking.findOne({
-            where: { event_registration_id, accommodation_id },
-        });
-        if (existing) {
-            return res.status(409).json({
-                error:
-                    "⚠️ Es existiert bereits eine Buchung für diese Unterkunft in dieser Anmeldung.",
-            });
-        }
-
-        // 🔎 Occupancy für Event + Unterkunft finden
         const occupancy = await Occupancy.findOne({
-            where: { event_id: eventId, accommodation_id },
+            where: { event_id: registration.event_id, accommodation_id },
+            lock: t.LOCK.UPDATE,
+            transaction: t,
         });
+
         if (!occupancy) {
-            return res
-                .status(404)
-                .json({ error: "Keine Belegungsdaten für diese Unterkunft gefunden." });
+            return res.status(404).json({ error: "Keine Belegungsdaten gefunden." });
         }
 
-        // 🧮 Verfügbarkeit prüfen
+        // 🧮 Verfügbarkeit prüfen (ZIMMER, nicht Betten)
         if (
-            single_beds >
-            occupancy.single_beds_total - occupancy.single_beds_booked ||
-            double_beds >
-            occupancy.double_beds_total - occupancy.double_beds_booked ||
-            multi_beds >
-            occupancy.multi_beds_total - occupancy.multi_beds_booked
+            single_beds > occupancy.available_single ||
+            double_beds > occupancy.available_double ||
+            quad_beds > occupancy.available_quad ||
+            quint_beds > occupancy.available_quint ||
+            sext_beds > occupancy.available_sext
         ) {
-            return res
-                .status(400)
-                .json({ error: "❌ Nicht genügend freie Betten verfügbar." });
+            return res.status(400).json({ error: "Nicht genügend freie Zimmer verfügbar." });
         }
 
-        // 💾 Buchung anlegen
         const booking = await Booking.create(
             {
                 event_registration_id,
-                event_id: eventId,
+                event_id: registration.event_id,
                 accommodation_id,
                 user_id: userId,
                 single_beds,
                 double_beds,
-                multi_beds,
+                quad_beds,
+                quint_beds,
+                sext_beds,
             },
             { transaction: t }
         );
 
-        // 📊 Occupancy aktualisieren
         await occupancy.update(
             {
-                single_beds_booked: occupancy.single_beds_booked + single_beds,
-                double_beds_booked: occupancy.double_beds_booked + double_beds,
-                multi_beds_booked: occupancy.multi_beds_booked + multi_beds,
+                single_rooms_booked: occupancy.single_rooms_booked + single_beds,
+                double_rooms_booked: occupancy.double_rooms_booked + double_beds,
+                quad_rooms_booked: occupancy.quad_rooms_booked + quad_beds,
+                quint_rooms_booked: occupancy.quint_rooms_booked + quint_beds,
+                sext_rooms_booked: occupancy.sext_rooms_booked + sext_beds,
             },
             { transaction: t }
         );
@@ -112,7 +84,6 @@ exports.createBooking = async (req, res, next) => {
         res.status(201).json(booking);
     } catch (err) {
         await t.rollback();
-        console.error("❌ Fehler beim Erstellen der Buchung:", err);
         next(err);
     }
 };
@@ -207,45 +178,52 @@ exports.getBookingById = async (req, res, next) => {
 };
 
 // ============================================================
-// ✏️ Buchung aktualisieren (inkl. Occupancy-Anpassung)
+// ✏️ Buchung aktualisieren
 // ============================================================
 exports.updateBooking = async (req, res, next) => {
     const t = await Booking.sequelize.transaction();
     try {
-        const { bookingUpdateSchema } = require("../validators/bookingValidator");
-        const { error } = bookingUpdateSchema.validate(req.body, { abortEarly: false });
-        if (error) {
-            return res.status(400).json({ error: error.details.map(d => d.message).join(", ") });
-        }
+        const { error } = bookingUpdateSchema.validate(req.body);
+        if (error) return res.status(400).json({ error: error.details[0].message });
 
-        const booking = await Booking.findByPk(req.params.id);
-        if (!booking) return res.status(404).json({ error: "❌ Buchung nicht gefunden." });
+        const booking = await Booking.findByPk(req.params.id, { transaction: t });
+        if (!booking) return res.status(404).json({ error: "Buchung nicht gefunden." });
 
         const occupancy = await Occupancy.findOne({
             where: { event_id: booking.event_id, accommodation_id: booking.accommodation_id },
+            lock: t.LOCK.UPDATE,
+            transaction: t,
         });
 
-        if (!occupancy) return res.status(404).json({ error: "Belegungsdaten nicht gefunden." });
+        if (!occupancy) return res.status(404).json({ error: "Occupancy nicht gefunden." });
 
-        // 🧮 Alte Werte abziehen
-        await occupancy.update(
-            {
-                single_beds_booked: occupancy.single_beds_booked - booking.single_beds,
-                double_beds_booked: occupancy.double_beds_booked - booking.double_beds,
-                multi_beds_booked: occupancy.multi_beds_booked - booking.multi_beds,
-            },
-            { transaction: t }
-        );
+        const diff = {
+            single: (req.body.single_beds ?? booking.single_beds) - booking.single_beds,
+            double: (req.body.double_beds ?? booking.double_beds) - booking.double_beds,
+            quad: (req.body.quad_beds ?? booking.quad_beds) - booking.quad_beds,
+            quint: (req.body.quint_beds ?? booking.quint_beds) - booking.quint_beds,
+            sext: (req.body.sext_beds ?? booking.sext_beds) - booking.sext_beds,
+        };
 
-        // 💾 Buchung mit neuen Werten speichern
+        if (
+            diff.single > occupancy.available_single ||
+            diff.double > occupancy.available_double ||
+            diff.quad > occupancy.available_quad ||
+            diff.quint > occupancy.available_quint ||
+            diff.sext > occupancy.available_sext
+        ) {
+            return res.status(400).json({ error: "Nicht genügend freie Zimmer verfügbar." });
+        }
+
         await booking.update(req.body, { transaction: t });
 
-        // 🧮 Neue Werte hinzufügen
         await occupancy.update(
             {
-                single_beds_booked: occupancy.single_beds_booked + (req.body.single_beds ?? booking.single_beds),
-                double_beds_booked: occupancy.double_beds_booked + (req.body.double_beds ?? booking.double_beds),
-                multi_beds_booked: occupancy.multi_beds_booked + (req.body.multi_beds ?? booking.multi_beds),
+                single_rooms_booked: occupancy.single_rooms_booked + diff.single,
+                double_rooms_booked: occupancy.double_rooms_booked + diff.double,
+                quad_rooms_booked: occupancy.quad_rooms_booked + diff.quad,
+                quint_rooms_booked: occupancy.quint_rooms_booked + diff.quint,
+                sext_rooms_booked: occupancy.sext_rooms_booked + diff.sext,
             },
             { transaction: t }
         );
@@ -254,31 +232,34 @@ exports.updateBooking = async (req, res, next) => {
         res.json(booking);
     } catch (err) {
         await t.rollback();
-        console.error("❌ Fehler beim Aktualisieren der Buchung:", err);
         next(err);
     }
 };
 
 
 // ============================================================
-// ❌ Buchung löschen (Occupancy zurücksetzen)
+// ❌ Buchung löschen
 // ============================================================
 exports.deleteBooking = async (req, res, next) => {
     const t = await Booking.sequelize.transaction();
     try {
-        const booking = await Booking.findByPk(req.params.id);
-        if (!booking) return res.status(404).json({ error: "❌ Buchung nicht gefunden." });
+        const booking = await Booking.findByPk(req.params.id, { transaction: t });
+        if (!booking) return res.status(404).json({ error: "Buchung nicht gefunden." });
 
         const occupancy = await Occupancy.findOne({
             where: { event_id: booking.event_id, accommodation_id: booking.accommodation_id },
+            lock: t.LOCK.UPDATE,
+            transaction: t,
         });
 
         if (occupancy) {
             await occupancy.update(
                 {
-                    single_beds_booked: occupancy.single_beds_booked - booking.single_beds,
-                    double_beds_booked: occupancy.double_beds_booked - booking.double_beds,
-                    multi_beds_booked: occupancy.multi_beds_booked - booking.multi_beds,
+                    single_rooms_booked: occupancy.single_rooms_booked - booking.single_beds,
+                    double_rooms_booked: occupancy.double_rooms_booked - booking.double_beds,
+                    quad_rooms_booked: occupancy.quad_rooms_booked - booking.quad_beds,
+                    quint_rooms_booked: occupancy.quint_rooms_booked - booking.quint_beds,
+                    sext_rooms_booked: occupancy.sext_rooms_booked - booking.sext_beds,
                 },
                 { transaction: t }
             );
@@ -287,10 +268,9 @@ exports.deleteBooking = async (req, res, next) => {
         await booking.destroy({ transaction: t });
         await t.commit();
 
-        res.json({ message: "✅ Buchung erfolgreich gelöscht." });
+        res.json({ message: "Buchung gelöscht." });
     } catch (err) {
         await t.rollback();
-        console.error("❌ Fehler beim Löschen der Buchung:", err);
         next(err);
     }
 };

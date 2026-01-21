@@ -3,8 +3,8 @@ const sequelize = require("../config/db");
 
 /**
  * 🏨 Occupancy Model
- * Beschreibt, wie viele Betten einer Unterkunft für ein bestimmtes Event reserviert sind
- * und wie viele davon bereits gebucht wurden.
+ * Beschreibt die Zimmerkapazitäten einer Unterkunft
+ * für ein bestimmtes Event sowie deren Belegung.
  */
 const Occupancy = sequelize.define(
     "occupancy",
@@ -27,57 +27,95 @@ const Occupancy = sequelize.define(
             allowNull: false,
         },
 
-        // 🛏️ Gesamtkapazität für dieses Event
-        single_beds_total: {
+        // =====================================================
+        // 🛏️ Gesamtkapazität (Zimmer pro Typ)
+        // =====================================================
+        single_rooms_total: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0,
         },
-        double_beds_total: {
+        double_rooms_total: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0,
         },
-        multi_beds_total: {
+        quad_rooms_total: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0,
         },
-
-        // 📦 aktuell gebuchte Betten
-        single_beds_booked: {
+        quint_rooms_total: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0,
         },
-        double_beds_booked: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            defaultValue: 0,
-        },
-        multi_beds_booked: {
+        sext_rooms_total: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0,
         },
 
-        // 🧮 virtuelle Felder (werden automatisch berechnet)
+        // =====================================================
+        // 📦 Gebuchte Zimmer
+        // =====================================================
+        single_rooms_booked: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        double_rooms_booked: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        quad_rooms_booked: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        quint_rooms_booked: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        sext_rooms_booked: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+
+        // =====================================================
+        // 🧮 Verfügbare Zimmer (virtuell)
+        // =====================================================
         available_single: {
             type: DataTypes.VIRTUAL,
             get() {
-                return this.single_beds_total - this.single_beds_booked;
+                return this.single_rooms_total - this.single_rooms_booked;
             },
         },
         available_double: {
             type: DataTypes.VIRTUAL,
             get() {
-                return this.double_beds_total - this.double_beds_booked;
+                return this.double_rooms_total - this.double_rooms_booked;
             },
         },
-        available_multi: {
+        available_quad: {
             type: DataTypes.VIRTUAL,
             get() {
-                return this.multi_beds_total - this.multi_beds_booked;
+                return this.quad_rooms_total - this.quad_rooms_booked;
+            },
+        },
+        available_quint: {
+            type: DataTypes.VIRTUAL,
+            get() {
+                return this.quint_rooms_total - this.quint_rooms_booked;
+            },
+        },
+        available_sext: {
+            type: DataTypes.VIRTUAL,
+            get() {
+                return this.sext_rooms_total - this.sext_rooms_booked;
             },
         },
     },

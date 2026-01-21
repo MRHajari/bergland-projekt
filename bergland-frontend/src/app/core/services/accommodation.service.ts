@@ -16,7 +16,10 @@ export interface AccommodationInterface {
   // ==========================================================
   single_rooms?: number;
   double_rooms?: number;
-  multi_bed_rooms?: number;
+  quad_rooms?: number;   // 4-Bett-Zimmer
+  quint_rooms?: number;  // 5-Bett-Zimmer
+  sext_rooms?: number;   // 6-Bett-Zimmer
+
   total_beds?: number;
 
   // ==========================================================
@@ -24,11 +27,25 @@ export interface AccommodationInterface {
   // ==========================================================
   single_beds_total?: number;
   double_beds_total?: number;
+
+  // ⚠️ Legacy
   multi_beds_total?: number;
+
+  // ✅ NEU
+  quad_beds_total?: number;
+  quint_beds_total?: number;
+  sext_beds_total?: number;
 
   available_single?: number;
   available_double?: number;
+
+  // ⚠️ Legacy
   available_multi?: number;
+
+  // ✅ NEU
+  available_quad?: number;
+  available_quint?: number;
+  available_sext?: number;
 
   // ==========================================================
   // 🔗 Referenzen (Event & Occupancy)
@@ -37,12 +54,21 @@ export interface AccommodationInterface {
   event_id?: string;
 
   // ==========================================================
-  // 🧾 Historische Belegungen (falls du später Übersicht brauchst)
+  // 🧾 Historische Belegungen
   // ==========================================================
   occupancies?: {
     id?: string;
     event_id?: string;
     used_beds?: number;
+
+    // ⚠️ Legacy
+    used_multi_beds?: number;
+
+    // ✅ NEU
+    used_quad_beds?: number;
+    used_quint_beds?: number;
+    used_sext_beds?: number;
+
     event?: {
       id?: string;
       name?: string;
@@ -56,11 +82,16 @@ export interface AccommodationInterface {
   // ==========================================================
   request_single?: number;
   request_double?: number;
+
+  // ⚠️ Legacy
   request_multi?: number;
+
+  // ✅ NEU
+  request_quad?: number;
+  request_quint?: number;
+  request_sext?: number;
 }
 
-
- 
 @Injectable({
   providedIn: 'root'
 })
@@ -89,10 +120,10 @@ export class AccommodationService {
     return this.api.delete(this.endpoint, id);
   }
 
-
   // 🔹 Unterkünfte eines bestimmten Events laden
   getByEvent(eventId: string): Observable<AccommodationInterface[]> {
-    return this.api.get<AccommodationInterface[]>(`occupancies/events/${eventId}/accommodations`);
-  }  
-  
+    return this.api.get<AccommodationInterface[]>(
+      `occupancies/events/${eventId}/accommodations`
+    );
+  }
 }

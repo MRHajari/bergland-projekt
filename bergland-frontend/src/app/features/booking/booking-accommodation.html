@@ -24,6 +24,11 @@
                 <th>Einzel</th>
                 <th>Doppel</th>
                 <th>Mehrbett</th>
+
+                <!-- ✅ NEU -->
+                <th>4-Bett</th>
+                <th>5-Bett</th>
+                <th>6-Bett</th>
             </tr>
         </thead>
         <tbody>
@@ -34,6 +39,11 @@
                 <td>{{ b.single_beds }}</td>
                 <td>{{ b.double_beds }}</td>
                 <td>{{ b.multi_beds }}</td>
+
+                <!-- ✅ NEU -->
+                <td>{{ b.quad_beds || 0 }}</td>
+                <td>{{ b.quint_beds || 0 }}</td>
+                <td>{{ b.sext_beds || 0 }}</td>
             </tr>
             }
         </tbody>
@@ -62,6 +72,7 @@
                     <i class="fa-solid fa-circle-check me-1"></i> Gebucht
                 </span>
             </h3>
+
             <p class="location">
                 <i class="fa-solid fa-location-dot me-2"></i>
                 {{ acc.street }}, {{ acc.postal_code }} {{ acc.city }}
@@ -71,21 +82,43 @@
                 <p><strong><i class="fa-solid fa-bed me-2"></i> Verfügbare Zimmer:</strong></p>
                 <p>Einzelzimmer: {{ acc.available_single }} / {{ acc.single_beds_total }}</p>
                 <p>Doppelzimmer: {{ acc.available_double }} / {{ acc.double_beds_total }}</p>
-                <p>Mehrbettzimmer: {{ acc.available_multi }} / {{ acc.multi_beds_total }}</p>
+                <p>Mehrbettzimmer</p>
+
+                <!-- ✅ NEU -->
+                <p>4-Bett-Zimmer: {{ acc.available_quad }} / {{ acc.quad_beds_total }}</p>
+                <p>5-Bett-Zimmer: {{ acc.available_quint }} / {{ acc.quint_beds_total }}</p>
+                <p>6-Bett-Zimmer: {{ acc.available_sext }} / {{ acc.sext_beds_total }}</p>
             </div>
 
             <div class="room-selection">
                 <div class="room-row">
-                    <label><i class="fa-solid fa-person me-2"></i> Einzelzimmer:</label>
+                    <label>Einzelzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_single" min="0" [attr.max]="acc.available_single" />
                 </div>
+
                 <div class="room-row">
-                    <label><i class="fa-solid fa-people-pulling me-2"></i> Doppelzimmer:</label>
+                    <label>Doppelzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_double" min="0" [attr.max]="acc.available_double" />
                 </div>
+
                 <div class="room-row">
-                    <label><i class="fa-solid fa-users me-2"></i> Mehrbettzimmer:</label>
-                    <input type="number" [(ngModel)]="acc.request_multi" min="0" [attr.max]="acc.available_multi" />
+                    <label>Mehrbettzimmer</label>
+                </div>
+
+                <!-- ✅ NEU -->
+                <div class="room-row">
+                    <label>4-Bett-Zimmer:</label>
+                    <input type="number" [(ngModel)]="acc.request_quad" min="0" [attr.max]="acc.available_quad" />
+                </div>
+
+                <div class="room-row">
+                    <label>5-Bett-Zimmer:</label>
+                    <input type="number" [(ngModel)]="acc.request_quint" min="0" [attr.max]="acc.available_quint" />
+                </div>
+
+                <div class="room-row">
+                    <label>6-Bett-Zimmer:</label>
+                    <input type="number" [(ngModel)]="acc.request_sext" min="0" [attr.max]="acc.available_sext" />
                 </div>
             </div>
 
@@ -97,8 +130,10 @@
             </button>
         </div>
         } @else {
+
         <div class="acc-card">
             <h3><i class="fa-solid fa-hotel me-2"></i> {{ acc.name }}</h3>
+
             <p class="location">
                 <i class="fa-solid fa-location-dot me-2"></i>
                 {{ acc.street }}, {{ acc.postal_code }} {{ acc.city }}
@@ -108,21 +143,41 @@
                 <p><strong><i class="fa-solid fa-bed me-2"></i> Verfügbare Zimmer:</strong></p>
                 <p>Einzelzimmer: {{ acc.available_single }} / {{ acc.single_beds_total }}</p>
                 <p>Doppelzimmer: {{ acc.available_double }} / {{ acc.double_beds_total }}</p>
-                <p>Mehrbettzimmer: {{ acc.available_multi }} / {{ acc.multi_beds_total }}</p>
+                <p>Mehrbettzimmer</p>
+                <p>4-Bett-Zimmer: {{ acc.available_quad }} / {{ acc.quad_beds_total }}</p>
+                <p>5-Bett-Zimmer: {{ acc.available_quint }} / {{ acc.quint_beds_total }}</p>
+                <p>6-Bett-Zimmer: {{ acc.available_sext }} / {{ acc.sext_beds_total }}</p>
             </div>
 
             <div class="room-selection">
                 <div class="room-row">
-                    <label><i class="fa-solid fa-person me-2"></i> Einzelzimmer:</label>
+                    <label>Einzelzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_single" min="0" [attr.max]="acc.available_single" />
                 </div>
+
                 <div class="room-row">
-                    <label><i class="fa-solid fa-people-pulling me-2"></i> Doppelzimmer:</label>
+                    <label>Doppelzimmer:</label>
                     <input type="number" [(ngModel)]="acc.request_double" min="0" [attr.max]="acc.available_double" />
                 </div>
+
                 <div class="room-row">
-                    <label><i class="fa-solid fa-users me-2"></i> Mehrbettzimmer:</label>
-                    <input type="number" [(ngModel)]="acc.request_multi" min="0" [attr.max]="acc.available_multi" />
+                    <label>Mehrbettzimmer</label>
+                </div>
+
+                <!-- ✅ NEU -->
+                <div class="room-row">
+                    <label>4-Bett-Zimmer:</label>
+                    <input type="number" [(ngModel)]="acc.request_quad" min="0" [attr.max]="acc.available_quad" />
+                </div>
+
+                <div class="room-row">
+                    <label>5-Bett-Zimmer:</label>
+                    <input type="number" [(ngModel)]="acc.request_quint" min="0" [attr.max]="acc.available_quint" />
+                </div>
+
+                <div class="room-row">
+                    <label>6-Bett-Zimmer:</label>
+                    <input type="number" [(ngModel)]="acc.request_sext" min="0" [attr.max]="acc.available_sext" />
                 </div>
             </div>
 
