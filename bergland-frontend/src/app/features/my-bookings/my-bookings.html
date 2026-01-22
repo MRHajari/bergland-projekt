@@ -42,9 +42,11 @@
                 <strong>{{ b.accommodation?.name }}</strong>
                 <span class="city">({{ b.accommodation?.city }})</span> —
                 <span>
-                    Einzel: {{ b.single_beds || 0 }},
-                    Doppel: {{ b.double_beds || 0 }},
-                    Mehrbett: {{ b.multi_beds || 0 }}
+                    <span>Einzel: </span><strong>{{ b.single_beds || 0 }}</strong>,
+                    <span>Doppel: </span><strong>{{ b.double_beds || 0 }}</strong>,
+                    <span>4-Bett: </span><strong>{{ b.quad_beds || 0 }}</strong>,
+                    <span>5-Bett: </span><strong>{{ b.quint_beds || 0 }}</strong>,
+                    <span>6-Bett: </span><strong>{{ b.sext_beds || 0 }}</strong>
                 </span>
             </li>
             }

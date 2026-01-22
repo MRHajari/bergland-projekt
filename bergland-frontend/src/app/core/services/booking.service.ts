@@ -17,11 +17,6 @@ export interface BookingInterface {
   // ============================================================
   single_beds?: number;
   double_beds?: number;
-  multi_beds?: number;
-
-  // ============================================================
-  // ✅ NEU: differenzierte Mehrbett-Zimmer
-  // ============================================================
   quad_beds?: number;   // 4-Bett-Zimmer
   quint_beds?: number;  // 5-Bett-Zimmer
   sext_beds?: number;   // 6-Bett-Zimmer
@@ -99,9 +94,6 @@ export class BookingService {
       // Legacy
       single_beds: data.single_beds ?? 0,
       double_beds: data.double_beds ?? 0,
-      multi_beds: data.multi_beds ?? 0,
-
-      // ✅ NEU
       quad_beds: data.quad_beds ?? 0,
       quint_beds: data.quint_beds ?? 0,
       sext_beds: data.sext_beds ?? 0,
@@ -118,9 +110,6 @@ export class BookingService {
       // Legacy
       single_beds: data.single_beds ?? 0,
       double_beds: data.double_beds ?? 0,
-      multi_beds: data.multi_beds ?? 0,
-
-      // ✅ NEU
       quad_beds: data.quad_beds ?? 0,
       quint_beds: data.quint_beds ?? 0,
       sext_beds: data.sext_beds ?? 0,

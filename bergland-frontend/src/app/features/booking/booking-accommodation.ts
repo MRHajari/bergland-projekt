@@ -84,9 +84,6 @@ export class BookingAccommodation implements OnInit {
 
       request_single: 0,
       request_double: 0,
-      request_multi: 0,
-
-      // ✅ NEU
       request_quad: 0,
       request_quint: 0,
       request_sext: 0,
@@ -106,9 +103,6 @@ export class BookingAccommodation implements OnInit {
       if (acc) {
         acc.request_single = booking.single_beds ?? 0;
         acc.request_double = booking.double_beds ?? 0;
-        acc.request_multi  = booking.multi_beds ?? 0;
-
-        // ✅ NEU
         acc.request_quad  = booking.quad_beds ?? 0;
         acc.request_quint = booking.quint_beds ?? 0;
         acc.request_sext  = booking.sext_beds ?? 0;
@@ -125,9 +119,6 @@ export class BookingAccommodation implements OnInit {
 
       single_beds: acc.request_single || 0,
       double_beds: acc.request_double || 0,
-      multi_beds: acc.request_multi || 0,
-
-      // ✅ NEU
       quad_beds: acc.request_quad || 0,
       quint_beds: acc.request_quint || 0,
       sext_beds: acc.request_sext || 0,
@@ -159,7 +150,6 @@ export class BookingAccommodation implements OnInit {
 
     acc.request_single = 0;
     acc.request_double = 0;
-    acc.request_multi = 0;
     acc.request_quad = 0;
     acc.request_quint = 0;
     acc.request_sext = 0;
