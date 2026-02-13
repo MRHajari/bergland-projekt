@@ -1,7 +1,17 @@
-const { Runtime, EventRegistration, Route, User } = require("../models");
+const {
+    Runtime,
+    EventRegistration,
+    RelayTeam,
+    User,
+    Event
+} = require("../models");
+
 const { runtimeSchema } = require("../validators/runtimeValidator");
 
+
+// ============================================================
 // ➕ Neue Laufzeit anlegen
+// ============================================================
 exports.createRuntime = async (req, res, next) => {
     try {
         const { error, value } = runtimeSchema.validate(req.body);
@@ -9,15 +19,28 @@ exports.createRuntime = async (req, res, next) => {
             return res.status(400).json({ error: error.details[0].message });
         }
 
-        const { event_registration_id, route_id, duration_seconds } = value;
+        const { event_registration_id, event_route_id, duration_seconds } = value;
 
-        // 🔍 Prüfen, ob Anmeldung existiert
+        // 🔍 Registrierung prüfen
         const registration = await EventRegistration.findByPk(event_registration_id);
         if (!registration) {
             return res.status(404).json({ error: "EventRegistration nicht gefunden." });
         }
 
-        // 🔍 Prüfen, ob bereits Runtime existiert
+        // 🔍 RelayTeam prüfen
+        const relayTeam = await RelayTeam.findByPk(event_route_id);
+        if (!relayTeam) {
+            return res.status(404).json({ error: "Lauftag nicht gefunden." });
+        }
+
+        // 🔒 Sicherheitscheck: Registration muss zum selben Event gehören
+        if (registration.event_id !== relayTeam.event_id) {
+            return res.status(400).json({
+                error: "Anmeldung gehört nicht zu diesem Event.",
+            });
+        }
+
+        // 🔍 Prüfen ob bereits Runtime existiert
         const existing = await Runtime.findOne({
             where: { event_registration_id },
         });
@@ -30,9 +53,9 @@ exports.createRuntime = async (req, res, next) => {
 
         const runtime = await Runtime.create({
             event_registration_id,
-            route_id,
+            event_route_id,
             duration_seconds,
-            recorded_by: req.user.id, // 👈 wichtig
+            recorded_by: req.user.id,
         });
 
         res.status(201).json(runtime);
@@ -42,7 +65,11 @@ exports.createRuntime = async (req, res, next) => {
     }
 };
 
-// 📋 Alle Laufzeiten laden
+
+
+// ============================================================
+// 📋 Alle Laufzeiten
+// ============================================================
 exports.getAllRuntimes = async (req, res, next) => {
     try {
         const runtimes = await Runtime.findAll({
@@ -50,15 +77,19 @@ exports.getAllRuntimes = async (req, res, next) => {
                 {
                     model: EventRegistration,
                     as: "registration",
-                    include: [
-                        {
-                            association: "registered_by_person",
-                            attributes: ["id", "first_name", "last_name", "email"],
-                        },
-                    ],
                 },
-                { model: Route, as: "route" },
-                { model: User, as: "timekeeper", attributes: ["id", "email"] },
+                {
+                    model: RelayTeam,
+                    as: "eventRoute",
+                    include: [
+                        { model: Event, as: "event" }
+                    ]
+                },
+                {
+                    model: User,
+                    as: "timekeeper",
+                    attributes: ["id", "email"]
+                },
             ],
             order: [["createdAt", "DESC"]],
         });
@@ -70,16 +101,17 @@ exports.getAllRuntimes = async (req, res, next) => {
     }
 };
 
-// 🔍 Einzelne Laufzeit per ID
+
+
+// ============================================================
+// 🔍 Laufzeit per ID
+// ============================================================
 exports.getRuntimeById = async (req, res, next) => {
     try {
         const runtime = await Runtime.findByPk(req.params.id, {
             include: [
-                {
-                    model: EventRegistration,
-                    as: "registration",
-                },
-                { model: Route, as: "route" },
+                { model: EventRegistration, as: "registration" },
+                { model: RelayTeam, as: "eventRoute" },
                 { model: User, as: "timekeeper" },
             ],
         });
@@ -95,7 +127,11 @@ exports.getRuntimeById = async (req, res, next) => {
     }
 };
 
+
+
+// ============================================================
 // 🔍 Laufzeit zu einer bestimmten Anmeldung
+// ============================================================
 exports.getByRegistration = async (req, res, next) => {
     try {
         const { registrationId } = req.params;
@@ -103,7 +139,7 @@ exports.getByRegistration = async (req, res, next) => {
         const runtime = await Runtime.findOne({
             where: { event_registration_id: registrationId },
             include: [
-                { model: Route, as: "route" },
+                { model: RelayTeam, as: "eventRoute" },
                 { model: User, as: "timekeeper" },
             ],
         });
@@ -115,7 +151,11 @@ exports.getByRegistration = async (req, res, next) => {
     }
 };
 
+
+
+// ============================================================
 // ✏️ Laufzeit aktualisieren
+// ============================================================
 exports.updateRuntime = async (req, res, next) => {
     try {
         const runtime = await Runtime.findByPk(req.params.id);
@@ -130,8 +170,7 @@ exports.updateRuntime = async (req, res, next) => {
 
         await runtime.update({
             duration_seconds: value.duration_seconds,
-            route_id: value.route_id,
-            recorded_by: req.user.id, // 👈 Update wird protokolliert
+            recorded_by: req.user.id,
         });
 
         res.json(runtime);
@@ -141,7 +180,11 @@ exports.updateRuntime = async (req, res, next) => {
     }
 };
 
+
+
+// ============================================================
 // ❌ Laufzeit löschen
+// ============================================================
 exports.deleteRuntime = async (req, res, next) => {
     try {
         const runtime = await Runtime.findByPk(req.params.id);

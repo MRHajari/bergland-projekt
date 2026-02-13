@@ -13,10 +13,10 @@ const Runtime = sequelize.define(
         event_registration_id: {
             type: DataTypes.UUID,
             allowNull: false,
-            unique: true, // ✅ wichtig: nur eine Laufzeit pro Anmeldung
+            unique: true,
         },
 
-        route_id: {
+        event_route_id: {
             type: DataTypes.UUID,
             allowNull: false,
         },
@@ -35,7 +35,6 @@ const Runtime = sequelize.define(
         recorded_by: {
             type: DataTypes.UUID,
             allowNull: false,
-            comment: "User-ID des Timekeepers",
         },
     },
     {

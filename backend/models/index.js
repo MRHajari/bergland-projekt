@@ -24,6 +24,7 @@ const Product = require("./product");
 const RelInvoiceProduct = require("./rel_invoice_product");
 const Token = require("./token");
 const Occupancy = require("./occupancy");
+const RelayTeam = require("./relay_team");
 
 // --------------------------------------------------------------
 // 🧩 Debug-Log
@@ -202,32 +203,7 @@ Occupancy.belongsTo(Accommodation, {
     as: "accommodation",
 });
 
-// ======================================================
-// 🗺️ EVENT ↔ ROUTE (1:n)
-// ======================================================
-Event.hasMany(Route, {
-    foreignKey: "event_id",
-    as: "routes",
-    onDelete: "CASCADE",
-});
-Route.belongsTo(Event, {
-    foreignKey: "event_id",
-    as: "event",
-});
 
-
-// ======================================================
-// 🕓 ROUTE ↔ RUNTIME (1:n)
-// ======================================================
-Route.hasMany(Runtime, {
-    foreignKey: "route_id",
-    as: "runtimes",
-    onDelete: "CASCADE",
-});
-Runtime.belongsTo(Route, {
-    foreignKey: "route_id",
-    as: "route",
-});
 
 // ======================================================
 // 🕒 EVENTREGISTRATION ↔ RUNTIME (1:1)
@@ -253,6 +229,48 @@ Runtime.belongsTo(User, {
     foreignKey: "recorded_by",
     as: "timekeeper",
 });
+
+// ======================================================
+// 🗓️ EVENT ↔ RELAYTEAM (Lauftag)
+// ======================================================
+
+Event.hasMany(RelayTeam, {
+    foreignKey: "event_id",
+    as: "eventRoutes",
+    onDelete: "CASCADE",
+});
+RelayTeam.belongsTo(Event, {
+    foreignKey: "event_id",
+    as: "event",
+});
+
+Route.hasMany(RelayTeam, {
+    foreignKey: "route_id",
+    as: "eventRoutes",
+    onDelete: "CASCADE",
+});
+RelayTeam.belongsTo(Route, {
+    foreignKey: "route_id",
+    as: "route",
+});
+
+
+// ======================================================
+// 🏁 RELAYTEAM ↔ RUNTIME
+// ======================================================
+
+RelayTeam.hasMany(Runtime, {
+    foreignKey: "event_route_id",
+    as: "runtimes",
+    onDelete: "CASCADE",
+});
+
+Runtime.belongsTo(RelayTeam, {
+    foreignKey: "event_route_id",
+    as: "eventRoute",
+});
+
+
 
 // ======================================================
 // 🔗 EventRegistration – Gruppenstruktur
@@ -349,6 +367,7 @@ module.exports = {
     UserRegistration,
     Runtime,
     Route,
+    RelayTeam,
     Squadron,
     RelPersonSquadron,
     Occupancy,
