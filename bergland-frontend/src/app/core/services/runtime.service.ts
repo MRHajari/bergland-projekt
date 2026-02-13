@@ -1,46 +1,63 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApiService } from '../api.service';
 
-export interface RuntimeDto {
+export interface Runtime {
   id: string;
-  registration_id: string;
-  route_id: string;
-  start_time?: string | null;  // ISO
-  end_time?: string | null;    // ISO
-  total_time?: string | null;  // z. B. "00:47:32"
+  event_registration_id: string;
+  event_route_id: string;
+  duration_seconds: number;
+  position?: number;
+  recorded_by: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class RuntimeService {
-  private endpoint = 'runtimes';
+  private apiUrl = 'http://localhost:3000/api/runtimes';
 
-  constructor(private api: ApiService) {}
+  constructor(private http: HttpClient) {}
 
-  getAll(): Observable<RuntimeDto[]> {
-    return this.api.get(this.endpoint);
+  // 📋 Alle Laufzeiten
+  getAll(): Observable<Runtime[]> {
+    return this.http.get<Runtime[]>(this.apiUrl);
   }
 
-  getById(id: string): Observable<RuntimeDto> {
-    return this.api.getById(this.endpoint, id);
+  // 🔍 Laufzeit per ID
+  getById(id: string): Observable<Runtime> {
+    return this.http.get<Runtime>(`${this.apiUrl}/${id}`);
   }
 
-  // 🔹 NEU: Laufzeiten zu einer Anmeldung
-  getByRegistration(registrationId: string): Observable<RuntimeDto[]> {
-    return this.api.get(`${this.endpoint}/registration/${registrationId}`);
+  // 🔍 Laufzeit zu Anmeldung
+  getByRegistration(registrationId: string): Observable<Runtime> {
+    return this.http.get<Runtime>(
+      `${this.apiUrl}/registration/${registrationId}`
+    );
   }
 
-  create(data: Partial<RuntimeDto>): Observable<RuntimeDto> {
-    return this.api.post(this.endpoint, data);
+  // ➕ Neue Laufzeit
+  create(data: {
+    event_registration_id: string;
+    event_route_id: string;
+    duration_seconds: number;
+  }): Observable<Runtime> {
+    return this.http.post<Runtime>(this.apiUrl, data);
   }
 
-  update(id: string, data: Partial<RuntimeDto>): Observable<RuntimeDto> {
-    return this.api.put(this.endpoint, id, data);
+  // ✏️ Laufzeit aktualisieren
+  update(id: string, data: {
+    event_registration_id: string;
+    event_route_id: string;
+    duration_seconds: number;
+  }): Observable<Runtime> {
+    return this.http.put<Runtime>(`${this.apiUrl}/${id}`, data);
   }
 
+  // ❌ Löschen
   delete(id: string): Observable<any> {
-    return this.api.delete(this.endpoint, id);
+    return this.http.delete(`${this.apiUrl}/${id}`);
   }
 }

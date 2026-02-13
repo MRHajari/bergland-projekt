@@ -1,48 +1,54 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApiService } from '../api.service';
 
-export interface RelayTeamDto {
+export interface RelayTeam {
   id: string;
   event_id: string;
   route_id: string;
-  name?: string | null;
-  run_date: string;           // yyyy-MM-dd
-  start_time?: string | null; // HH:mm (optional)
-  start_location?: string | null;
-  notes?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
+  run_date: string;
+  start_time?: string;
+  start_location?: string;
+  notes?: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class RelayTeamService {
-  private endpoint = 'relay-teams';
+  private apiUrl = 'http://localhost:3000/api/relay-teams';
 
-  constructor(private api: ApiService) {}
+  constructor(private http: HttpClient) {}
 
-  getAll(): Observable<RelayTeamDto[]> {
-    return this.api.get(this.endpoint);
+  // 📋 Alle Lauftage
+  getAll(): Observable<RelayTeam[]> {
+    return this.http.get<RelayTeam[]>(this.apiUrl);
   }
 
-  getById(id: string): Observable<RelayTeamDto> {
-    return this.api.getById(this.endpoint, id);
+  // 🔍 Lauftag per ID
+  getById(id: string): Observable<RelayTeam> {
+    return this.http.get<RelayTeam>(`${this.apiUrl}/${id}`);
   }
 
-  // 🔹 NEU: Lauftage eines Events
-  getByEvent(eventId: string): Observable<RelayTeamDto[]> {
-    return this.api.get(`${this.endpoint}/event/${eventId}`);
+  // 🔍 Lauftage eines Events
+  getByEvent(eventId: string): Observable<RelayTeam[]> {
+    return this.http.get<RelayTeam[]>(
+      `${this.apiUrl}/event/${eventId}`
+    );
   }
 
-  create(data: Partial<RelayTeamDto>): Observable<RelayTeamDto> {
-    return this.api.post(this.endpoint, data);
+  // ➕ Erstellen
+  create(data: RelayTeam): Observable<RelayTeam> {
+    return this.http.post<RelayTeam>(this.apiUrl, data);
   }
 
-  update(id: string, data: Partial<RelayTeamDto>): Observable<RelayTeamDto> {
-    return this.api.put(this.endpoint, id, data);
+  // ✏️ Aktualisieren
+  update(id: string, data: RelayTeam): Observable<RelayTeam> {
+    return this.http.put<RelayTeam>(`${this.apiUrl}/${id}`, data);
   }
 
+  // ❌ Löschen
   delete(id: string): Observable<any> {
-    return this.api.delete(this.endpoint, id);
+    return this.http.delete(`${this.apiUrl}/${id}`);
   }
 }

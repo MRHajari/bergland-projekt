@@ -1,53 +1,45 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApiService } from '../api.service';
 
-export interface RouteDto {
+export interface Route {
   id: string;
-  event_id: string;
   name: string;
-  start_point?: string | null;
-  end_point?: string | null;
-
-  // Je nach Backend-Variante – beide optional abdecken:
-  length_km?: number | null;      // unsere erste Modellvariante
-  elevation_m?: number | null;
-  distance_km?: number | null;    // falls du das Feld im Backend nutzt (Seed)
-  difficulty?: string | null;
-
-  description?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
+  distance_km: number;
+  difficulty?: string;
+  description?: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class RouteService {
-  private endpoint = 'routes';
+  private apiUrl = 'http://localhost:3000/api/routes';
 
-  constructor(private api: ApiService) {}
+  constructor(private http: HttpClient) {}
 
-  getAll(): Observable<RouteDto[]> {
-    return this.api.get(this.endpoint);
+  // 📋 Alle Strecken
+  getAll(): Observable<Route[]> {
+    return this.http.get<Route[]>(this.apiUrl);
   }
 
-  getById(id: string): Observable<RouteDto> {
-    return this.api.getById(this.endpoint, id);
+  // 🔍 Strecke per ID
+  getById(id: string): Observable<Route> {
+    return this.http.get<Route>(`${this.apiUrl}/${id}`);
   }
 
-  // 🔹 NEU: Strecken eines Events
-  getByEvent(eventId: string): Observable<RouteDto[]> {
-    return this.api.get(`${this.endpoint}/event/${eventId}`);
+  // ➕ Erstellen
+  create(data: Route): Observable<Route> {
+    return this.http.post<Route>(this.apiUrl, data);
   }
 
-  create(data: Partial<RouteDto>): Observable<RouteDto> {
-    return this.api.post(this.endpoint, data);
+  // ✏️ Aktualisieren
+  update(id: string, data: Route): Observable<Route> {
+    return this.http.put<Route>(`${this.apiUrl}/${id}`, data);
   }
 
-  update(id: string, data: Partial<RouteDto>): Observable<RouteDto> {
-    return this.api.put(this.endpoint, id, data);
-  }
-
+  // ❌ Löschen
   delete(id: string): Observable<any> {
-    return this.api.delete(this.endpoint, id);
+    return this.http.delete(`${this.apiUrl}/${id}`);
   }
 }
