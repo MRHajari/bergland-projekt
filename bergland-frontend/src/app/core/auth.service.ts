@@ -66,35 +66,34 @@ export class AuthService {
   // ============================================================
   refreshToken(): Observable<any> {
     const token = localStorage.getItem('refreshToken');
-    return this.http.post(`${this.apiUrl}/refresh-token`, { token }).pipe(
-      tap((res: any) => {
-        if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
-        if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
-        if (res.user) localStorage.setItem('currentUser', JSON.stringify(res.user));
-      }),
-      catchError((err) => {
-        console.error('❌ Token-Aktualisierung fehlgeschlagen:', err);
-        this.clearSession();
-        return throwError(() => err);
-      })
-    );
+    return this.http.post(`${this.apiUrl}/refresh-token`, { token });
   }
+
 
   // ============================================================
   // 🔹 Logout
   // ============================================================
   logout(): Observable<any> {
     const token = localStorage.getItem('refreshToken');
-    const obs = this.http.post(`${this.apiUrl}/logout`, { token }).pipe(
+  
+    // ✅ Lokal sofort löschen (stabil)
+    this.clearSessionLocal();
+  
+    // ✅ Backend optional informieren
+    if (!token) {
+      return this.http.post(`${this.apiUrl}/logout`, { token: null });
+    }
+  
+    return this.http.post(`${this.apiUrl}/logout`, { token }).pipe(
       catchError((err) => {
+        // Backend-Fehler egal – lokal sind wir schon raus
         console.warn('⚠️ Logout-Fehler:', err);
         return throwError(() => err);
       })
     );
-
-    this.clearSession();
-    return obs;
   }
+  
+  
 
   private clearSession() {
     localStorage.removeItem('accessToken');
@@ -148,4 +147,12 @@ export class AuthService {
       return false;
     }
   }
+
+clearSessionLocal() {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('currentUser');
+}
+
+
 }
