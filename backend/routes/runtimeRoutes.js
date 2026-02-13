@@ -1,17 +1,59 @@
 const express = require("express");
 const router = express.Router();
-const { authenticateToken } = require("../middlewares/authMiddleware");
+
+const { authenticateToken, requireRole } = require("../middlewares/authMiddleware");
 const runtimeController = require("../controllers/runtimeController");
 
-// Standard-CRUD
-router.post("/", authenticateToken, runtimeController.createRuntime);
-router.get("/", authenticateToken, runtimeController.getAllRuntimes);
-router.get("/:id", authenticateToken, runtimeController.getRuntimeById);
-router.put("/:id", authenticateToken, runtimeController.updateRuntime);
-router.delete("/:id", authenticateToken, runtimeController.deleteRuntime);
+// -----------------------------------------------------
+// 🔒 Nur Timekeeper & Admin dürfen Laufzeiten verwalten
+// -----------------------------------------------------
 
-// Erweiterte Abfragen
-router.get("/person/:personId", authenticateToken, runtimeController.getByPerson);
-router.get("/registration/:registrationId", authenticateToken, runtimeController.getByRegistration);
+// ➕ Neue Laufzeit
+router.post(
+    "/",
+    authenticateToken,
+    requireRole("timekeeper", "admin"),
+    runtimeController.createRuntime
+);
+
+// 📋 Alle Laufzeiten
+router.get(
+    "/",
+    authenticateToken,
+    requireRole("timekeeper", "admin"),
+    runtimeController.getAllRuntimes
+);
+
+// 🔍 Laufzeit nach Anmeldung
+router.get(
+    "/registration/:registrationId",
+    authenticateToken,
+    requireRole("timekeeper", "admin"),
+    runtimeController.getByRegistration
+);
+
+// 🔍 Einzelne Laufzeit
+router.get(
+    "/:id",
+    authenticateToken,
+    requireRole("timekeeper", "admin"),
+    runtimeController.getRuntimeById
+);
+
+// ✏️ Aktualisieren
+router.put(
+    "/:id",
+    authenticateToken,
+    requireRole("timekeeper", "admin"),
+    runtimeController.updateRuntime
+);
+
+// ❌ Löschen
+router.delete(
+    "/:id",
+    authenticateToken,
+    requireRole("timekeeper", "admin"),
+    runtimeController.deleteRuntime
+);
 
 module.exports = router;

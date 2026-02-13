@@ -215,7 +215,10 @@ Route.belongsTo(Event, {
     as: "event",
 });
 
+
+// ======================================================
 // 🕓 ROUTE ↔ RUNTIME (1:n)
+// ======================================================
 Route.hasMany(Runtime, {
     foreignKey: "route_id",
     as: "runtimes",
@@ -226,26 +229,29 @@ Runtime.belongsTo(Route, {
     as: "route",
 });
 
-// 🕒 PERSON ↔ RUNTIME (1:n)
-Person.hasMany(Runtime, {
-    foreignKey: "person_id",
-    as: "runtimes",
-    onDelete: "CASCADE",
-});
-Runtime.belongsTo(Person, {
-    foreignKey: "person_id",
-    as: "person",
-});
-
-// 🕓 EVENTREGISTRATION ↔ RUNTIME (1:n)
-EventRegistration.hasMany(Runtime, {
+// ======================================================
+// 🕒 EVENTREGISTRATION ↔ RUNTIME (1:1)
+// ======================================================
+EventRegistration.hasOne(Runtime, {
     foreignKey: "event_registration_id",
-    as: "runtimes",
+    as: "runtime",
     onDelete: "CASCADE",
 });
 Runtime.belongsTo(EventRegistration, {
     foreignKey: "event_registration_id",
-    as: "eventRegistration",
+    as: "registration",
+});
+
+// ======================================================
+// 👮 USER (Timekeeper) ↔ RUNTIME
+// ======================================================
+User.hasMany(Runtime, {
+    foreignKey: "recorded_by",
+    as: "recordedRuntimes",
+});
+Runtime.belongsTo(User, {
+    foreignKey: "recorded_by",
+    as: "timekeeper",
 });
 
 // ======================================================

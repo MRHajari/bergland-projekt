@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
+
 const eventController = require("../controllers/eventController");
-const { authenticateToken, authorizeAdmin } = require("../middlewares/authMiddleware");
+const { authenticateToken, requireRole } = require("../middlewares/authMiddleware");
 
 // ============================================================
 // 🔹 Öffentliche Routen (sichtbar für alle Benutzer)
@@ -18,13 +19,28 @@ router.get("/:id", eventController.getEventById);
 // ============================================================
 
 // ➕ Neues Event erstellen
-router.post("/", authenticateToken, authorizeAdmin, eventController.createEvent);
+router.post(
+    "/",
+    authenticateToken,
+    requireRole("admin"),
+    eventController.createEvent
+);
 
 // ✏️ Event aktualisieren
-router.put("/:id", authenticateToken, authorizeAdmin, eventController.updateEvent);
+router.put(
+    "/:id",
+    authenticateToken,
+    requireRole("admin"),
+    eventController.updateEvent
+);
 
 // 🗑️ Event löschen
-router.delete("/:id", authenticateToken, authorizeAdmin, eventController.deleteEvent);
+router.delete(
+    "/:id",
+    authenticateToken,
+    requireRole("admin"),
+    eventController.deleteEvent
+);
 
 // ============================================================
 // 🏨 Unterkünfte (Occupancies) für ein Event abrufen
