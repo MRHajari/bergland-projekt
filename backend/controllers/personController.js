@@ -1,5 +1,7 @@
 const Person = require("../models/person");
 const { personSchema } = require("../validators/personValidator");
+const { User } = require("../models");
+
 
 /**
  * PersonController
@@ -38,21 +40,28 @@ exports.getPersonById = async (req, res) => {
 // ➕ Neue Person erstellen
 exports.create = async (req, res) => {
     try {
+        if (!req.user?.id) {
+            return res.status(401).json({ message: "Nicht authentifiziert" });
+        }
+
         const { error, value } = personSchema.validate(req.body);
-        if (error)
-            return res
-                .status(400)
-                .json({ message: error.details[0].message });
+        if (error) {
+            return res.status(400).json({ message: error.details[0].message });
+        }
+
+        const owner_id = req.user.id;
+
+        // 🔍 Sicherstellen, dass User existiert
+        const userExists = await User.findByPk(owner_id);
+        if (!userExists) {
+            return res.status(400).json({
+                message: "Owner-User existiert nicht mehr.",
+            });
+        }
 
         const { first_name, last_name, email } = value;
-        const owner_id = req.user?.id || req.body.owner_id;
 
-        if (!first_name || !last_name || !owner_id)
-            return res
-                .status(400)
-                .json({ message: "Vorname, Nachname und owner_id sind erforderlich" });
-
-        // 🔎 Doppelprüfung: existiert bereits eine Person mit gleichem Namen + Owner?
+        // 🔎 Doppelprüfung
         const existing = await Person.findOne({
             where: {
                 first_name: first_name.trim(),
@@ -68,7 +77,6 @@ exports.create = async (req, res) => {
             });
         }
 
-        // ✳️ Optional: Email eindeutig?
         if (email) {
             const existingEmail = await Person.findOne({ where: { email } });
             if (existingEmail) {
@@ -79,13 +87,13 @@ exports.create = async (req, res) => {
             }
         }
 
-        // ✅ Person anlegen
         const newPerson = await Person.create({
             ...value,
             owner_id,
         });
 
         res.status(201).json(newPerson);
+
     } catch (err) {
         console.error("❌ Fehler beim Erstellen einer Person:", err);
         res.status(500).json({ message: "Serverfehler beim Erstellen der Person" });

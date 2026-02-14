@@ -17,13 +17,29 @@ const { validateEvent, validateEventUpdate } = require("../validators/eventValid
 // ============================================================
 exports.getAllEvents = async (req, res) => {
     try {
-        // ✅ Lazy-Import verhindert EagerLoadingError
-        const { Event, Route, Squadron, EventRegistration, Occupancy, Accommodation } = require("../models");
+        const {
+            Event,
+            RelayTeam,
+            Route,
+            Squadron,
+            EventRegistration,
+            Occupancy,
+            Accommodation
+        } = require("../models");
 
         const events = await Event.findAll({
             include: [
-                { model: Route, as: "routes" },
-                { model: Squadron, as: "squadrons" }, // ✅ richtiger Alias
+                {
+                    model: RelayTeam,
+                    as: "eventRoutes",
+                    include: [
+                        {
+                            model: Route,
+                            as: "route",
+                        },
+                    ],
+                },
+                { model: Squadron, as: "squadrons" },
                 { model: EventRegistration, as: "eventRegistrations" },
                 {
                     model: Occupancy,
@@ -40,16 +56,7 @@ exports.getAllEvents = async (req, res) => {
             order: [["start_date", "ASC"]],
         });
 
-        const result = events.map((e) => ({
-            ...e.toJSON(),
-            route_count: e.routes?.length || 0,
-            squadron_count: e.squadrons?.length || 0,
-            registration_count: e.eventRegistrations?.length || 0,
-            accommodations:
-                e.occupancies?.map((o) => o.accommodation).filter(Boolean) || [],
-        }));
-
-        res.json(result);
+        res.json(events);
     } catch (error) {
         console.error("❌ Fehler beim Abrufen der Events:", error);
         res.status(500).json({
@@ -60,15 +67,35 @@ exports.getAllEvents = async (req, res) => {
 };
 
 
+
 // ============================================================
 // 🔍 Einzelnes Event mit allen Details abrufen
 // ============================================================
 exports.getEventById = async (req, res) => {
     try {
-        const { Event, Squadron, EventRegistration, Person, Route, Occupancy, Booking } = require("../models");
+        const {
+            Event,
+            RelayTeam,
+            Route,
+            Squadron,
+            EventRegistration,
+            Person,
+            Occupancy,
+            Booking,
+        } = require("../models");
 
         const event = await Event.findByPk(req.params.id, {
             include: [
+                {
+                    model: RelayTeam,
+                    as: "eventRoutes",
+                    include: [
+                        {
+                            model: Route,
+                            as: "route",
+                        },
+                    ],
+                },
                 { model: Squadron, as: "squadrons" },
                 {
                     model: EventRegistration,
@@ -77,11 +104,10 @@ exports.getEventById = async (req, res) => {
                         {
                             model: Person,
                             as: "registered_by_person",
-                            attributes: ["first_name", "last_name", "email"],
+                            attributes: ["id", "first_name", "last_name", "email"],
                         },
                     ],
                 },
-                { model: Route, as: "routes" },
                 { model: Occupancy, as: "occupancies" },
                 { model: Booking, as: "bookings" },
             ],
@@ -96,6 +122,7 @@ exports.getEventById = async (req, res) => {
         res.status(500).json({ message: "Fehler beim Laden des Events." });
     }
 };
+
 
 
 // ============================================================
