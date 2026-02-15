@@ -4,9 +4,12 @@ import { Observable } from 'rxjs';
 
 export interface Route {
   id: string;
+  event_id: string;
   name: string;
-  distance_km: number;
-  difficulty?: string;
+  start_point?: string;
+  end_point?: string;
+  length_km?: number;
+  elevation_m?: number;
   description?: string;
 }
 

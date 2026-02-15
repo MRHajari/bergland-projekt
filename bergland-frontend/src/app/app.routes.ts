@@ -20,6 +20,7 @@ import { ProductsAdmin } from './features/admin/products-admin/products-admin';
 import { EventsAdmin } from './features/admin/events-admin/events-admin';
 import { UsersAdmin } from './features/admin/users-admin/users-admin';
 import { AccommodationsAdmin } from './features/admin/accommodations-admin/accommodations-admin';
+import { RoutesAdmin } from './features/admin/routes-admin/routes-admin';
 import { MyBookings } from './features/my-bookings/my-bookings';
 import { MyOrders } from './features/my-orders/my-orders';
 import { InvoicesAdmin } from './features/admin/invoices-admin/invoices-admin';
@@ -84,6 +85,7 @@ export const routes: Routes = [
           { path: 'events', component: EventsAdmin },
           { path: 'events/:id/registrations', loadComponent: () => import('./features/admin/events-admin/event-registrations-admin/event-registrations-admin.js').then(m => m.EventRegistrationsAdmin) },
           { path: 'users', component: UsersAdmin },
+          { path: 'routes', component: RoutesAdmin },
           { path: 'accommodations', component: AccommodationsAdmin },
           { path: 'invoices', component: InvoicesAdmin },
 

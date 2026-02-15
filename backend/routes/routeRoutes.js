@@ -1,32 +1,28 @@
-// backend/routes/bookingRoutes.js
 const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middlewares/authMiddleware");
-const bookingController = require("../controllers/bookingController");
+const routeController = require("../controllers/routeController");
 
-// ============================================================
-// Buchungen API
-// ============================================================
+// ==============================
+// ROUTE API
+// ==============================
 
-// Alle Buchungen (Admin)
-router.get("/", authenticateToken, bookingController.getAllBookings);
+// Alle Strecken
+router.get("/", authenticateToken, routeController.getAllRoutes);
 
-// Alle Buchungen eines Benutzers
-router.get("/user/:userId", authenticateToken, bookingController.getBookingsByUser);
+// Strecken eines Events
+router.get("/event/:eventId", authenticateToken, routeController.getRoutesByEvent);
 
-// Buchungen nach Registrierung
-router.get("/by-registration/:registrationId", authenticateToken, bookingController.getAllByRegistration);
+// Einzelne Strecke
+router.get("/:id", authenticateToken, routeController.getRouteById);
 
-// Einzelne Buchung
-router.get("/:id", authenticateToken, bookingController.getBookingById);
-
-// Neue Buchung
-router.post("/", authenticateToken, bookingController.createBooking);
+// Neue Strecke
+router.post("/", authenticateToken, routeController.createRoute);
 
 // Update
-router.put("/:id", authenticateToken, bookingController.updateBooking);
+router.put("/:id", authenticateToken, routeController.updateRoute);
 
 // Löschen
-router.delete("/:id", authenticateToken, bookingController.deleteBooking);
+router.delete("/:id", authenticateToken, routeController.deleteRoute);
 
 module.exports = router;

@@ -16,5 +16,6 @@ export class AdminDashboard {
     { title: 'Unterkünfte', route: '/admin/accommodations', icon: 'fa-solid fa-hotel' },
     { title: 'Produkte verwalten', route: '/admin/products', icon: 'fa-solid fa-boxes-stacked' },
     { title: 'Rechnungen verwalten', route: '/admin/invoices', icon: 'fa-solid fa-file-invoice' },
+    { title: 'Strecken verwalten', route: '/admin/routes', icon: 'fa-solid fa-route' }
   ];
 }

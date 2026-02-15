@@ -1,0 +1,176 @@
+<div class="admin-container">
+
+    <button class="back-btn" (click)="goBack()">← Zurück</button>
+
+    <h1>Strecken Verwaltung</h1>
+
+    @if (loading) {
+    <p class="loading">Lade Strecken...</p>
+    }
+    @else if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+    }
+    @else {
+
+    <!-- ================= CREATE ================= -->
+    <section class="form-section">
+
+        <h2>Neue Strecke</h2>
+
+        <form (ngSubmit)="addRoute()" class="form-grid">
+
+            <div class="form-group">
+                <label>Event ID</label>
+                <input [(ngModel)]="newRoute.event_id" name="event_id" required>
+            </div>
+
+            <div class="form-group">
+                <label>Name</label>
+                <input [(ngModel)]="newRoute.name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Startpunkt</label>
+                <input [(ngModel)]="newRoute.start_point" name="start_point">
+            </div>
+
+            <div class="form-group">
+                <label>Endpunkt</label>
+                <input [(ngModel)]="newRoute.end_point" name="end_point">
+            </div>
+
+            <div class="form-group">
+                <label>Länge (km)</label>
+                <input type="number" [(ngModel)]="newRoute.length_km" name="length_km">
+            </div>
+
+            <div class="form-group">
+                <label>Höhenmeter</label>
+                <input type="number" [(ngModel)]="newRoute.elevation_m" name="elevation_m">
+            </div>
+
+            <div class="form-group full">
+                <label>Beschreibung</label>
+                <textarea [(ngModel)]="newRoute.description" name="description"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="primary">+ Erstellen</button>
+            </div>
+
+        </form>
+
+    </section>
+
+
+    <!-- ================= LIST ================= -->
+    <section class="list-section">
+
+        <h2>Bestehende Strecken</h2>
+
+        <input class="search-input" [(ngModel)]="searchTerm" placeholder="Nach Name oder Event suchen">
+
+        @if (filteredRoutes.length === 0) {
+        <p>Keine Strecken gefunden.</p>
+        }
+        @else {
+
+        <table class="user-table">
+
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Event</th>
+                    <th>Länge</th>
+                    <th>HM</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @for (r of pagedRoutes; track r.id) {
+
+                <tr>
+
+                    <!-- NAME -->
+                    <td>
+                        @if (editingRoute && editingRoute.id === r.id) {
+                        <input [(ngModel)]="editingRoute.name" name="name_{{r.id}}">
+                        }
+                        @else {
+                        {{ r.name }}
+                        }
+                    </td>
+
+                    <!-- EVENT -->
+                    <td>{{ r.event_id }}</td>
+
+                    <!-- LENGTH -->
+                    <td>
+                        @if (editingRoute && editingRoute.id === r.id) {
+                        <input type="number" [(ngModel)]="editingRoute.length_km" name="length_{{r.id}}">
+                        }
+                        @else {
+                        {{ r.length_km ?? '—' }}
+                        }
+                    </td>
+
+                    <!-- ELEVATION -->
+                    <td>
+                        @if (editingRoute && editingRoute.id === r.id) {
+                        <input type="number" [(ngModel)]="editingRoute.elevation_m" name="elev_{{r.id}}">
+                        }
+                        @else {
+                        {{ r.elevation_m ?? '—' }}
+                        }
+                    </td>
+
+                    <!-- ACTIONS -->
+                    <td class="actions">
+
+                        @if (editingRoute && editingRoute.id === r.id) {
+
+                        <button class="primary" (click)="saveRoute()">Speichern</button>
+                        <button class="secondary" (click)="cancelEdit()">Abbrechen</button>
+
+                        }
+                        @else {
+
+                        <button class="secondary" (click)="editRoute(r)">Bearbeiten</button>
+                        <button class="danger" (click)="deleteRoute(r.id, r.name)">Löschen</button>
+
+                        }
+
+                    </td>
+
+                </tr>
+
+                }
+
+            </tbody>
+        </table>
+
+
+        <!-- PAGINATION -->
+        <div class="pagination">
+
+            <button (click)="page = page - 1" [disabled]="page === 1">
+                ← Zurück
+            </button>
+
+            <span>Seite {{ page }} / {{ totalPages }}</span>
+
+            <button (click)="page = page + 1" [disabled]="page === totalPages">
+                Weiter →
+            </button>
+
+        </div>
+
+        }
+
+    </section>
+
+    }
+
+</div>

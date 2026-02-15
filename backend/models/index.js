@@ -256,6 +256,22 @@ RelayTeam.belongsTo(Route, {
 
 
 // ======================================================
+// 🗺️ ROUTE ↔ EVENT
+// ======================================================
+
+Event.hasMany(Route, {
+    foreignKey: "event_id",
+    as: "routes",
+    onDelete: "CASCADE",
+});
+
+Route.belongsTo(Event, {
+    foreignKey: "event_id",
+    as: "event",
+});
+
+
+// ======================================================
 // 🏁 RELAYTEAM ↔ RUNTIME
 // ======================================================
 
