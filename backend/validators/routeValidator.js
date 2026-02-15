@@ -2,8 +2,6 @@
 const Joi = require("joi");
 
 const routeSchema = Joi.object({
-    event_id: Joi.string().guid({ version: "uuidv4" }).required(),
-
     name: Joi.string().min(2).max(180).required(),
 
     start_point: Joi.string().max(180).allow("", null),

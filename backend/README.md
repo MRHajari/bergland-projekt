@@ -11,7 +11,7 @@ Backend-API für die **Bergland-App** (Reservierung, Events, Rechnungen, Zahlung
 - Vollständige Datenbank-Modelle:
   - Person, Address, LoginData
   - Accommodation, Booking
-  - Event, Registration, Runtime, RelayTeam, Route
+  - Event, Registration, Runtime, EventRoute, Route
   - Invoice, Payment, Product
 - Authentifizierung & Autorisierung mit **JWT** (Access + Refresh Tokens)
 - Eingabevalidierung mit **Joi**
@@ -23,10 +23,11 @@ Backend-API für die **Bergland-App** (Reservierung, Events, Rechnungen, Zahlung
 ---
 
 ## 📂 Projektstruktur
+
 backend/
 ├── config/                                 # ⚙️ Konfigurationen
 │   ├── db.js                               # Sequelize DB-Konfiguration (SQLite)
-│   └── config.js                             # 
+│   └── config.js                             #
 │
 ├── controllers/                            # 🎯 Business-Logik / API-Controller
 │   ├── accommodationController.js          # Unterkunft
@@ -39,7 +40,7 @@ backend/
 │   ├── occupancyController.js              # Belegung (Unterkunft ↔ Event)
 │   ├── personController.js                 # Personenverwaltung
 │   ├── productController.js                # Produkte (Startgebühr, T-Shirt, etc.)
-│   ├── relayTeamController.js              # Staffel / Teams
+│   ├── eventRouteController.js              # Staffel / Teams
 │   ├── relPersonAddressController.js       # Verbindung Person ↔ Adresse
 │   ├── routeController.js                  # Routen / Strecken
 │   ├── runtimeController.js                # Laufzeiten / Ergebnisse
@@ -80,7 +81,7 @@ backend/
 │   ├── occupancyRoutes.js
 │   ├── personRoutes.js
 │   ├── productRoutes.js
-│   ├── relayTeamRoutes.js
+│   ├── eventRouteRoutes.js
 │   ├── relPersonAddressRoutes.js
 │   ├── routeRoutes.js
 │   ├── runtimeRoutes.js
@@ -100,7 +101,7 @@ backend/
 │   ├── occupancyValidator.js               # Belegung
 │   ├── personValidator.js                  # Personendaten
 │   ├── productValidator.js                 # Produkte
-│   ├── relayTeamValidator.js               # Staffel / Team
+│   ├── eventRouteValidator.js               # Staffel / Team
 │   ├── relPersonAddressValidator.js        # Verbindung Person ↔ Adresse
 │   ├── routeValidator.js                   # Routen
 │   ├── runtimeValidator.js                 # Laufzeiten
@@ -112,7 +113,7 @@ backend/
 ├── middlewares/                            # 🧱 Middleware-Schicht
 │   ├── authMiddleware.js                   # JWT-Verifikation
 │   ├── errorHandler.js                     # Globale Fehlerbehandlung
-│   
+│
 │
 ├── db/
 │   └── database.sqlite                     # SQLite Datenbank (lokal)
@@ -124,26 +125,26 @@ backend/
 ├── server.js                               # 🚀 Express App – lädt Config, Routes & DB
 └── README.md                               # 📘 Projektdokumentation
 
-
-
-
 # Dependencies installieren
+
 npm install
 
 # Entwicklung (mit automatischem Seeding)
+
 NODE_ENV=development node server.js
 
 # Produktion
+
 NODE_ENV=production node server.js
 
-
 #### Development starten
-npm run dev
 
+npm run dev
 
 ## ⚙️ Installation & Setup
 
 ### 1. Repository klonen
+
 ```bash
 git clone <repo-url>
 cd backend

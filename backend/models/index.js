@@ -24,7 +24,7 @@ const Product = require("./product");
 const RelInvoiceProduct = require("./rel_invoice_product");
 const Token = require("./token");
 const Occupancy = require("./occupancy");
-const RelayTeam = require("./relay_team");
+const EventRoute = require("./eventRoute");
 
 // --------------------------------------------------------------
 // 🧩 Debug-Log
@@ -37,6 +37,7 @@ console.log("DEBUG MODELS:", {
     Booking: !!Booking?.getTableName,
     Invoice: !!Invoice?.getTableName,
     Product: !!Product?.getTableName,
+    EventRoute: !!EventRoute?.getTableName,
 });
 
 // --------------------------------------------------------------
@@ -203,14 +204,15 @@ Occupancy.belongsTo(Accommodation, {
     as: "accommodation",
 });
 
-
-
 // ======================================================
-// 🕒 EVENTREGISTRATION ↔ RUNTIME (1:1)
+// 🕒 EVENTREGISTRATION ↔ RUNTIME
 // ======================================================
-EventRegistration.hasOne(Runtime, {
+
+// ⚠️ WICHTIG: Runtime ist NICHT 1:1 wenn Person mehrere Strecken laufen kann.
+// Daher: hasMany statt hasOne.
+EventRegistration.hasMany(Runtime, {
     foreignKey: "event_registration_id",
-    as: "runtime",
+    as: "runtimes",
     onDelete: "CASCADE",
 });
 Runtime.belongsTo(EventRegistration, {
@@ -231,61 +233,60 @@ Runtime.belongsTo(User, {
 });
 
 // ======================================================
-// 🗓️ EVENT ↔ RELAYTEAM (Lauftag)
+// ✅ EVENT ↔ ROUTE über EVENTROUTE (Join-Tabelle)
 // ======================================================
 
-Event.hasMany(RelayTeam, {
+// Event 1:n EventRoute
+Event.hasMany(EventRoute, {
     foreignKey: "event_id",
     as: "eventRoutes",
     onDelete: "CASCADE",
 });
-RelayTeam.belongsTo(Event, {
+EventRoute.belongsTo(Event, {
     foreignKey: "event_id",
     as: "event",
 });
 
-Route.hasMany(RelayTeam, {
+// Route 1:n EventRoute
+Route.hasMany(EventRoute, {
     foreignKey: "route_id",
     as: "eventRoutes",
     onDelete: "CASCADE",
 });
-RelayTeam.belongsTo(Route, {
+EventRoute.belongsTo(Route, {
     foreignKey: "route_id",
     as: "route",
 });
 
-
-// ======================================================
-// 🗺️ ROUTE ↔ EVENT
-// ======================================================
-
-Event.hasMany(Route, {
+// Many-to-Many Zugriff
+Event.belongsToMany(Route, {
+    through: EventRoute,
     foreignKey: "event_id",
+    otherKey: "route_id",
     as: "routes",
-    onDelete: "CASCADE",
 });
 
-Route.belongsTo(Event, {
-    foreignKey: "event_id",
-    as: "event",
+Route.belongsToMany(Event, {
+    through: EventRoute,
+    foreignKey: "route_id",
+    otherKey: "event_id",
+    as: "events",
 });
 
-
 // ======================================================
-// 🏁 RELAYTEAM ↔ RUNTIME
+// ✅ RUNTIME ↔ EVENTROUTE (KERNRELATION)
 // ======================================================
 
-RelayTeam.hasMany(Runtime, {
+EventRoute.hasMany(Runtime, {
     foreignKey: "event_route_id",
     as: "runtimes",
     onDelete: "CASCADE",
 });
 
-Runtime.belongsTo(RelayTeam, {
+Runtime.belongsTo(EventRoute, {
     foreignKey: "event_route_id",
     as: "eventRoute",
 });
-
 
 
 // ======================================================
@@ -383,7 +384,7 @@ module.exports = {
     UserRegistration,
     Runtime,
     Route,
-    RelayTeam,
+    EventRoute,
     Squadron,
     RelPersonSquadron,
     Occupancy,

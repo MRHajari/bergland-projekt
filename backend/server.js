@@ -41,6 +41,7 @@ app.use("/api/accommodations", require("./routes/accommodationRoutes"));
 app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/events", require("./routes/eventRoutes"));
 app.use("/api/routes", require("./routes/routeRoutes"));
+app.use("/api/event-routes", require("./routes/eventRouteRoutes"));
 app.use("/api/runtimes", require("./routes/runtimeRoutes"));
 app.use("/api/squadrons", require("./routes/squadronRoutes"));
 app.use("/api/rel-person-squadron", require("./routes/relPersonSquadronRoutes"));

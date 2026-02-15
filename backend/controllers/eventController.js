@@ -8,29 +8,20 @@ const {
     Booking,
     Person,
     Accommodation,
+    EventRoute
 } = require("../models");
 
 const { validateEvent, validateEventUpdate } = require("../validators/eventValidator");
 
 // ============================================================
-// 📋 Alle Events abrufen (mit Unterkünften)
+// 📋 Alle Events abrufen (mit Strecken + Unterkünften)
 // ============================================================
 exports.getAllEvents = async (req, res) => {
     try {
-        const {
-            Event,
-            RelayTeam,
-            Route,
-            Squadron,
-            EventRegistration,
-            Occupancy,
-            Accommodation
-        } = require("../models");
-
         const events = await Event.findAll({
             include: [
                 {
-                    model: RelayTeam,
+                    model: EventRoute,
                     as: "eventRoutes",
                     include: [
                         {
@@ -67,27 +58,15 @@ exports.getAllEvents = async (req, res) => {
 };
 
 
-
 // ============================================================
 // 🔍 Einzelnes Event mit allen Details abrufen
 // ============================================================
 exports.getEventById = async (req, res) => {
     try {
-        const {
-            Event,
-            RelayTeam,
-            Route,
-            Squadron,
-            EventRegistration,
-            Person,
-            Occupancy,
-            Booking,
-        } = require("../models");
-
         const event = await Event.findByPk(req.params.id, {
             include: [
                 {
-                    model: RelayTeam,
+                    model: EventRoute,
                     as: "eventRoutes",
                     include: [
                         {
@@ -124,7 +103,6 @@ exports.getEventById = async (req, res) => {
 };
 
 
-
 // ============================================================
 // ➕ Neues Event erstellen
 // ============================================================
@@ -154,6 +132,7 @@ exports.createEvent = async (req, res) => {
     }
 };
 
+
 // ============================================================
 // ✏️ Event aktualisieren
 // ============================================================
@@ -180,6 +159,7 @@ exports.updateEvent = async (req, res) => {
     }
 };
 
+
 // ============================================================
 // ❌ Event löschen
 // ============================================================
@@ -193,6 +173,6 @@ exports.deleteEvent = async (req, res) => {
         res.json({ message: "🗑️ Event erfolgreich gelöscht." });
     } catch (err) {
         console.error("❌ Fehler beim Löschen des Events:", err);
-        res.status(500).json({ message: "Fehler beim Löschen des E  vents." });
+        res.status(500).json({ message: "Fehler beim Löschen des Events." });
     }
 };
