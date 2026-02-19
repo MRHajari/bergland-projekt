@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouteService, Route } from '../../../core/services/route.service';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
+
+
 
 @Component({
   selector: 'app-routes-admin',
@@ -18,7 +20,6 @@ export class RoutesAdmin implements OnInit {
   editingRoute: Route | null = null;
 
   newRoute: Partial<Route> = {
-    event_id: '',
     name: '',
     start_point: '',
     end_point: '',
@@ -34,60 +35,51 @@ export class RoutesAdmin implements OnInit {
   page = 1;
   pageSize = 10;
 
-  constructor(
-    private routeService: RouteService,
-    private location: Location,
-    private router: Router
-  ) {}
+  showRouteModal = false;
+eventRoutesMap: Record<string, boolean> = {};
+selectedRouteEventId: string | null = null;
+
+
+  private location = inject(Location);
+  private router= inject(Router);
+  private routeService = inject(RouteService);
 
   ngOnInit(): void {
     this.loadRoutes();
   }
 
-  // =============================
-  // LOAD
-  // =============================
   loadRoutes(): void {
     this.loading = true;
     this.routeService.getAll().subscribe({
       next: data => {
-        this.routes = data;
         console.log('Strecken geladen:', data);
+        this.routes = data;
         this.loading = false;
       },
-      error: err => {
-        console.error(err);
+      error: () => {
         this.errorMessage = 'Fehler beim Laden der Strecken';
         this.loading = false;
       }
     });
   }
 
-  // =============================
-  // CREATE
-  // =============================
   addRoute(): void {
-    if (!this.newRoute.name?.trim() || !this.newRoute.event_id?.trim()) {
-      alert('Name und Event ID sind Pflichtfelder');
+    if (!this.newRoute.name?.trim()) {
+      alert('Name ist Pflichtfeld');
       return;
     }
 
     this.routeService.create(this.newRoute as Route).subscribe({
       next: () => {
-        alert('Strecke erstellt');
         this.resetForm();
         this.loadRoutes();
       },
-      error: err => {
-        console.error(err);
-        alert('Fehler beim Erstellen');
-      }
+      error: () => alert('Fehler beim Erstellen')
     });
   }
 
   resetForm() {
     this.newRoute = {
-      event_id: '',
       name: '',
       start_point: '',
       end_point: '',
@@ -97,9 +89,6 @@ export class RoutesAdmin implements OnInit {
     };
   }
 
-  // =============================
-  // EDIT
-  // =============================
   editRoute(route: Route) {
     this.editingRoute = { ...route };
   }
@@ -108,15 +97,9 @@ export class RoutesAdmin implements OnInit {
     if (!this.editingRoute) return;
 
     this.routeService.update(this.editingRoute.id, this.editingRoute)
-      .subscribe({
-        next: () => {
-          this.editingRoute = null;
-          this.loadRoutes();
-        },
-        error: err => {
-          console.error(err);
-          alert('Fehler beim Speichern');
-        }
+      .subscribe(() => {
+        this.editingRoute = null;
+        this.loadRoutes();
       });
   }
 
@@ -124,36 +107,21 @@ export class RoutesAdmin implements OnInit {
     this.editingRoute = null;
   }
 
-  // =============================
-  // DELETE
-  // =============================
   deleteRoute(id: string, name: string) {
     if (!confirm(`Strecke "${name}" löschen?`)) return;
 
-    this.routeService.delete(id).subscribe({
-      next: () => this.loadRoutes(),
-      error: err => {
-        console.error(err);
-        alert('Fehler beim Löschen');
-      }
-    });
+    this.routeService.delete(id)
+      .subscribe(() => this.loadRoutes());
   }
 
-  // =============================
-  // FILTER
-  // =============================
   get filteredRoutes() {
     if (!this.searchTerm.trim()) return this.routes;
     const term = this.searchTerm.toLowerCase();
     return this.routes.filter(r =>
-      r.name.toLowerCase().includes(term) ||
-      r.event_id.toLowerCase().includes(term)
+      r.name.toLowerCase().includes(term)
     );
   }
 
-  // =============================
-  // PAGINATION
-  // =============================
   get pagedRoutes() {
     const start = (this.page - 1) * this.pageSize;
     return this.filteredRoutes.slice(start, start + this.pageSize);
@@ -162,6 +130,7 @@ export class RoutesAdmin implements OnInit {
   get totalPages() {
     return Math.ceil(this.filteredRoutes.length / this.pageSize);
   }
+  
 
   goBack() {
     if (window.history.length > 1)

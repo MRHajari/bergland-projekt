@@ -12,17 +12,12 @@
     }
     @else {
 
-    <!-- ================= CREATE ================= -->
+    <!-- CREATE -->
     <section class="form-section">
 
         <h2>Neue Strecke</h2>
 
         <form (ngSubmit)="addRoute()" class="form-grid">
-
-            <div class="form-group">
-                <label>Event ID</label>
-                <input [(ngModel)]="newRoute.event_id" name="event_id" required>
-            </div>
 
             <div class="form-group">
                 <label>Name</label>
@@ -62,13 +57,12 @@
 
     </section>
 
-
-    <!-- ================= LIST ================= -->
+    <!-- LIST -->
     <section class="list-section">
 
         <h2>Bestehende Strecken</h2>
 
-        <input class="search-input" [(ngModel)]="searchTerm" placeholder="Nach Name oder Event suchen">
+        <input class="search-input" [(ngModel)]="searchTerm" placeholder="Nach Name suchen">
 
         @if (filteredRoutes.length === 0) {
         <p>Keine Strecken gefunden.</p>
@@ -76,11 +70,9 @@
         @else {
 
         <table class="user-table">
-
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Event</th>
                     <th>Länge</th>
                     <th>HM</th>
                     <th>Aktionen</th>
@@ -88,12 +80,9 @@
             </thead>
 
             <tbody>
-
                 @for (r of pagedRoutes; track r.id) {
-
                 <tr>
 
-                    <!-- NAME -->
                     <td>
                         @if (editingRoute && editingRoute.id === r.id) {
                         <input [(ngModel)]="editingRoute.name" name="name_{{r.id}}">
@@ -103,10 +92,6 @@
                         }
                     </td>
 
-                    <!-- EVENT -->
-                    <td>{{ r.event_id }}</td>
-
-                    <!-- LENGTH -->
                     <td>
                         @if (editingRoute && editingRoute.id === r.id) {
                         <input type="number" [(ngModel)]="editingRoute.length_km" name="length_{{r.id}}">
@@ -116,7 +101,6 @@
                         }
                     </td>
 
-                    <!-- ELEVATION -->
                     <td>
                         @if (editingRoute && editingRoute.id === r.id) {
                         <input type="number" [(ngModel)]="editingRoute.elevation_m" name="elev_{{r.id}}">
@@ -126,45 +110,28 @@
                         }
                     </td>
 
-                    <!-- ACTIONS -->
                     <td class="actions">
 
                         @if (editingRoute && editingRoute.id === r.id) {
-
                         <button class="primary" (click)="saveRoute()">Speichern</button>
                         <button class="secondary" (click)="cancelEdit()">Abbrechen</button>
-
                         }
                         @else {
-
                         <button class="secondary" (click)="editRoute(r)">Bearbeiten</button>
                         <button class="danger" (click)="deleteRoute(r.id, r.name)">Löschen</button>
-
                         }
 
                     </td>
 
                 </tr>
-
                 }
-
             </tbody>
         </table>
 
-
-        <!-- PAGINATION -->
         <div class="pagination">
-
-            <button (click)="page = page - 1" [disabled]="page === 1">
-                ← Zurück
-            </button>
-
+            <button (click)="page = page - 1" [disabled]="page === 1">← Zurück</button>
             <span>Seite {{ page }} / {{ totalPages }}</span>
-
-            <button (click)="page = page + 1" [disabled]="page === totalPages">
-                Weiter →
-            </button>
-
+            <button (click)="page = page + 1" [disabled]="page === totalPages">Weiter →</button>
         </div>
 
         }
@@ -172,5 +139,4 @@
     </section>
 
     }
-
 </div>
