@@ -8,6 +8,9 @@ import { EventRegistrationService } from '../../../core/services/event-registrat
 import { AccommodationService } from '../../../core/services/accommodation.service';
 import { OccupancyService } from '../../../core/services/occupancy.service';
 import { Location } from '@angular/common';
+import { RouteService } from '../../../core/services/route.service';
+import { EventRouteService } from '../../../core/services/event-route.service';
+
 
 @Component({
   selector: 'app-events-admin',
@@ -22,8 +25,15 @@ export class EventsAdmin implements OnInit {
   private eventRegistrationService = inject(EventRegistrationService);
   private router = inject(Router);
   private accommodationService = inject(AccommodationService);
-private occupancyService = inject(OccupancyService);
-private location = inject(Location);
+  private occupancyService = inject(OccupancyService);
+  private location = inject(Location);
+  private routeService = inject(RouteService);
+  private eventRouteService = inject(EventRouteService);
+
+  showRouteModal = false;
+  routes: any[] = [];
+  eventRoutesMap: Record<string, boolean> = {};
+  selectedRouteEventId: string | null = null;
 
 
   events: any[] = [];
@@ -258,6 +268,62 @@ getAccommodationNames(event: any): string {
     return '–';
   }
   return event.accommodations.map((a: any) => a.name).join(', ');
+}
+
+
+// ================= ROUTE MODAL =================
+
+// öffnen
+openRouteModal(event: any) {
+  this.selectedRouteEventId = event.id;
+  this.showRouteModal = true;
+
+  this.routeService.getAll().subscribe({
+    next: (data) => {
+      this.routes = data || [];
+      this.loadEventRoutes(event.id);
+    }
+  });
+}
+
+// bestehende Zuordnungen laden
+loadEventRoutes(eventId: string) {
+  this.eventRouteService.getByEvent(eventId).subscribe({
+    next: (data) => {
+      this.eventRoutesMap = {};
+      data.forEach((r: any) => this.eventRoutesMap[r.route_id] = true);
+    }
+  });
+}
+
+// checkbox toggle
+toggleRoute(routeId: string, checked: boolean) {
+  this.eventRoutesMap[routeId] = checked;
+}
+
+// speichern
+saveRouteAssignments() {
+  if (!this.selectedRouteEventId) return;
+
+  const payload = Object.entries(this.eventRoutesMap)
+    .filter(([_, checked]) => checked)
+    .map(([route_id]) => ({
+      event_id: this.selectedRouteEventId,
+      route_id
+    }));
+
+  this.eventRouteService.updateAssignments(this.selectedRouteEventId, payload)
+    .subscribe(() => {
+      this.showRouteModal = false;
+      this.selectedRouteEventId = null;
+      this.loadEvents();
+    });
+}
+
+// schließen
+closeRouteModal() {
+  this.showRouteModal = false;
+  this.selectedRouteEventId = null;
 }
 
 

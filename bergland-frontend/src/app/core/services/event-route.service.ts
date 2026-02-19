@@ -45,6 +45,10 @@ export class EventRouteService {
     return this.http.put<EventRoute>(`${this.apiUrl}/${id}`, data);
   }
 
+  updateAssignments(eventId: string, data: any[]) {
+    return this.http.post(`${this.apiUrl}/bulk/${eventId}`, data);
+  }
+
   // ❌ delete
   delete(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);

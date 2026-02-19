@@ -2,17 +2,20 @@
 const { EventRoute, Event, Route } = require("../models");
 const schema = require("../validators/eventRouteValidator");
 
-// ➕ Zuordnung Event ↔ Route (Lauftag) erstellen
+// ➕ Zuordnung erstellen
 exports.createEventRoute = async (req, res, next) => {
     try {
         const { error, value } = schema.validate(req.body);
-        if (error) return res.status(400).json({ error: error.details[0].message });
+        if (error)
+            return res.status(400).json({ error: error.details[0].message });
 
         const event = await Event.findByPk(value.event_id);
-        if (!event) return res.status(404).json({ error: "Event nicht gefunden." });
+        if (!event)
+            return res.status(404).json({ error: "Event nicht gefunden." });
 
         const route = await Route.findByPk(value.route_id);
-        if (!route) return res.status(404).json({ error: "Route nicht gefunden." });
+        if (!route)
+            return res.status(404).json({ error: "Route nicht gefunden." });
 
         const created = await EventRoute.create(value);
         res.status(201).json(created);
@@ -22,7 +25,7 @@ exports.createEventRoute = async (req, res, next) => {
     }
 };
 
-// 📋 Alle Lauftage (Admin)
+// 📋 Alle Zuordnungen
 exports.getAllEventRoutes = async (req, res, next) => {
     try {
         const items = await EventRoute.findAll({
@@ -39,7 +42,7 @@ exports.getAllEventRoutes = async (req, res, next) => {
     }
 };
 
-// 📋 Lauftage eines Events
+// 📋 Nach Event
 exports.getEventRoutesByEvent = async (req, res, next) => {
     try {
         const { eventId } = req.params;
@@ -57,16 +60,50 @@ exports.getEventRoutesByEvent = async (req, res, next) => {
     }
 };
 
-// ❌ Löschen einer Zuordnung
+// ❌ Löschen
 exports.deleteEventRoute = async (req, res, next) => {
     try {
         const item = await EventRoute.findByPk(req.params.id);
-        if (!item) return res.status(404).json({ error: "EventRoute nicht gefunden." });
+        if (!item)
+            return res.status(404).json({ error: "EventRoute nicht gefunden." });
 
         await item.destroy();
         res.json({ message: "Zuordnung gelöscht." });
     } catch (err) {
         console.error("❌ Fehler beim Löschen EventRoute:", err);
+        next(err);
+    }
+};
+
+// ===================================================
+// GET BY EVENT (für Frontend Modal)
+// ===================================================
+exports.getByEvent = async (req, res, next) => {
+    try {
+        const rows = await EventRoute.findAll({
+            where: { event_id: req.params.eventId }
+        });
+        res.json(rows);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ===================================================
+// BULK ASSIGN
+// ===================================================
+exports.bulkAssign = async (req, res, next) => {
+    try {
+        const eventId = req.params.eventId;
+        const rows = req.body;
+
+        await EventRoute.destroy({
+            where: { event_id: eventId }
+        });
+
+        const created = await EventRoute.bulkCreate(rows);
+        res.json(created);
+    } catch (err) {
         next(err);
     }
 };

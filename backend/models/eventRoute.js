@@ -14,14 +14,23 @@ const EventRoute = sequelize.define(
         event_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            references: {
+                model: "event",
+                key: "id",
+            },
+            onDelete: "CASCADE",
         },
 
         route_id: {
             type: DataTypes.UUID,
             allowNull: false,
+            references: {
+                model: "route",
+                key: "id",
+            },
+            onDelete: "CASCADE",
         },
 
-        // optional: wenn du im Diagramm "Lauftag" = Datum/Zeitslot meinst
         day_date: {
             type: DataTypes.DATEONLY,
             allowNull: true,
@@ -41,11 +50,18 @@ const EventRoute = sequelize.define(
         tableName: "event_route",
         freezeTableName: true,
         timestamps: true,
+
         indexes: [
             {
                 unique: true,
                 fields: ["event_id", "route_id", "day_date", "start_time"],
             },
+            {
+                fields: ["event_id"],
+            },
+            {
+                fields: ["route_id"],
+            }
         ],
     }
 );
