@@ -7,7 +7,10 @@ const {
     Route
 } = require("../models");
 
-const { runtimeSchema } = require("../validators/runtimeValidator");
+const {
+    createRuntimeSchema,
+    updateRuntimeSchema,
+} = require("../validators/runtimeValidator");
 
 
 // ============================================================
@@ -15,55 +18,84 @@ const { runtimeSchema } = require("../validators/runtimeValidator");
 // ============================================================
 exports.createRuntime = async (req, res, next) => {
     try {
-        const { error, value } = runtimeSchema.validate(req.body);
+        const { error, value } = createRuntimeSchema.validate(req.body);
         if (error) return res.status(400).json({ error: error.details[0].message });
 
         const { event_registration_id, event_route_id, duration_seconds } = value;
 
+        console.log("CREATE runtime payload:", {
+            event_registration_id,
+            event_route_id,
+            duration_seconds,
+            user: req.user?.id,
+        });
+
         // Registrierung prüfen
         const registration = await EventRegistration.findByPk(event_registration_id);
-        if (!registration)
+        if (!registration) {
             return res.status(404).json({ error: "Registration nicht gefunden." });
+        }
 
-        // EventRoute prüfen
-        const eventRoute = await EventRoute.findByPk(event_route_id);
-        if (!eventRoute)
-            return res.status(404).json({ error: "EventRoute nicht gefunden." });
+        /**
+         * WICHTIG:
+         * Frontend schickt aktuell Route.id als event_route_id.
+         * Daher NICHT findByPk(event_route_id), sondern EventRoute über (event_id + route_id) suchen.
+         */
+        const eventRoute = await EventRoute.findOne({
+            where: {
+                event_id: registration.event_id,
+                route_id: event_route_id, // <- hier steckt Route.id drin
+            },
+        });
 
-        // Sicherheitscheck: gleiche Event-Zuordnung
-        if (registration.event_id !== eventRoute.event_id)
-            return res.status(400).json({
-                error: "Registration gehört nicht zu diesem Event.",
-            });
+        console.log("FOUND eventRoute:", eventRoute ? {
+            id: eventRoute.id,
+            event_id: eventRoute.event_id,
+            route_id: eventRoute.route_id,
+        } : null);
+
+        if (!eventRoute) {
+            return res
+                .status(404)
+                .json({ error: "EventRoute nicht gefunden (Event+Route passt nicht)." });
+        }
 
         // prüfen ob runtime für diese kombination existiert
         const exists = await Runtime.findOne({
             where: {
                 event_registration_id,
-                event_route_id
-            }
+                event_route_id: eventRoute.id, // <- speichern immer gegen EventRoute.id
+            },
         });
 
-        if (exists)
+        if (exists) {
             return res.status(400).json({
                 error: "Für diese Strecke existiert bereits eine Laufzeit.",
             });
+        }
 
         const runtime = await Runtime.create({
             event_registration_id,
-            event_route_id,
+            event_route_id: eventRoute.id, // <- EventRoute.id in DB speichern
             duration_seconds,
             recorded_by: req.user.id,
         });
 
-        res.status(201).json(runtime);
+        const created = await Runtime.findByPk(runtime.id, {
+            include: [
+                {
+                    model: EventRoute,
+                    as: "eventRoute",
+                },
+            ],
+        });
 
+        return res.status(201).json(created);
     } catch (err) {
         console.error("❌ Fehler createRuntime:", err);
         next(err);
     }
 };
-
 
 // ============================================================
 // 📋 Alle Laufzeiten
@@ -78,10 +110,10 @@ exports.getAllRuntimes = async (req, res, next) => {
                     as: "eventRoute",
                     include: [
                         { model: Event, as: "event" },
-                        { model: Route, as: "route" }
-                    ]
+                        { model: Route, as: "route" },
+                    ],
                 },
-                { model: User, as: "timekeeper", attributes: ["id", "email"] }
+                { model: User, as: "timekeeper", attributes: ["id", "email"] },
             ],
             order: [["createdAt", "DESC"]],
         });
@@ -92,7 +124,6 @@ exports.getAllRuntimes = async (req, res, next) => {
         next(err);
     }
 };
-
 
 // ============================================================
 // 🔍 Laufzeit per ID
@@ -107,8 +138,7 @@ exports.getRuntimeById = async (req, res, next) => {
             ],
         });
 
-        if (!runtime)
-            return res.status(404).json({ error: "Runtime nicht gefunden." });
+        if (!runtime) return res.status(404).json({ error: "Runtime nicht gefunden." });
 
         res.json(runtime);
     } catch (err) {
@@ -116,7 +146,6 @@ exports.getRuntimeById = async (req, res, next) => {
         next(err);
     }
 };
-
 
 // ============================================================
 // 🔍 Laufzeiten einer Anmeldung
@@ -127,8 +156,8 @@ exports.getByRegistration = async (req, res, next) => {
             where: { event_registration_id: req.params.registrationId },
             include: [
                 { model: EventRoute, as: "eventRoute" },
-                { model: User, as: "timekeeper" }
-            ]
+                { model: User, as: "timekeeper" },
+            ],
         });
 
         res.json(runtimes);
@@ -138,32 +167,33 @@ exports.getByRegistration = async (req, res, next) => {
     }
 };
 
-
 // ============================================================
 // ✏️ Laufzeit ändern
 // ============================================================
 exports.updateRuntime = async (req, res, next) => {
     try {
         const runtime = await Runtime.findByPk(req.params.id);
-        if (!runtime)
-            return res.status(404).json({ error: "Runtime nicht gefunden." });
+        if (!runtime) return res.status(404).json({ error: "Runtime nicht gefunden." });
 
-        const { error, value } = runtimeSchema.validate(req.body);
-        if (error)
-            return res.status(400).json({ error: error.details[0].message });
+        const { error, value } = updateRuntimeSchema.validate(req.body);
+        if (error) return res.status(400).json({ error: error.details[0].message });
 
         await runtime.update({
             duration_seconds: value.duration_seconds,
             recorded_by: req.user.id,
         });
 
-        res.json(runtime);
+        // optional: Runtime inkl. eventRoute zurückgeben, damit Frontend direkt alles hat
+        const updated = await Runtime.findByPk(runtime.id, {
+            include: [{ model: EventRoute, as: "eventRoute" }],
+        });
+
+        return res.json(updated);
     } catch (err) {
         console.error("❌ Fehler updateRuntime:", err);
         next(err);
     }
 };
-
 
 // ============================================================
 // ❌ Löschen
@@ -171,8 +201,7 @@ exports.updateRuntime = async (req, res, next) => {
 exports.deleteRuntime = async (req, res, next) => {
     try {
         const runtime = await Runtime.findByPk(req.params.id);
-        if (!runtime)
-            return res.status(404).json({ error: "Runtime nicht gefunden." });
+        if (!runtime) return res.status(404).json({ error: "Runtime nicht gefunden." });
 
         await runtime.destroy();
         res.json({ message: "Runtime gelöscht." });
