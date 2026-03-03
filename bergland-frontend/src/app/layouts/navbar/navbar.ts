@@ -13,13 +13,20 @@ import { AuthService } from '../../core/auth.service';
 export class Navbar implements OnInit {
   isCollapsed = false;
   isAdmin = false;
-  isLoggedIn = false;   // 🔹 neu
+  isLoggedIn = false;  
+  isTimekeeper = false;
+  canAccessTime = false;
 
   private authService = inject(AuthService);
 
   ngOnInit(): void {
-    this.isAdmin = this.authService.getUserRole() === 'admin';
-    this.isLoggedIn = this.authService.isLoggedIn(); // 🔹 neu
+    const role = this.authService.getUserRole();
+  
+    this.isAdmin = role === 'admin';
+    this.isTimekeeper = role === 'timekeeper';
+    this.canAccessTime = this.isAdmin || this.isTimekeeper;
+  
+    this.isLoggedIn = this.authService.isLoggedIn();
   }
 
   toggleCollapse(): void {

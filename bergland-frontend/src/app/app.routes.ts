@@ -24,7 +24,7 @@ import { RoutesAdmin } from './features/admin/routes-admin/routes-admin';
 import { MyBookings } from './features/my-bookings/my-bookings';
 import { MyOrders } from './features/my-orders/my-orders';
 import { InvoicesAdmin } from './features/admin/invoices-admin/invoices-admin';
-
+import { RaceResults } from './features/race-results/race-results';
 
 
 // 🔹 Layouts
@@ -34,6 +34,7 @@ import { MainLayout } from './layouts/main-layout/main-layout';
 // 🔹 Guards
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // 🔸 Standardweiterleitung
@@ -73,8 +74,12 @@ export const routes: Routes = [
       // 💳 Meine Bestellungen (neu!)
       { path: 'my-orders', component: MyOrders, canActivate: [authGuard] },
 
-
-
+      { 
+        path: 'results', 
+        component: RaceResults, 
+        canActivate: [roleGuard(['admin', 'timekeeper'])]
+      },
+      
       // ⚙️ Adminbereich
       {
         path: 'admin',

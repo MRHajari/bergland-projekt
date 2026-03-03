@@ -1,0 +1,71 @@
+<div class="results-container">
+
+    <div class="header">
+        <h1>
+            <i class="fa-solid fa-stopwatch me-2"></i>
+            Ergebnisse
+        </h1>
+
+        <div class="toolbar">
+            <select class="select" (change)="onSelectEvent($any($event.target).value)">
+                <option value="">Event wählen</option>
+                @for (ev of events(); track ev.id) {
+                <option [value]="ev.id">{{ ev.name }}</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (loading()) {
+    <p class="info">Lade Daten...</p>
+    }
+    @else if (error()) {
+    <p class="error">{{ error() }}</p>
+    }
+    @else if (!selectedEventId()) {
+    <p class="info">Bitte ein Event auswählen.</p>
+    }
+    @else if (routes().length === 0) {
+    <p class="info">Keine Strecken für dieses Event.</p>
+    }
+    @else if (participants().length === 0) {
+    <p class="info">Keine Teilnehmer für dieses Event.</p>
+    }
+    @else {
+
+    <div class="table-wrap">
+        <table class="results-table">
+
+            <thead>
+                <tr>
+                    <th class="sticky-col">Teilnehmer</th>
+
+                    @for (r of routes(); track r.id) {
+                    <th class="route-head">{{ r.name }}</th>
+                    }
+
+                    <th class="total-head">Gesamt</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @for (p of participants(); track p.participantId) {
+                <tr>
+                    <td class="sticky-col name-cell">{{ p.name }}</td>
+
+                    @for (r of routes(); track r.id) {
+                    <td class="time-cell">
+                        <input class="time-input" type="time" step="1" [value]="getTimeValue(p.registrationId, r.id)"
+                            (blur)="onTimeBlur(p.registrationId, r.id, $any($event.target).value)" />
+                    </td>
+                    }
+
+                    <td class="total-col">{{ totalTime(p.registrationId) }}</td>
+                </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+    }
+</div>

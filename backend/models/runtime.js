@@ -10,10 +10,9 @@ const Runtime = sequelize.define(
             defaultValue: DataTypes.UUIDV4,
         },
 
-        event_registration_id: {
+        participant_id: {
             type: DataTypes.UUID,
             allowNull: false,
-            unique: true,
         },
 
         event_route_id: {
@@ -24,7 +23,6 @@ const Runtime = sequelize.define(
         duration_seconds: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            comment: "Laufzeit in Sekunden",
         },
 
         position: {
@@ -41,6 +39,12 @@ const Runtime = sequelize.define(
         tableName: "runtime",
         freezeTableName: true,
         timestamps: true,
+        indexes: [
+            {
+                unique: true,
+                fields: ["participant_id", "event_route_id"],
+            },
+        ],
     }
 );
 

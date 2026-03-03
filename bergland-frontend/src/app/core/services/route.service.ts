@@ -31,6 +31,11 @@ export class RouteService {
     return this.http.get<Route>(`${this.apiUrl}/${id}`);
   }
 
+  // 📋 Strecken eines Events
+  getByEvent(eventId: string): Observable<Route[]> {
+    return this.http.get<Route[]>(`${this.apiUrl}/event/${eventId}`);
+  }
+  
   // ➕ Erstellen
   create(data: Route): Observable<Route> {
     return this.http.post<Route>(this.apiUrl, data);

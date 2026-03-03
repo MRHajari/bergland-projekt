@@ -5,25 +5,17 @@ const runtimeController = require("../controllers/runtimeController");
 const { authenticateToken } = require("../middlewares/authMiddleware");
 const { authorizeRoles } = require("../middlewares/roleMiddleware");
 
-// ============================================================
-// 📋 Lesen (alle eingeloggten User erlaubt)
-// ============================================================
-
-router.get("/", authenticateToken, runtimeController.getAllRuntimes);
-
-router.get("/:id", authenticateToken, runtimeController.getRuntimeById);
-
+// Lesen
 router.get(
     "/registration/:registrationId",
     authenticateToken,
     runtimeController.getByRegistration
 );
 
+router.get("/", authenticateToken, runtimeController.getAllRuntimes);
+router.get("/:id", authenticateToken, runtimeController.getRuntimeById);
 
-// ============================================================
-// ✏️ Schreiben (nur Admin & Timekeeper)
-// ============================================================
-
+// Schreiben
 router.post(
     "/",
     authenticateToken,

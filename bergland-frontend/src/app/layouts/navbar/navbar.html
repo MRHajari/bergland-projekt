@@ -48,18 +48,29 @@
 
     </ul>
 
-    <!-- 🔹 Admin-Bereich -->
-    @if (isAdmin) {
+    <!-- 🔹 Admin / Operator Bereich -->
+    @if (canAccessTime || isAdmin) {
     <div class="admin-section">
+
+        @if (canAccessTime) {
+        <button class="admin-btn" routerLink="/results">
+            <i class="fa-solid fa-stopwatch"></i>
+            @if (!isCollapsed) { <span class="label">Zeiterfassung</span> }
+            <span class="tooltip-text tooltip-bottom">Zeiterfassung</span>
+        </button>
+        }
+
+        @if (isAdmin) {
         <button class="admin-btn" routerLink="/admin">
             <i class="fa-solid fa-gear"></i>
             @if (!isCollapsed) { <span class="label">Administration</span> }
             <span class="tooltip-text tooltip-bottom">Administration</span>
         </button>
+        }
+
     </div>
-    } @else {
-    <div class="admin-section"></div>
     }
+
 
     <!-- 🔹 Toggle unten -->
     <div class="nav-bottom">

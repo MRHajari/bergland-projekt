@@ -11,6 +11,12 @@ export interface Runtime {
   recorded_by: string;
   createdAt?: string;
   updatedAt?: string;
+
+  eventRoute?: {
+    id: string;
+    event_id: string;
+    route_id: string;
+  };
 }
 
 @Injectable({
