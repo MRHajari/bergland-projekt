@@ -29,6 +29,10 @@ export class Login implements OnInit {
     // 🔹 Optionaler Redirect-Zielpfad
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/events';
 
+    if (this.route.snapshot.queryParams['reason'] === 'session-expired') {
+      this.errorMessage = 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.';
+    }
+
     // 🔹 Formular initialisieren
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],

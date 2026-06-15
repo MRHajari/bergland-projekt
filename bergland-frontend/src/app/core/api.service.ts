@@ -52,12 +52,34 @@ export class ApiService {
     console.error('❌ API-Fehler:', msg, error);
   
     // ⚠️ Auth-Token prüfen
-    if (error.status === 401) {
-      console.warn('⚠️ 401 – Ungültiger oder abgelaufener Token. Benutzer wird ausgeloggt.');
-      this.auth.logout();
+    if (this.isAuthenticationError(error)) {
+      console.warn('⚠️ Sitzung ungültig oder abgelaufen. Benutzer wird zur Login-Seite weitergeleitet.');
+      this.auth.handleSessionExpired();
     }
   
     return throwError(() => new Error(msg));
+  }
+
+  private isAuthenticationError(error: HttpErrorResponse): boolean {
+    if (error.status === 401) return true;
+    if (error.status !== 403) return false;
+
+    const message =
+      error.error?.message ||
+      error.error?.error ||
+      error.message ||
+      '';
+
+    const normalized = String(message).toLowerCase();
+    return (
+      normalized.includes('token') &&
+      (
+        normalized.includes('abgelaufen') ||
+        normalized.includes('ungültig') ||
+        normalized.includes('invalid') ||
+        normalized.includes('expired')
+      )
+    );
   }
   
 

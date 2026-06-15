@@ -17,8 +17,8 @@ dotenv.config();
 const {
     JWT_SECRET,
     JWT_REFRESH_SECRET,
-    JWT_EXPIRES_IN = "2h",
-    JWT_REFRESH_EXPIRES_IN = "7d",
+    JWT_EXPIRES_IN = "8h",
+    JWT_REFRESH_EXPIRES_IN = "30d",
     EMAIL_SECRET,
     MAIL_HOST,
     MAIL_PORT,

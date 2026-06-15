@@ -4,8 +4,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, throwError } from 'rxjs';
-import { jwtDecode, JwtPayload } from 'jwt-decode';
 import { Router } from '@angular/router';
+import { ToastService } from './toast.service';
 
 export interface AuthUser {
   id: string;
@@ -21,8 +21,13 @@ export interface AuthUser {
 })
 export class AuthService {
   private apiUrl = 'http://localhost:3000/api/auth';
+  private sessionExpiryRedirectInProgress = false;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private toastService: ToastService
+  ) {}
 
   // ============================================================
   // 🔹 Registrierung
@@ -48,11 +53,7 @@ export class AuthService {
   login(credentials: { email: string; password: string }): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
       tap((res: any) => {
-        if (res.accessToken) localStorage.setItem('accessToken', res.accessToken);
-        if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
-
-        // 🧠 Benutzerobjekt (mit person_id!) speichern
-        if (res.user) localStorage.setItem('currentUser', JSON.stringify(res.user));
+        this.storeSession(res);
       }),
       catchError((err) => {
         console.error('❌ Login fehlgeschlagen:', err);
@@ -95,12 +96,6 @@ export class AuthService {
   
   
 
-  private clearSession() {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('currentUser');
-  }
-
   // ============================================================
   // 🔹 E-Mail-Verifikation
   // ============================================================
@@ -118,6 +113,10 @@ export class AuthService {
   // ============================================================
   getAccessToken(): string | null {
     return localStorage.getItem('accessToken');
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem('refreshToken');
   }
 
   getCurrentUser(): AuthUser | null {
@@ -140,18 +139,64 @@ export class AuthService {
   isLoggedIn(): boolean {
     const token = this.getAccessToken();
     if (!token) return false;
+
     try {
-      const payload = jwtDecode<JwtPayload>(token);
-      return !((payload.exp || 0) * 1000 < Date.now());
+      const payload = this.decodeJwtPayload(token);
+      return !((payload?.exp || 0) * 1000 < Date.now());
     } catch {
       return false;
     }
+  }
+
+  storeSession(res: any) {
+    this.sessionExpiryRedirectInProgress = false;
+    if (res?.accessToken) localStorage.setItem('accessToken', res.accessToken);
+    if (res?.refreshToken) localStorage.setItem('refreshToken', res.refreshToken);
+    if (res?.user) localStorage.setItem('currentUser', JSON.stringify(res.user));
+  }
+
+  handleSessionExpired(returnUrl?: string) {
+    if (this.sessionExpiryRedirectInProgress) {
+      return;
+    }
+
+    this.sessionExpiryRedirectInProgress = true;
+    this.clearSessionLocal();
+    this.toastService.show('Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.', 'warning', 6000);
+
+    const targetUrl = returnUrl || this.router.url;
+    const safeReturnUrl = targetUrl && targetUrl !== '/login' ? targetUrl : undefined;
+
+    this.router.navigate(['/login'], {
+      queryParams: {
+        reason: 'session-expired',
+        returnUrl: safeReturnUrl,
+      },
+      replaceUrl: true,
+    });
   }
 
 clearSessionLocal() {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('currentUser');
+}
+
+private decodeJwtPayload(token: string): { exp?: number } | null {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
+  const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+
+  const json = decodeURIComponent(
+    atob(padded)
+      .split('')
+      .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
+      .join('')
+  );
+
+  return JSON.parse(json);
 }
 
 

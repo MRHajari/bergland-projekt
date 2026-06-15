@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 
-export const adminGuard: CanActivateFn = () => {
+export const adminGuard: CanActivateFn = (_, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
@@ -12,7 +12,7 @@ export const adminGuard: CanActivateFn = () => {
 
   // 🔒 Wenn nicht eingeloggt → auf Loginseite
   if (!isLoggedIn) {
-    router.navigate(['/login']);
+    router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 

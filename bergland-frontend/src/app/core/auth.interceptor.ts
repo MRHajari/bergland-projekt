@@ -42,12 +42,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Nur 401 interessiert uns hier
-      if (error.status !== 401) {
+      if (!isAuthenticationError(error)) {
         return throwError(() => error);
       }
 
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = authService.getRefreshToken();
       if (!refreshToken) {
         // Kein Refresh vorhanden -> harte Abmeldung
         hardLogout(authService, router);
@@ -71,13 +70,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             }
 
             // ✅ Token speichern + wartende Requests freigeben
-            localStorage.setItem('accessToken', newAccess);
-            if (res?.refreshToken) {
-              localStorage.setItem('refreshToken', res.refreshToken);
-            }
-            if (res?.user) {
-              localStorage.setItem('currentUser', JSON.stringify(res.user));
-            }
+            authService.storeSession(res);
 
             isRefreshing = false;
             refreshTokenSubject.next(newAccess);
@@ -108,11 +101,29 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 function hardLogout(authService: AuthService, router: Router) {
-  // Backend-Logout ist nice-to-have. Stabilität ist wichtiger.
-  // -> Lokal sofort aufräumen und navigieren.
   try {
-    authService.clearSessionLocal();
+    authService.handleSessionExpired(router.url);
   } catch {}
+}
 
-  router.navigate(['/login']);
+function isAuthenticationError(error: HttpErrorResponse): boolean {
+  if (error.status === 401) return true;
+  if (error.status !== 403) return false;
+
+  const message =
+    error.error?.message ||
+    error.error?.error ||
+    error.message ||
+    '';
+
+  const normalized = String(message).toLowerCase();
+  return (
+    normalized.includes('token') &&
+    (
+      normalized.includes('abgelaufen') ||
+      normalized.includes('ungültig') ||
+      normalized.includes('invalid') ||
+      normalized.includes('expired')
+    )
+  );
 }

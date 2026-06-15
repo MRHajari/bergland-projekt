@@ -12,7 +12,10 @@ exports.authenticateToken = (req, res, next) => {
             : null;
 
     if (!token) {
-        return res.status(401).json({ message: "Kein Zugriff – Token fehlt" });
+        return res.status(401).json({
+            code: "AUTH_TOKEN_MISSING",
+            message: "Kein Zugriff – Token fehlt",
+        });
     }
 
     try {
@@ -21,15 +24,21 @@ exports.authenticateToken = (req, res, next) => {
         req.user = decoded.user || decoded;
 
         if (!req.user?.id) {
-            return res.status(403).json({
+            return res.status(401).json({
+                code: "AUTH_TOKEN_INVALID",
                 message: "Token ungültig oder unvollständig",
             });
         }
 
         next();
     } catch (err) {
-        return res.status(403).json({
-            message: "Token ungültig oder abgelaufen",
+        const isExpired = err?.name === "TokenExpiredError";
+
+        return res.status(401).json({
+            code: isExpired ? "AUTH_TOKEN_EXPIRED" : "AUTH_TOKEN_INVALID",
+            message: isExpired
+                ? "Token abgelaufen"
+                : "Token ungültig oder abgelaufen",
         });
     }
 };

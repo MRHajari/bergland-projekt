@@ -3,7 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 
 export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
-  return () => {
+  return (_, state) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
@@ -12,7 +12,7 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
 
     // 🔒 nicht eingeloggt
     if (!isLoggedIn) {
-      router.navigate(['/login']);
+      router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
       return false;
     }
 

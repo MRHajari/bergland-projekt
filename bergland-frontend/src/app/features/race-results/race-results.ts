@@ -187,11 +187,18 @@ export class RaceResults implements OnInit {
     if (!routes.length) return '—';
 
     let total = 0;
+    let hasAnyRuntime = false;
+
     for (const r of routes) {
       const rt = this.findRuntime(participantId, r.id);
-      if (!rt) return '—';
+      if (!rt) continue;
+
+      hasAnyRuntime = true;
       total += rt.duration_seconds;
     }
+
+    if (!hasAnyRuntime) return '—';
+
     return this.secondsToHms(total);
   }
 
