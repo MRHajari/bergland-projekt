@@ -421,3 +421,9 @@
   border-radius: 6px;
   font-weight: 600;
 }
+
+.haftungsausschluss-link{
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
