@@ -33,7 +33,26 @@ exports.getAllRegistrations = async (req, res) => {
                     as: "squadron",
                     attributes: ["id", "name"],
                 },
-                { model: Runtime, as: "runtimes" },
+                {
+                    model: EventRegistrationParticipant,
+                    as: "participants",
+                    include: [
+                        {
+                            model: Person,
+                            as: "person",
+                            attributes: ["id", "first_name", "last_name", "email"],
+                        },
+                        {
+                            model: Squadron,
+                            as: "squadron",
+                            attributes: ["id", "name"],
+                        },
+                        {
+                            model: Runtime,
+                            as: "runtimes",
+                        },
+                    ],
+                },
             ],
             order: [["createdAt", "DESC"]],
         });

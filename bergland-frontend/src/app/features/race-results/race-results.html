@@ -33,6 +33,10 @@
     }
     @else {
 
+    @if (timeInputError()) {
+    <p class="error">{{ timeInputError() }}</p>
+    }
+
     <div class="table-wrap">
         <table class="results-table">
 
@@ -55,12 +59,18 @@
 
                     @for (r of routes(); track r.id) {
                     <td class="time-cell">
-                        <input class="time-input" type="time" step="1" [value]="getTimeValue(p.registrationId, r.id)"
-                            (blur)="onTimeBlur(p.registrationId, r.id, $any($event.target).value)" />
+                        <input
+                            class="time-input"
+                            type="text"
+                            placeholder="HH:MM:SS"
+                            autocomplete="off"
+                            [value]="getTimeValue(p.participantId, r.id)"
+                            (blur)="onTimeBlur(p.participantId, r.id, $any($event.target).value)"
+                        />
                     </td>
                     }
 
-                    <td class="total-col">{{ totalTime(p.registrationId) }}</td>
+                    <td class="total-col">{{ totalTime(p.participantId) }}</td>
                 </tr>
                 }
             </tbody>

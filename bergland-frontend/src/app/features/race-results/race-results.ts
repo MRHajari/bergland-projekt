@@ -6,10 +6,14 @@ import { forkJoin } from 'rxjs';
 import { EventService, EventInterface } from '../../core/services/event.service';
 import { RouteService, Route } from '../../core/services/route.service';
 import { EventRegistrationService } from '../../core/services/event-registration.service';
-import { RuntimeService, Runtime } from '../../core/services/runtime.service';
+import {
+  RuntimeService,
+  Runtime,
+  RuntimeCreatePayload,
+  RuntimeUpdatePayload
+} from '../../core/services/runtime.service';
 
 interface ParticipantRow {
-  registrationId: string;
   participantId: string;
   name: string;
 }
@@ -38,6 +42,7 @@ export class RaceResults implements OnInit {
 
   loading = signal(false);
   error = signal<string | null>(null);
+  timeInputError = signal<string | null>(null);
 
   // INIT
   ngOnInit() {
@@ -47,6 +52,7 @@ export class RaceResults implements OnInit {
   private loadEvents() {
     this.loading.set(true);
     this.error.set(null);
+    this.timeInputError.set(null);
 
     this.eventService.getAll().subscribe({
       next: data => {
@@ -66,6 +72,7 @@ export class RaceResults implements OnInit {
       this.routes.set([]);
       this.participants.set([]);
       this.runtimes.set([]);
+      this.timeInputError.set(null);
       return;
     }
 
@@ -76,19 +83,18 @@ export class RaceResults implements OnInit {
   private loadEventData(eventId: string) {
     this.loading.set(true);
     this.error.set(null);
+    this.timeInputError.set(null);
 
     forkJoin({
       routes: this.routeService.getByEvent(eventId),
       regs: this.regService.getGroupByEvent(eventId),
-      runtimes: this.runtimeService.getAll()
+      runtimes: this.runtimeService.getByEvent(eventId)
     }).subscribe({
       next: ({ routes, regs, runtimes }) => {
         this.routes.set(routes ?? []);
-        console.log('Registrations:', regs);
 
         const flat: ParticipantRow[] = (regs ?? []).flatMap(reg =>
           (reg.participants ?? []).map(p => ({
-            registrationId: reg.id!,
             participantId: p.id!,
             name: p.person
               ? `${p.person.first_name} ${p.person.last_name}`
@@ -110,15 +116,15 @@ export class RaceResults implements OnInit {
   }
 
   // RUNTIME HELPERS
-  private findRuntime(regId: string, routeId: string): Runtime | undefined {
+  private findRuntime(participantId: string, routeId: string): Runtime | undefined {
     return this.runtimes().find(r =>
-      r.event_registration_id === regId &&
+      r.participant_id === participantId &&
       r.eventRoute?.route_id === routeId
     );
   }
   
-  getTimeValue(regId: string, routeId: string): string {
-    const rt = this.findRuntime(regId, routeId);
+  getTimeValue(participantId: string, routeId: string): string {
+    const rt = this.findRuntime(participantId, routeId);
     if (!rt) return '';
     return this.secondsToHms(rt.duration_seconds);
   }
@@ -129,34 +135,44 @@ export class RaceResults implements OnInit {
    * - Wenn Runtime existiert: update
    * - Sonst: create
    */
-  onTimeBlur(regId: string, routeId: string, raw: string) {
+  onTimeBlur(participantId: string, routeId: string, raw: string) {
     const value = (raw ?? '').trim();
+    this.timeInputError.set(null);
 
     // Leer -> wir lassen es leer. (Wenn du löschen willst: unten Kommentar lesen)
     if (!value) return;
 
-    // "HH:MM" oder "HH:MM:SS" akzeptieren
+    // "HH:MM" oder "HH:MM:SS" akzeptieren (als Dauer, nicht als Uhrzeit)
     const seconds = this.hmsToSeconds(value);
-    if (seconds === null) return;
+    if (seconds === null) {
+      this.timeInputError.set('Ungültiges Zeitformat. Bitte HH:MM oder HH:MM:SS als Dauer eingeben.');
+      return;
+    }
 
-    const existing = this.findRuntime(regId, routeId);
+    const existing = this.findRuntime(participantId, routeId);
 
     if (existing?.id) {
-      const payload: Runtime = { ...existing, duration_seconds: seconds };
+      const payload: RuntimeUpdatePayload = { duration_seconds: seconds };
 
       this.runtimeService.update(existing.id, payload).subscribe({
-        next: updated => this.replaceRuntime(updated),
+        next: updated => {
+          this.timeInputError.set(null);
+          this.replaceRuntime(updated);
+        },
         error: err => console.error('Update Runtime fehlgeschlagen', err)
       });
     } else {
-      const payload: Partial<Runtime> = {
-        event_registration_id: regId,
+      const payload: RuntimeCreatePayload = {
+        participant_id: participantId,
         event_route_id: routeId,
         duration_seconds: seconds
       };
 
-      this.runtimeService.create(payload as Runtime).subscribe({
-        next: created => this.runtimes.update(list => [...list, created]),
+      this.runtimeService.create(payload).subscribe({
+        next: created => {
+          this.timeInputError.set(null);
+          this.runtimes.update(list => [...list, created]);
+        },
         error: err => console.error('Create Runtime fehlgeschlagen', err)
       });
     }
@@ -166,13 +182,13 @@ export class RaceResults implements OnInit {
     this.runtimes.update(list => list.map(r => (r.id === updated.id ? updated : r)));
   }
 
-  totalTime(regId: string): string {
+  totalTime(participantId: string): string {
     const routes = this.routes();
     if (!routes.length) return '—';
 
     let total = 0;
     for (const r of routes) {
-      const rt = this.findRuntime(regId, r.id);
+      const rt = this.findRuntime(participantId, r.id);
       if (!rt) return '—';
       total += rt.duration_seconds;
     }

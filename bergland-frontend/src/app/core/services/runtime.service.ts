@@ -4,11 +4,11 @@ import { Observable } from 'rxjs';
 
 export interface Runtime {
   id: string;
-  event_registration_id: string;
+  participant_id: string;
   event_route_id: string;
   duration_seconds: number;
-  position?: number;
-  recorded_by: string;
+  position?: number | null;
+  recorded_by?: string;
   createdAt?: string;
   updatedAt?: string;
 
@@ -17,6 +17,26 @@ export interface Runtime {
     event_id: string;
     route_id: string;
   };
+
+  participant?: {
+    id: string;
+    registration_id: string;
+    person_id: string;
+    registration?: {
+      id: string;
+      event_id: string;
+    };
+  };
+}
+
+export interface RuntimeCreatePayload {
+  participant_id: string;
+  event_route_id: string;
+  duration_seconds: number;
+}
+
+export interface RuntimeUpdatePayload {
+  duration_seconds: number;
 }
 
 @Injectable({
@@ -37,28 +57,18 @@ export class RuntimeService {
     return this.http.get<Runtime>(`${this.apiUrl}/${id}`);
   }
 
-  // 🔍 Laufzeit zu Anmeldung
-  getByRegistration(registrationId: string): Observable<Runtime> {
-    return this.http.get<Runtime>(
-      `${this.apiUrl}/registration/${registrationId}`
-    );
+  // 🔍 Laufzeiten eines Events
+  getByEvent(eventId: string): Observable<Runtime[]> {
+    return this.http.get<Runtime[]>(`${this.apiUrl}/event/${eventId}`);
   }
 
   // ➕ Neue Laufzeit
-  create(data: {
-    event_registration_id: string;
-    event_route_id: string;
-    duration_seconds: number;
-  }): Observable<Runtime> {
+  create(data: RuntimeCreatePayload): Observable<Runtime> {
     return this.http.post<Runtime>(this.apiUrl, data);
   }
 
   // ✏️ Laufzeit aktualisieren
-  update(id: string, data: {
-    event_registration_id: string;
-    event_route_id: string;
-    duration_seconds: number;
-  }): Observable<Runtime> {
+  update(id: string, data: RuntimeUpdatePayload): Observable<Runtime> {
     return this.http.put<Runtime>(`${this.apiUrl}/${id}`, data);
   }
 

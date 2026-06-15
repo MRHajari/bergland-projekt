@@ -205,19 +205,17 @@ Occupancy.belongsTo(Accommodation, {
 });
 
 // ======================================================
-// 🕒 EVENTREGISTRATION ↔ RUNTIME
+// 🕒 EVENTREGISTRATIONPARTICIPANT ↔ RUNTIME
 // ======================================================
 
-// ⚠️ WICHTIG: Runtime ist NICHT 1:1 wenn Person mehrere Strecken laufen kann.
-// Daher: hasMany statt hasOne.
-EventRegistration.hasMany(Runtime, {
-    foreignKey: "event_registration_id",
+EventRegistrationParticipant.hasMany(Runtime, {
+    foreignKey: "participant_id",
     as: "runtimes",
     onDelete: "CASCADE",
 });
-Runtime.belongsTo(EventRegistration, {
-    foreignKey: "event_registration_id",
-    as: "registration",
+Runtime.belongsTo(EventRegistrationParticipant, {
+    foreignKey: "participant_id",
+    as: "participant",
 });
 
 // ======================================================

@@ -7,11 +7,12 @@ const { authorizeRoles } = require("../middlewares/roleMiddleware");
 
 // Lesen
 router.get(
-    "/registration/:registrationId",
+    "/participant/:participantId",
     authenticateToken,
-    runtimeController.getByRegistration
+    runtimeController.getByParticipant
 );
 
+router.get("/event/:eventId", authenticateToken, runtimeController.getByEvent);
 router.get("/", authenticateToken, runtimeController.getAllRuntimes);
 router.get("/:id", authenticateToken, runtimeController.getRuntimeById);
 
