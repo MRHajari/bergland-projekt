@@ -14,6 +14,7 @@ import { AuthService } from '../../../core/auth.service'; // ✅ korrigierter Pf
 })
 export class Login implements OnInit {
   loginForm!: FormGroup;
+  noticeMessage = '';
   errorMessage = '';
   loading = false;
   returnUrl = '/';
@@ -30,7 +31,7 @@ export class Login implements OnInit {
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/events';
 
     if (this.route.snapshot.queryParams['reason'] === 'session-expired') {
-      this.errorMessage = 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.';
+      this.noticeMessage = 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.';
     }
 
     // 🔹 Formular initialisieren
@@ -44,6 +45,7 @@ export class Login implements OnInit {
     if (this.loginForm.invalid) return;
 
     this.loading = true;
+    this.noticeMessage = '';
     this.errorMessage = '';
 
     this.authService.login(this.loginForm.value).subscribe({

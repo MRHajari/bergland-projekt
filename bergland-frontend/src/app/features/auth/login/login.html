@@ -7,15 +7,22 @@
 
         <h2>Login</h2>
 
+        @if (noticeMessage) {
+        <div class="notice-box">
+            <strong>Hinweis:</strong>
+            <span>{{ noticeMessage }}</span>
+        </div>
+        }
+
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-            <label>Email</label>
-            <input type="email" formControlName="email" placeholder="Deine Email" />
+            <label for="login-email">Email</label>
+            <input id="login-email" type="email" formControlName="email" placeholder="Deine Email" />
             @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
             <div class="error">Bitte gültige Email eingeben</div>
             }
 
-            <label>Passwort</label>
-            <input type="password" formControlName="password" placeholder="Dein Passwort" />
+            <label for="login-password">Passwort</label>
+            <input id="login-password" type="password" formControlName="password" placeholder="Dein Passwort" />
             @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
             <div class="error">Passwort erforderlich</div>
             }

@@ -5,7 +5,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { Router } from '@angular/router';
-import { ToastService } from './toast.service';
 
 export interface AuthUser {
   id: string;
@@ -25,8 +24,7 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private router: Router,
-    private toastService: ToastService
+    private router: Router
   ) {}
 
   // ============================================================
@@ -162,7 +160,6 @@ export class AuthService {
 
     this.sessionExpiryRedirectInProgress = true;
     this.clearSessionLocal();
-    this.toastService.show('Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.', 'warning', 6000);
 
     const targetUrl = returnUrl || this.router.url;
     const safeReturnUrl = targetUrl && targetUrl !== '/login' ? targetUrl : undefined;
