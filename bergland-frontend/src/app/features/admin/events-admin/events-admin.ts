@@ -3,13 +3,19 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { EventService } from '../../../core/services/event.service';
-import { RegistrationService } from '../../../core/services/user.registration.service';
 import { EventRegistrationService } from '../../../core/services/event-registration.service';
 import { AccommodationService } from '../../../core/services/accommodation.service';
 import { OccupancyService } from '../../../core/services/occupancy.service';
 import { Location } from '@angular/common';
 import { RouteService } from '../../../core/services/route.service';
 import { EventRouteService } from '../../../core/services/event-route.service';
+
+interface RouteAssignmentForm {
+  assigned: boolean;
+  day_date: string;
+  start_time: string;
+  id?: string;
+}
 
 
 @Component({
@@ -21,7 +27,6 @@ import { EventRouteService } from '../../../core/services/event-route.service';
 })
 export class EventsAdmin implements OnInit {
   private eventService = inject(EventService);
-  private registrationService = inject(RegistrationService);
   private eventRegistrationService = inject(EventRegistrationService);
   private router = inject(Router);
   private accommodationService = inject(AccommodationService);
@@ -32,8 +37,10 @@ export class EventsAdmin implements OnInit {
 
   showRouteModal = false;
   routes: any[] = [];
-  eventRoutesMap: Record<string, boolean> = {};
+  eventRoutesMap: Record<string, RouteAssignmentForm> = {};
   selectedRouteEventId: string | null = null;
+  selectedRouteEvent: any = null;
+  routeModalError: string | null = null;
 
 
   events: any[] = [];
@@ -232,16 +239,26 @@ toggleAccommodation(accId: string, checked: boolean) {
   this.eventOccupancies[accId] = checked;
 }
 
+onAccommodationToggle(accId: string, event: Event) {
+  const checked = (event.target as HTMLInputElement | null)?.checked ?? false;
+  this.toggleAccommodation(accId, checked);
+}
+
 // Änderungen speichern
 saveAccommodationAssignments() {
   if (!this.selectedEventId) return;
 
-  const assignments = Object.entries(this.eventOccupancies)
-    .filter(([_, assigned]) => assigned)
-    .map(([accommodation_id]) => ({
+  const assignments: { accommodation_id: string; event_id: string }[] = [];
+
+  for (const accommodation_id in this.eventOccupancies) {
+    const assigned = this.eventOccupancies[accommodation_id];
+    if (!assigned) continue;
+
+    assignments.push({
       accommodation_id,
       event_id: this.selectedEventId!,
-    }));
+    });
+  }
 
   this.occupancyService.updateAssignments(this.selectedEventId!, assignments).subscribe({
     next: () => {
@@ -262,6 +279,17 @@ closeAccommodationModal() {
   this.selectedEventId = null;
 }
 
+onModalBackdropKeydown(event: KeyboardEvent, type: 'accommodation' | 'route') {
+  if (event.key !== 'Escape') return;
+
+  if (type === 'accommodation') {
+    this.closeAccommodationModal();
+    return;
+  }
+
+  this.closeRouteModal();
+}
+
 /** 🏨 Gibt die Unterkünfte als kommagetrennte Liste zurück */
 getAccommodationNames(event: any): string {
   if (!event.accommodations || event.accommodations.length === 0) {
@@ -276,7 +304,10 @@ getAccommodationNames(event: any): string {
 // öffnen
 openRouteModal(event: any) {
   this.selectedRouteEventId = event.id;
+  this.selectedRouteEvent = event;
   this.showRouteModal = true;
+  this.routeModalError = null;
+  this.eventRoutesMap = {};
 
   this.routeService.getAll().subscribe({
     next: (data) => {
@@ -291,32 +322,80 @@ loadEventRoutes(eventId: string) {
   this.eventRouteService.getByEvent(eventId).subscribe({
     next: (data) => {
       this.eventRoutesMap = {};
-      data.forEach((r: any) => this.eventRoutesMap[r.route_id] = true);
+
+      for (const route of this.routes) {
+        this.eventRoutesMap[route.id] = {
+          assigned: false,
+          day_date: this.selectedRouteEvent?.start_date || '',
+          start_time: '',
+        };
+      }
+
+      data.forEach((r: any) => {
+        this.eventRoutesMap[r.route_id] = {
+          assigned: true,
+          day_date: this.formatDate(r.day_date || this.selectedRouteEvent?.start_date || ''),
+          start_time: this.normalizeTime(r.start_time),
+          id: r.id,
+        };
+      });
     }
   });
 }
 
 // checkbox toggle
 toggleRoute(routeId: string, checked: boolean) {
-  this.eventRoutesMap[routeId] = checked;
+  const current = this.getRouteAssignment(routeId);
+  this.eventRoutesMap[routeId] = {
+    ...current,
+    assigned: checked,
+    day_date: current.day_date || this.selectedRouteEvent?.start_date || '',
+  };
+}
+
+onRouteToggle(routeId: string, event: Event) {
+  const checked = (event.target as HTMLInputElement | null)?.checked ?? false;
+  this.toggleRoute(routeId, checked);
+}
+
+updateRouteAssignment(routeId: string, field: 'day_date' | 'start_time', value: string) {
+  const current = this.getRouteAssignment(routeId);
+  this.eventRoutesMap[routeId] = {
+    ...current,
+    [field]: value,
+  };
 }
 
 // speichern
 saveRouteAssignments() {
   if (!this.selectedRouteEventId) return;
 
+  this.routeModalError = null;
+
   const payload = Object.entries(this.eventRoutesMap)
-    .filter(([_, checked]) => checked)
-    .map(([route_id]) => ({
+    .filter(([_, assignment]) => assignment.assigned)
+    .map(([route_id, assignment]) => ({
       event_id: this.selectedRouteEventId,
-      route_id
+      route_id,
+      day_date: assignment.day_date || null,
+      start_time: assignment.start_time || null,
     }));
+
+  const invalidAssignment = payload.find(item => item.start_time && !item.day_date);
+  if (invalidAssignment) {
+    this.routeModalError = 'Wenn eine Startzeit gesetzt ist, muss auch ein Datum gesetzt sein.';
+    return;
+  }
 
   this.eventRouteService.updateAssignments(this.selectedRouteEventId, payload)
     .subscribe(() => {
       this.showRouteModal = false;
       this.selectedRouteEventId = null;
+      this.selectedRouteEvent = null;
       this.loadEvents();
+    }, (err) => {
+      console.error('Fehler beim Speichern der Strecken:', err);
+      this.routeModalError = '❌ Fehler beim Speichern der Strecken und Startzeiten.';
     });
 }
 
@@ -324,6 +403,16 @@ saveRouteAssignments() {
 closeRouteModal() {
   this.showRouteModal = false;
   this.selectedRouteEventId = null;
+  this.selectedRouteEvent = null;
+  this.routeModalError = null;
+}
+
+getRouteAssignment(routeId: string): RouteAssignmentForm {
+  return this.eventRoutesMap[routeId] || {
+    assigned: false,
+    day_date: this.selectedRouteEvent?.start_date || '',
+    start_time: '',
+  };
 }
 
 
@@ -333,6 +422,11 @@ closeRouteModal() {
   formatDate(dateStr: string): string {
     if (!dateStr) return '';
     return dateStr.split('T')[0];
+  }
+
+  normalizeTime(timeStr: string): string {
+    if (!timeStr) return '';
+    return timeStr.slice(0, 5);
   }
 
   get filteredEvents() {

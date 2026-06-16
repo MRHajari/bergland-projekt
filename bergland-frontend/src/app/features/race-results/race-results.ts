@@ -241,7 +241,7 @@ export class RaceResults implements OnInit {
     });
 
     if (hasMissingStartTime) {
-      this.captureMessage.set('Für diese Strecke ist keine Startzeit hinterlegt. Bitte zuerst eine Startzeit setzen.');
+      this.captureMessage.set('Für diese Strecke ist keine Startzeit hinterlegt. Bitte im Admin bei der Strecke oder hier manuell eine Startzeit setzen.');
       return;
     }
 

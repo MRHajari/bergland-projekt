@@ -173,7 +173,7 @@
     <!-- 🏨 Unterkunftszuordnung Modal -->
     <!-- ===================================================== -->
     @if (showAccommodationModal) {
-    <div class="modal-backdrop" (click)="closeAccommodationModal()"></div>
+    <div class="modal-backdrop" tabindex="0" (click)="closeAccommodationModal()" (keydown)="onModalBackdropKeydown($event, 'accommodation')"></div>
 
     <div class="modal">
         <h2><i class="fa-solid fa-hotel me-2"></i> Unterkünfte zuordnen</h2>
@@ -186,7 +186,7 @@
             @for (acc of accommodations; track acc.id) {
             <div class="modal-item">
                 <input type="checkbox" [checked]="eventOccupancies[acc.id]"
-                    (change)="toggleAccommodation(acc.id, $event.target.checked)" />
+                    (change)="onAccommodationToggle(acc.id, $event)" />
                 <div class="accommodation-info">
                     <strong><i class="fa-solid fa-bed me-1"></i> {{ acc.name }}</strong>
                     <span class="city">– {{ acc.city }}</span>
@@ -214,22 +214,53 @@
     <!-- Routeszuordnung Modal -->
     <!-- ===================================================== -->
     @if (showRouteModal) {
-    <div class="modal-backdrop" (click)="closeRouteModal()"></div>
+    <div class="modal-backdrop" tabindex="0" (click)="closeRouteModal()" (keydown)="onModalBackdropKeydown($event, 'route')"></div>
 
     <div class="modal">
         <h2><i class="fa-solid fa-route me-2"></i> Strecken zuordnen</h2>
 
+        <p>
+            <i class="fa-solid fa-circle-info me-2"></i>
+            Hier kannst du pro Strecke das Datum und die offizielle Startzeit für die Zeiterfassung pflegen.
+        </p>
+
+        @if (routeModalError) {
+        <p class="error">{{ routeModalError }}</p>
+        }
+
         <div class="modal-list">
             @for (r of routes; track r.id) {
             <div class="modal-item">
-                <input type="checkbox" [checked]="eventRoutesMap[r.id]"
-                    (change)="toggleRoute(r.id, $event.target.checked)" />
+                <input type="checkbox" [checked]="getRouteAssignment(r.id).assigned"
+                    (change)="onRouteToggle(r.id, $event)" />
 
                 <div class="accommodation-info">
                     <strong>{{ r.name }}</strong>
                     <span class="details">
                         {{ r.length_km }} km · {{ r.elevation_m }} hm
                     </span>
+
+                    @if (getRouteAssignment(r.id).assigned) {
+                    <div class="route-meta-grid">
+                        <label>
+                            <span>Datum</span>
+                            <input
+                                type="date"
+                                [value]="getRouteAssignment(r.id).day_date"
+                                (input)="updateRouteAssignment(r.id, 'day_date', $any($event.target).value)"
+                            />
+                        </label>
+
+                        <label>
+                            <span>Startzeit</span>
+                            <input
+                                type="time"
+                                [value]="getRouteAssignment(r.id).start_time"
+                                (input)="updateRouteAssignment(r.id, 'start_time', $any($event.target).value)"
+                            />
+                        </label>
+                    </div>
+                    }
                 </div>
             </div>
             }
