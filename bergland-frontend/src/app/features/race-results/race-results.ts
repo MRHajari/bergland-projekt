@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 
 import { EventService, EventInterface } from '../../core/services/event.service';
 import { RouteService, Route } from '../../core/services/route.service';
@@ -25,10 +25,11 @@ interface CaptureTarget {
   participantId: string;
   registrationId: string;
   routeId: string;
-  finishTime: string;
+  capturedTime: string;
 }
 
 type RuntimeField = 'start_time' | 'finish_time' | 'split_time';
+type CaptureField = 'finish_time' | 'split_time';
 
 @Component({
   selector: 'app-race-results',
@@ -61,6 +62,7 @@ export class RaceResults implements OnInit {
 
   captureModalOpen = signal(false);
   captureRouteId = signal<string | null>(null);
+  captureField = signal<CaptureField>('finish_time');
   captureStartNumber = signal('');
   captureMatchedParticipants = signal<ParticipantRow[]>([]);
   captureMessage = signal<string | null>(null);
@@ -125,7 +127,7 @@ export class RaceResults implements OnInit {
           (reg.participants ?? []).map(p => ({
             participantId: p.id!,
             registrationId: reg.id!,
-            startNumber: typeof p.start_number === 'number' ? p.start_number : Number(p.start_number ?? null),
+            startNumber: p.start_number ?? null,
             name: p.person
               ? `${p.person.first_name} ${p.person.last_name}`
               : 'Unbekannt'
@@ -167,13 +169,22 @@ export class RaceResults implements OnInit {
     return this.routes().find(r => r.id === routeId)?.name || 'Strecke';
   }
 
+  getCaptureActionLabel(): string {
+    return this.captureField() === 'split_time' ? 'Zwischenzeit erfassen' : 'Zielzeit erfassen';
+  }
+
+  getCaptureActionPastLabel(): string {
+    return this.captureField() === 'split_time' ? 'Zwischenzeit' : 'Zielzeit';
+  }
+
   getCapturePrimaryParticipant(): ParticipantRow | null {
     return this.captureMatchedParticipants()[0] || null;
   }
 
-  openCaptureModal(routeId: string) {
+  openCaptureModal(routeId: string, field: CaptureField) {
     this.captureModalOpen.set(true);
     this.captureRouteId.set(routeId);
+    this.captureField.set(field);
     this.captureStartNumber.set('');
     this.captureMatchedParticipants.set([]);
     this.captureMessage.set(null);
@@ -184,6 +195,7 @@ export class RaceResults implements OnInit {
   closeCaptureModal() {
     this.captureModalOpen.set(false);
     this.captureRouteId.set(null);
+    this.captureField.set('finish_time');
     this.captureStartNumber.set('');
     this.captureMatchedParticipants.set([]);
     this.captureMessage.set(null);
@@ -218,10 +230,11 @@ export class RaceResults implements OnInit {
     }
   }
 
-  captureFinishTime() {
+  captureRuntimeTime() {
     const routeId = this.captureRouteId();
     const matchedParticipants = this.captureMatchedParticipants();
-    const finishTime = this.getCurrentTimeString();
+    const captureField = this.captureField();
+    const capturedTime = this.getCurrentTimeString();
 
     if (!routeId) {
       this.captureMessage.set('Keine Strecke ausgewählt.');
@@ -249,28 +262,40 @@ export class RaceResults implements OnInit {
       participantId: participant.participantId,
       registrationId: participant.registrationId,
       routeId,
-      finishTime
+      capturedTime
     }));
 
-    this.captureFinishTimeForTargets(targets, eventRouteStartTime ?? null, matchedParticipants.map(p => p.name));
+    this.captureRuntimeTimeForTargets(
+      targets,
+      eventRouteStartTime ?? null,
+      matchedParticipants.map(p => p.name),
+      captureField
+    );
   }
 
   onCaptureEnter(event: Event) {
     event.preventDefault();
-    this.captureFinishTime();
+    this.captureRuntimeTime();
   }
 
-  private captureFinishTimeForTargets(
+  onCaptureBackdropKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      this.closeCaptureModal();
+    }
+  }
+
+  private captureRuntimeTimeForTargets(
     targets: CaptureTarget[],
     eventRouteStartTime: string | null,
-    participantNames: string[]
+    participantNames: string[],
+    captureField: CaptureField
   ) {
-    const requests = targets.map(target => {
+    const requests: Observable<Runtime>[] = targets.map(target => {
       const existing = this.findRuntime(target.participantId, target.routeId);
 
       if (existing?.id) {
         const payload: RuntimeUpdatePayload = {
-          finish_time: target.finishTime,
+          [captureField]: target.capturedTime,
           ...(existing.start_time ? {} : { start_time: eventRouteStartTime ?? undefined })
         };
 
@@ -282,36 +307,39 @@ export class RaceResults implements OnInit {
         registration_id: target.registrationId,
         route_id: target.routeId,
         start_time: eventRouteStartTime!,
-        finish_time: target.finishTime,
-        split_time: null
+        finish_time: captureField === 'finish_time' ? target.capturedTime : null,
+        split_time: captureField === 'split_time' ? target.capturedTime : null
       };
 
       return this.runtimeService.create(payload);
     });
 
     forkJoin(requests).subscribe({
-      next: savedRuntimes => {
-        savedRuntimes.forEach(runtime => {
-          const existing = this.runtimes().some(item => item.id === runtime.id);
+      next: (savedRuntimes) => {
+        const typedRuntimes = savedRuntimes as unknown as Runtime[];
+
+        typedRuntimes.forEach((runtime) => {
+          const typedRuntime = runtime as Runtime;
+          const existing = this.runtimes().some(item => item.id === typedRuntime.id);
           if (existing) {
-            this.replaceRuntime(runtime);
+            this.replaceRuntime(typedRuntime);
             return;
           }
 
-          this.runtimes.update(list => [...list, runtime]);
+          this.runtimes.update((list: Runtime[]) => [...list, typedRuntime]);
         });
 
         this.timeInputError.set(null);
         this.timeCaptureSuccess.set(
           participantNames.length === 1
-            ? `Zielzeit für ${participantNames[0]} auf ${targets[0].finishTime} erfasst.`
-            : `Zielzeit für Team ${this.captureStartNumber()} auf ${targets[0].finishTime} erfasst.`
+            ? `${this.getCaptureActionPastLabel()} für ${participantNames[0]} auf ${targets[0].capturedTime} erfasst.`
+            : `${this.getCaptureActionPastLabel()} für Team ${this.captureStartNumber()} auf ${targets[0].capturedTime} erfasst.`
         );
         this.closeCaptureModal();
       },
       error: err => {
-        console.error('Zielzeit erfassen fehlgeschlagen', err);
-        this.captureMessage.set('Zielzeit konnte nicht gespeichert werden.');
+        console.error('Zeit erfassen fehlgeschlagen', err);
+        this.captureMessage.set(`${this.getCaptureActionPastLabel()} konnte nicht gespeichert werden.`);
       }
     });
   }

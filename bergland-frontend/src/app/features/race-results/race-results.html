@@ -53,9 +53,14 @@
                         <div class="route-head-content">
                             <span>{{ r.name }}</span>
                             <small>Start: {{ getRouteStartTime(r.id) || '–' }}</small>
-                            <button class="capture-btn" type="button" (click)="openCaptureModal(r.id)">
-                                Zeit erfassen
-                            </button>
+                            <div class="capture-actions">
+                                <button class="capture-btn capture-btn-secondary" type="button" (click)="openCaptureModal(r.id, 'split_time')">
+                                    Zwischen erfassen
+                                </button>
+                                <button class="capture-btn" type="button" (click)="openCaptureModal(r.id, 'finish_time')">
+                                    Ziel erfassen
+                                </button>
+                            </div>
                         </div>
                     </th>
                     }
@@ -129,10 +134,10 @@
     </div>
 
     @if (captureModalOpen()) {
-    <div class="modal-backdrop" (click)="closeCaptureModal()">
-        <div class="capture-modal" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" tabindex="0" (click)="closeCaptureModal()" (keydown)="onCaptureBackdropKeydown($event)">
+        <div class="capture-modal" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             <div class="modal-header">
-                <h2>Zeit erfassen – {{ getCaptureRouteName() }}</h2>
+                <h2>{{ getCaptureActionLabel() }} – {{ getCaptureRouteName() }}</h2>
                 <button type="button" class="modal-close" (click)="closeCaptureModal()">×</button>
             </div>
 
@@ -173,7 +178,7 @@
 
             <div class="modal-actions">
                 <button type="button" class="btn-secondary" (click)="closeCaptureModal()">Abbrechen</button>
-                <button type="button" class="btn-primary" (click)="captureFinishTime()">Zeit erfassen</button>
+                <button type="button" class="btn-primary" (click)="captureRuntimeTime()">{{ getCaptureActionLabel() }}</button>
             </div>
         </div>
     </div>

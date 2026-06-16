@@ -104,6 +104,12 @@ h1{
   color:rgba(255,255,255,0.85);
 }
 
+.capture-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.4rem;
+}
+
 .capture-btn{
   width:max-content;
   border:none;
@@ -117,6 +123,14 @@ h1{
 
 .capture-btn:hover{
   background:#e2e8f0;
+}
+
+.capture-btn-secondary{
+  background:#dbeafe;
+}
+
+.capture-btn-secondary:hover{
+  background:#bfdbfe;
 }
 
 .time-cell{
