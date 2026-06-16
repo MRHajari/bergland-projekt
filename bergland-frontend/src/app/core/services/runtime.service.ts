@@ -5,7 +5,12 @@ import { Observable } from 'rxjs';
 export interface Runtime {
   id: string;
   participant_id: string;
+  registration_id?: string | null;
+  route_id?: string | null;
   event_route_id: string;
+  start_time?: string | null;
+  finish_time?: string | null;
+  split_time?: string | null;
   duration_seconds: number;
   position?: number | null;
   recorded_by?: string;
@@ -31,12 +36,18 @@ export interface Runtime {
 
 export interface RuntimeCreatePayload {
   participant_id: string;
-  event_route_id: string;
-  duration_seconds: number;
+  registration_id?: string;
+  event_route_id?: string;
+  route_id?: string;
+  start_time: string;
+  finish_time?: string | null;
+  split_time?: string | null;
 }
 
 export interface RuntimeUpdatePayload {
-  duration_seconds: number;
+  start_time?: string | null;
+  finish_time?: string | null;
+  split_time?: string | null;
 }
 
 @Injectable({

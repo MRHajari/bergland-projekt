@@ -15,8 +15,11 @@ import {
 
 interface ParticipantRow {
   participantId: string;
+  registrationId: string;
   name: string;
 }
+
+type RuntimeField = 'start_time' | 'finish_time' | 'split_time';
 
 @Component({
   selector: 'app-race-results',
@@ -96,6 +99,7 @@ export class RaceResults implements OnInit {
         const flat: ParticipantRow[] = (regs ?? []).flatMap(reg =>
           (reg.participants ?? []).map(p => ({
             participantId: p.id!,
+            registrationId: reg.id!,
             name: p.person
               ? `${p.person.first_name} ${p.person.last_name}`
               : 'Unbekannt'
@@ -129,30 +133,45 @@ export class RaceResults implements OnInit {
     return this.secondsToHms(rt.duration_seconds);
   }
 
+  getRuntimeFieldValue(participantId: string, routeId: string, field: RuntimeField): string {
+    const rt = this.findRuntime(participantId, routeId);
+    return this.normalizeTimeForInput(rt?.[field] ?? null);
+  }
+
   /**
    * Speichern beim Blur.
    * - Wenn Wert leer: optional löschen (wenn Backend delete anbietet) ODER ignorieren
    * - Wenn Runtime existiert: update
    * - Sonst: create
    */
-  onTimeBlur(participantId: string, routeId: string, raw: string) {
-    const value = (raw ?? '').trim();
+  onTimeBlur(
+    participantId: string,
+    registrationId: string,
+    routeId: string,
+    field: RuntimeField,
+    raw: string
+  ) {
+    const value = this.normalizeTimeForApi(raw);
     this.timeInputError.set(null);
 
-    // Leer -> wir lassen es leer. (Wenn du löschen willst: unten Kommentar lesen)
-    if (!value) return;
-
-    // "HH:MM" oder "HH:MM:SS" akzeptieren (als Dauer, nicht als Uhrzeit)
-    const seconds = this.hmsToSeconds(value);
-    if (seconds === null) {
-      this.timeInputError.set('Ungültiges Zeitformat. Bitte HH:MM oder HH:MM:SS als Dauer eingeben.');
+    if (value !== null && !this.isValidClockTime(value)) {
+      this.timeInputError.set('Ungültiges Zeitformat. Bitte HH:MM:SS als Uhrzeit eingeben.');
       return;
     }
 
     const existing = this.findRuntime(participantId, routeId);
 
+    if (!existing && field !== 'start_time' && !value) {
+      return;
+    }
+
+    if (!existing && field !== 'start_time') {
+      this.timeInputError.set('Bitte zuerst eine Startzeit erfassen.');
+      return;
+    }
+
     if (existing?.id) {
-      const payload: RuntimeUpdatePayload = { duration_seconds: seconds };
+      const payload: RuntimeUpdatePayload = { [field]: value };
 
       this.runtimeService.update(existing.id, payload).subscribe({
         next: updated => {
@@ -162,10 +181,18 @@ export class RaceResults implements OnInit {
         error: err => console.error('Update Runtime fehlgeschlagen', err)
       });
     } else {
+      if (!value) {
+        this.timeInputError.set('Für einen neuen Eintrag ist eine Startzeit erforderlich.');
+        return;
+      }
+
       const payload: RuntimeCreatePayload = {
         participant_id: participantId,
-        event_route_id: routeId,
-        duration_seconds: seconds
+        registration_id: registrationId,
+        route_id: routeId,
+        start_time: field === 'start_time' ? value : '00:00:00',
+        finish_time: field === 'finish_time' ? value : null,
+        split_time: field === 'split_time' ? value : null
       };
 
       this.runtimeService.create(payload).subscribe({
@@ -202,6 +229,10 @@ export class RaceResults implements OnInit {
     return this.secondsToHms(total);
   }
 
+  hasRuntime(participantId: string, routeId: string): boolean {
+    return !!this.findRuntime(participantId, routeId);
+  }
+
   // TIME UTILS
   private secondsToHms(total: number): string {
     const h = Math.floor(total / 3600);
@@ -210,18 +241,23 @@ export class RaceResults implements OnInit {
     return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
   }
 
-  private hmsToSeconds(hms: string): number | null {
-    // erlaubt: "HH:MM" oder "HH:MM:SS"
-    const parts = hms.split(':').map(p => p.trim());
-    if (parts.length < 2 || parts.length > 3) return null;
+  private isValidClockTime(value: string): boolean {
+    return /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(value);
+  }
 
-    const h = Number(parts[0]);
-    const m = Number(parts[1]);
-    const s = parts.length === 3 ? Number(parts[2]) : 0;
+  private normalizeTimeForApi(raw: string | null | undefined): string | null {
+    const value = (raw ?? '').trim();
+    if (!value) return null;
 
-    if ([h, m, s].some(n => Number.isNaN(n))) return null;
-    if (h < 0 || m < 0 || m > 59 || s < 0 || s > 59) return null;
+    if (/^\d{2}:\d{2}$/.test(value)) {
+      return `${value}:00`;
+    }
 
-    return h * 3600 + m * 60 + s;
+    return value;
+  }
+
+  private normalizeTimeForInput(value: string | null): string {
+    if (!value) return '';
+    return value.slice(0, 8);
   }
 }

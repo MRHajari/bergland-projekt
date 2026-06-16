@@ -59,14 +59,52 @@
 
                     @for (r of routes(); track r.id) {
                     <td class="time-cell">
-                        <input
-                            class="time-input"
-                            type="text"
-                            placeholder="HH:MM:SS"
-                            autocomplete="off"
-                            [value]="getTimeValue(p.participantId, r.id)"
-                            (blur)="onTimeBlur(p.participantId, r.id, $any($event.target).value)"
-                        />
+                        <div class="time-group">
+                            <label class="time-label">
+                                <span>Start</span>
+                                <input
+                                    class="time-input"
+                                    type="text"
+                                    placeholder="HH:MM:SS"
+                                    autocomplete="off"
+                                    [value]="getRuntimeFieldValue(p.participantId, r.id, 'start_time')"
+                                    (blur)="onTimeBlur(p.participantId, p.registrationId, r.id, 'start_time', $any($event.target).value)"
+                                />
+                            </label>
+
+                            <label class="time-label">
+                                <span>Zwischen</span>
+                                <input
+                                    class="time-input"
+                                    type="text"
+                                    placeholder="HH:MM:SS"
+                                    autocomplete="off"
+                                    [value]="getRuntimeFieldValue(p.participantId, r.id, 'split_time')"
+                                    (blur)="onTimeBlur(p.participantId, p.registrationId, r.id, 'split_time', $any($event.target).value)"
+                                />
+                            </label>
+
+                            <label class="time-label">
+                                <span>Ziel</span>
+                                <input
+                                    class="time-input"
+                                    type="text"
+                                    placeholder="HH:MM:SS"
+                                    autocomplete="off"
+                                    [value]="getRuntimeFieldValue(p.participantId, r.id, 'finish_time')"
+                                    (blur)="onTimeBlur(p.participantId, p.registrationId, r.id, 'finish_time', $any($event.target).value)"
+                                />
+                            </label>
+
+                            <div class="duration-info">
+                                @if (hasRuntime(p.participantId, r.id)) {
+                                    <span>Dauer: {{ getTimeValue(p.participantId, r.id) }}</span>
+                                }
+                                @else {
+                                    <span>Noch kein Eintrag</span>
+                                }
+                            </div>
+                        </div>
                     </td>
                     }
 

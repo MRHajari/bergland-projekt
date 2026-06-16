@@ -15,14 +15,40 @@ const Runtime = sequelize.define(
             allowNull: false,
         },
 
+        registration_id: {
+            type: DataTypes.UUID,
+            allowNull: true,
+        },
+
         event_route_id: {
             type: DataTypes.UUID,
             allowNull: false,
         },
 
+        route_id: {
+            type: DataTypes.UUID,
+            allowNull: true,
+        },
+
+        start_time: {
+            type: DataTypes.TIME,
+            allowNull: true,
+        },
+
+        finish_time: {
+            type: DataTypes.TIME,
+            allowNull: true,
+        },
+
+        split_time: {
+            type: DataTypes.TIME,
+            allowNull: true,
+        },
+
         duration_seconds: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            defaultValue: 0,
         },
 
         position: {

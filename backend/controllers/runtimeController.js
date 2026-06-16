@@ -13,6 +13,124 @@ const {
     updateRuntimeSchema,
 } = require("../validators/runtimeValidator");
 
+const runtimeInclude = [
+    {
+        model: EventRegistrationParticipant,
+        as: "participant",
+        include: [
+            {
+                model: EventRegistration,
+                as: "registration",
+                attributes: ["id", "event_id"],
+            },
+        ],
+    },
+    {
+        model: EventRoute,
+        as: "eventRoute",
+        include: [
+            { model: Event, as: "event" },
+            { model: Route, as: "route" },
+        ],
+    },
+    { model: User, as: "timekeeper", attributes: ["id", "email"] },
+];
+
+function normalizeOptionalTime(value) {
+    if (value === undefined) return undefined;
+    if (value === null || value === "") return null;
+
+    const trimmed = String(value).trim();
+    if (!trimmed) return null;
+
+    if (/^\d{2}:\d{2}$/.test(trimmed)) {
+        return `${trimmed}:00`;
+    }
+
+    return trimmed;
+}
+
+function timeToSeconds(value) {
+    if (!value) return null;
+
+    const [hours, minutes, seconds] = value.split(":").map(Number);
+    return (hours * 3600) + (minutes * 60) + seconds;
+}
+
+function calculateDurationSeconds(startTime, finishTime) {
+    if (!startTime || !finishTime) return 0;
+
+    const startSeconds = timeToSeconds(startTime);
+    const finishSeconds = timeToSeconds(finishTime);
+
+    if (startSeconds === null || finishSeconds === null) return 0;
+    return finishSeconds - startSeconds;
+}
+
+function validateChronology({ start_time, finish_time, split_time }) {
+    if (finish_time && !start_time) {
+        return "Eine Zielzeit darf nur mit vorhandener Startzeit gespeichert werden.";
+    }
+
+    if (split_time && !start_time) {
+        return "Eine Zwischenzeit darf nur mit vorhandener Startzeit gespeichert werden.";
+    }
+
+    const startSeconds = timeToSeconds(start_time);
+    const finishSeconds = timeToSeconds(finish_time);
+    const splitSeconds = timeToSeconds(split_time);
+
+    if (startSeconds !== null && splitSeconds !== null && splitSeconds < startSeconds) {
+        return "Die Zwischenzeit darf nicht vor der Startzeit liegen.";
+    }
+
+    if (startSeconds !== null && finishSeconds !== null && finishSeconds < startSeconds) {
+        return "Die Zielzeit darf nicht vor der Startzeit liegen.";
+    }
+
+    if (splitSeconds !== null && finishSeconds !== null && finishSeconds < splitSeconds) {
+        return "Die Zielzeit darf nicht vor der Zwischenzeit liegen.";
+    }
+
+    return null;
+}
+
+async function loadParticipant(participantId) {
+    return EventRegistrationParticipant.findByPk(participantId, {
+        include: [
+            {
+                model: EventRegistration,
+                as: "registration",
+                attributes: ["id", "event_id"],
+            },
+        ],
+    });
+}
+
+async function resolveEventRoute({ participant, route_id, event_route_id }) {
+    if (event_route_id) {
+        const directEventRoute = await EventRoute.findByPk(event_route_id);
+
+        if (
+            directEventRoute &&
+            directEventRoute.event_id === participant.registration.event_id
+        ) {
+            return directEventRoute;
+        }
+    }
+
+    if (!route_id && !event_route_id) {
+        return null;
+    }
+
+    return EventRoute.findOne({
+        where: {
+            event_id: participant.registration.event_id,
+            route_id: route_id || event_route_id,
+        },
+    });
+}
+
 
 // ============================================================
 // ➕ Neue Laufzeit
@@ -22,24 +140,7 @@ exports.createRuntime = async (req, res, next) => {
         const { error, value } = createRuntimeSchema.validate(req.body);
         if (error) return res.status(400).json({ error: error.details[0].message });
 
-        const { participant_id, event_route_id, duration_seconds } = value;
-
-        console.log("CREATE runtime payload:", {
-            participant_id,
-            event_route_id,
-            duration_seconds,
-            user: req.user?.id,
-        });
-
-        const participant = await EventRegistrationParticipant.findByPk(participant_id, {
-            include: [
-                {
-                    model: EventRegistration,
-                    as: "registration",
-                    attributes: ["id", "event_id"],
-                },
-            ],
-        });
+        const participant = await loadParticipant(value.participant_id);
 
         if (!participant) {
             return res.status(404).json({ error: "Teilnehmer nicht gefunden." });
@@ -49,23 +150,22 @@ exports.createRuntime = async (req, res, next) => {
             return res.status(404).json({ error: "Registrierung des Teilnehmers nicht gefunden." });
         }
 
-        /**
-         * WICHTIG:
-         * Frontend schickt aktuell Route.id als event_route_id.
-         * Daher NICHT findByPk(event_route_id), sondern EventRoute über (event_id + route_id) suchen.
-         */
-        const eventRoute = await EventRoute.findOne({
-            where: {
-                event_id: participant.registration.event_id,
-                route_id: event_route_id, // <- hier steckt Route.id drin
-            },
+        const eventRoute = await resolveEventRoute({
+            participant,
+            route_id: value.route_id,
+            event_route_id: value.event_route_id,
         });
 
-        console.log("FOUND eventRoute:", eventRoute ? {
-            id: eventRoute.id,
-            event_id: eventRoute.event_id,
-            route_id: eventRoute.route_id,
-        } : null);
+        console.log("CREATE runtime payload:", {
+            participant_id: value.participant_id,
+            registration_id: value.registration_id,
+            route_id: value.route_id,
+            event_route_id: value.event_route_id,
+            start_time: value.start_time,
+            finish_time: value.finish_time,
+            split_time: value.split_time,
+            user: req.user?.id,
+        });
 
         if (!eventRoute) {
             return res
@@ -73,11 +173,30 @@ exports.createRuntime = async (req, res, next) => {
                 .json({ error: "EventRoute nicht gefunden (Event+Route passt nicht)." });
         }
 
-        // prüfen ob runtime für diese kombination existiert
+        const start_time = normalizeOptionalTime(value.start_time);
+        const finish_time = normalizeOptionalTime(value.finish_time);
+        const split_time = normalizeOptionalTime(value.split_time);
+
+        const chronologyError = validateChronology({
+            start_time,
+            finish_time,
+            split_time,
+        });
+
+        if (chronologyError) {
+            return res.status(400).json({ error: chronologyError });
+        }
+
+        console.log("FOUND eventRoute:", eventRoute ? {
+            id: eventRoute.id,
+            event_id: eventRoute.event_id,
+            route_id: eventRoute.route_id,
+        } : null);
+
         const exists = await Runtime.findOne({
             where: {
-                participant_id,
-                event_route_id: eventRoute.id, // <- speichern immer gegen EventRoute.id
+                participant_id: value.participant_id,
+                event_route_id: eventRoute.id,
             },
         });
 
@@ -88,32 +207,18 @@ exports.createRuntime = async (req, res, next) => {
         }
 
         const runtime = await Runtime.create({
-            participant_id,
-            event_route_id: eventRoute.id, // <- EventRoute.id in DB speichern
-            duration_seconds,
+            participant_id: value.participant_id,
+            registration_id: value.registration_id || participant.registration.id,
+            route_id: eventRoute.route_id,
+            event_route_id: eventRoute.id,
+            start_time,
+            finish_time,
+            split_time,
+            duration_seconds: calculateDurationSeconds(start_time, finish_time),
             recorded_by: req.user.id,
         });
 
-        const created = await Runtime.findByPk(runtime.id, {
-            include: [
-                {
-                    model: EventRegistrationParticipant,
-                    as: "participant",
-                    include: [
-                        {
-                            model: EventRegistration,
-                            as: "registration",
-                            attributes: ["id", "event_id"],
-                        },
-                    ],
-                },
-                {
-                    model: EventRoute,
-                    as: "eventRoute",
-                },
-                { model: User, as: "timekeeper", attributes: ["id", "email"] },
-            ],
-        });
+        const created = await Runtime.findByPk(runtime.id, { include: runtimeInclude });
 
         return res.status(201).json(created);
     } catch (err) {
@@ -128,28 +233,7 @@ exports.createRuntime = async (req, res, next) => {
 exports.getAllRuntimes = async (req, res, next) => {
     try {
         const runtimes = await Runtime.findAll({
-            include: [
-                {
-                    model: EventRegistrationParticipant,
-                    as: "participant",
-                    include: [
-                        {
-                            model: EventRegistration,
-                            as: "registration",
-                            attributes: ["id", "event_id"],
-                        },
-                    ],
-                },
-                {
-                    model: EventRoute,
-                    as: "eventRoute",
-                    include: [
-                        { model: Event, as: "event" },
-                        { model: Route, as: "route" },
-                    ],
-                },
-                { model: User, as: "timekeeper", attributes: ["id", "email"] },
-            ],
+            include: runtimeInclude,
             order: [["createdAt", "DESC"]],
         });
 
@@ -166,21 +250,7 @@ exports.getAllRuntimes = async (req, res, next) => {
 exports.getRuntimeById = async (req, res, next) => {
     try {
         const runtime = await Runtime.findByPk(req.params.id, {
-            include: [
-                {
-                    model: EventRegistrationParticipant,
-                    as: "participant",
-                    include: [
-                        {
-                            model: EventRegistration,
-                            as: "registration",
-                            attributes: ["id", "event_id"],
-                        },
-                    ],
-                },
-                { model: EventRoute, as: "eventRoute" },
-                { model: User, as: "timekeeper" },
-            ],
+            include: runtimeInclude,
         });
 
         if (!runtime) return res.status(404).json({ error: "Runtime nicht gefunden." });
@@ -199,21 +269,7 @@ exports.getByParticipant = async (req, res, next) => {
     try {
         const runtimes = await Runtime.findAll({
             where: { participant_id: req.params.participantId },
-            include: [
-                {
-                    model: EventRegistrationParticipant,
-                    as: "participant",
-                    include: [
-                        {
-                            model: EventRegistration,
-                            as: "registration",
-                            attributes: ["id", "event_id"],
-                        },
-                    ],
-                },
-                { model: EventRoute, as: "eventRoute" },
-                { model: User, as: "timekeeper" },
-            ],
+            include: runtimeInclude,
         });
 
         res.json(runtimes);
@@ -275,29 +331,35 @@ exports.updateRuntime = async (req, res, next) => {
         const { error, value } = updateRuntimeSchema.validate(req.body);
         if (error) return res.status(400).json({ error: error.details[0].message });
 
+        const nextValues = {
+            start_time:
+                value.start_time !== undefined
+                    ? normalizeOptionalTime(value.start_time)
+                    : runtime.start_time,
+            finish_time:
+                value.finish_time !== undefined
+                    ? normalizeOptionalTime(value.finish_time)
+                    : runtime.finish_time,
+            split_time:
+                value.split_time !== undefined
+                    ? normalizeOptionalTime(value.split_time)
+                    : runtime.split_time,
+        };
+
+        const chronologyError = validateChronology(nextValues);
+        if (chronologyError) {
+            return res.status(400).json({ error: chronologyError });
+        }
+
         await runtime.update({
-            duration_seconds: value.duration_seconds,
+            start_time: nextValues.start_time,
+            finish_time: nextValues.finish_time,
+            split_time: nextValues.split_time,
+            duration_seconds: calculateDurationSeconds(nextValues.start_time, nextValues.finish_time),
             recorded_by: req.user.id,
         });
 
-        // optional: Runtime inkl. eventRoute zurückgeben, damit Frontend direkt alles hat
-        const updated = await Runtime.findByPk(runtime.id, {
-            include: [
-                {
-                    model: EventRegistrationParticipant,
-                    as: "participant",
-                    include: [
-                        {
-                            model: EventRegistration,
-                            as: "registration",
-                            attributes: ["id", "event_id"],
-                        },
-                    ],
-                },
-                { model: EventRoute, as: "eventRoute" },
-                { model: User, as: "timekeeper", attributes: ["id", "email"] },
-            ],
-        });
+        const updated = await Runtime.findByPk(runtime.id, { include: runtimeInclude });
 
         return res.json(updated);
     } catch (err) {
