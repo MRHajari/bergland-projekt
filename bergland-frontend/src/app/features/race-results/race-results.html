@@ -37,6 +37,10 @@
     <p class="error">{{ timeInputError() }}</p>
     }
 
+    @if (timeCaptureSuccess()) {
+    <p class="success">{{ timeCaptureSuccess() }}</p>
+    }
+
     <div class="table-wrap">
         <table class="results-table">
 
@@ -45,7 +49,15 @@
                     <th class="sticky-col">Teilnehmer</th>
 
                     @for (r of routes(); track r.id) {
-                    <th class="route-head">{{ r.name }}</th>
+                    <th class="route-head">
+                        <div class="route-head-content">
+                            <span>{{ r.name }}</span>
+                            <small>Start: {{ getRouteStartTime(r.id) || '–' }}</small>
+                            <button class="capture-btn" type="button" (click)="openCaptureModal(r.id)">
+                                Zeit erfassen
+                            </button>
+                        </div>
+                    </th>
                     }
 
                     <th class="total-head">Gesamt</th>
@@ -115,5 +127,56 @@
 
         </table>
     </div>
+
+    @if (captureModalOpen()) {
+    <div class="modal-backdrop" (click)="closeCaptureModal()">
+        <div class="capture-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Zeit erfassen – {{ getCaptureRouteName() }}</h2>
+                <button type="button" class="modal-close" (click)="closeCaptureModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <label class="modal-label">
+                    <span>Startnummer</span>
+                    <input
+                        class="modal-input"
+                        type="text"
+                        [value]="captureStartNumber()"
+                        (input)="onCaptureStartNumberInput($any($event.target).value)"
+                        (keydown.enter)="onCaptureEnter($event)"
+                        placeholder="z. B. 101"
+                        autofocus
+                    />
+                </label>
+
+                @if (captureMatchedParticipants().length > 0) {
+                <div class="capture-preview">
+                    @if (captureMatchedParticipants().length === 1) {
+                    <strong class="capture-name">{{ getCapturePrimaryParticipant()?.name }}</strong>
+                    } @else {
+                    <strong class="capture-name">Team Startnummer {{ captureStartNumber() }}</strong>
+                    <ul class="capture-team-list">
+                        @for (p of captureMatchedParticipants(); track p.participantId) {
+                        <li>{{ p.name }}</li>
+                        }
+                    </ul>
+                    }
+                    <span>Startnummer: {{ captureStartNumber() }}</span>
+                </div>
+                }
+
+                @if (captureMessage()) {
+                <p class="error modal-message">{{ captureMessage() }}</p>
+                }
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" (click)="closeCaptureModal()">Abbrechen</button>
+                <button type="button" class="btn-primary" (click)="captureFinishTime()">Zeit erfassen</button>
+            </div>
+        </div>
+    </div>
+    }
     }
 </div>
