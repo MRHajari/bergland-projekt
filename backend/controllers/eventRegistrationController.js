@@ -10,6 +10,80 @@ const {
 
 const eventRegistrationSchema = require("../validators/eventRegistrationValidator");
 
+async function getNextStartNumberForEvent(event_id, transaction) {
+    const lastParticipant = await EventRegistrationParticipant.findOne({
+        include: [
+            {
+                model: EventRegistration,
+                as: "registration",
+                where: { event_id },
+                attributes: [],
+            },
+        ],
+        order: [["start_number", "DESC"]],
+        transaction,
+    });
+
+    return typeof lastParticipant?.start_number === "number"
+        ? lastParticipant.start_number + 1
+        : 1;
+}
+
+async function getSharedSquadronStartNumber({ event_id, squadron_id, transaction }) {
+    const existingParticipant = await EventRegistrationParticipant.findOne({
+        where: { squadron_id },
+        include: [
+            {
+                model: EventRegistration,
+                as: "registration",
+                where: { event_id },
+                attributes: [],
+            },
+        ],
+        order: [["createdAt", "ASC"]],
+        transaction,
+    });
+
+    if (typeof existingParticipant?.start_number === "number") {
+        return existingParticipant.start_number;
+    }
+
+    const squadron = await Squadron.findOne({
+        where: { id: squadron_id, event_id },
+        transaction,
+    });
+
+    if (!squadron) {
+        throw new Error("Staffel nicht gefunden.");
+    }
+
+    const squadronStartNumber = Number(squadron.start_number);
+    if (Number.isInteger(squadronStartNumber) && squadronStartNumber > 0) {
+        return squadronStartNumber;
+    }
+
+    const nextStartNumber = await getNextStartNumberForEvent(event_id, transaction);
+    await squadron.update({ start_number: String(nextStartNumber) }, { transaction });
+    return nextStartNumber;
+}
+
+async function assignParticipantStartNumber({
+    event_id,
+    participation_type,
+    squadron_id,
+    transaction,
+}) {
+    if (participation_type === "staffel") {
+        if (!squadron_id) {
+            throw new Error("Für Staffel-Teilnehmer ist eine squadron_id erforderlich.");
+        }
+
+        return getSharedSquadronStartNumber({ event_id, squadron_id, transaction });
+    }
+
+    return getNextStartNumberForEvent(event_id, transaction);
+}
+
 // ============================================================
 // 🎟️ EventRegistration Controller
 // ============================================================
@@ -148,38 +222,27 @@ exports.createGroupRegistration = async (req, res) => {
             { transaction: t }
         );
 
-        const lastParticipant = await EventRegistrationParticipant.findOne({
-            include: [
-                {
-                    model: EventRegistration,
-                    as: "registration",
-                    where: { event_id },
-                    attributes: [],
-                },
-            ],
-            order: [["start_number", "DESC"]],
-            transaction: t,
-        });
-
-        let nextStartNumber =
-            typeof lastParticipant?.start_number === "number"
-                ? lastParticipant.start_number + 1
-                : 1;
-
         for (const p of participants) {
+            const participationType = p.participation_type ?? "einzeln";
+            const squadronId = participationType === "staffel" ? (p.squadron_id ?? null) : null;
+            const startNumber = await assignParticipantStartNumber({
+                event_id,
+                participation_type: participationType,
+                squadron_id: squadronId,
+                transaction: t,
+            });
+
             await EventRegistrationParticipant.create(
                 {
                     registration_id: registration.id,
                     person_id: p.person_id,
-                    squadron_id: p.squadron_id ?? null,
-                    participation_type: p.participation_type ?? "einzeln",
+                    squadron_id: squadronId,
+                    participation_type: participationType,
                     catering_type: p.catering_type ?? null,
-                    start_number: nextStartNumber,
+                    start_number: startNumber,
                 },
                 { transaction: t }
             );
-
-            nextStartNumber++;
         }
 
         await t.commit();
@@ -323,34 +386,28 @@ exports.addParticipant = async (req, res) => {
 
         const event_id = registration.event_id;
 
-        const lastParticipant = await EventRegistrationParticipant.findOne({
-            include: [
-                {
-                    model: EventRegistration,
-                    as: "registration",
-                    where: { event_id },
-                    attributes: [],
-                },
-            ],
-            order: [["start_number", "DESC"]],
+        const normalizedParticipationType = participation_type ?? "einzeln";
+        const normalizedSquadronId = normalizedParticipationType === "staffel"
+            ? (squadron_id ?? null)
+            : null;
+
+        const startNumber = await assignParticipantStartNumber({
+            event_id,
+            participation_type: normalizedParticipationType,
+            squadron_id: normalizedSquadronId,
             transaction: t,
         });
-
-        let nextStartNumber =
-            typeof lastParticipant?.start_number === "number"
-                ? lastParticipant.start_number + 1
-                : 1;
 
         const participant = await EventRegistrationParticipant.create(
             {
                 registration_id,
                 person_id,
-                squadron_id: squadron_id ?? null,
-                participation_type: participation_type ?? "einzeln",
+                squadron_id: normalizedSquadronId,
+                participation_type: normalizedParticipationType,
                 catering_type: catering_type ?? null,
                 gender: gender ?? null,
                 staffel_aufnahme: staffel_aufnahme ?? null,
-                start_number: nextStartNumber,
+                start_number: startNumber,
             },
             { transaction: t }
         );
@@ -377,15 +434,20 @@ exports.updateParticipantStartNumber = async (req, res) => {
 
         let newStartNumber = null;
 
-        if (start_number !== null && start_number !== undefined && start_number !== "") {
-            const parsed = Number(start_number);
-            if (!Number.isInteger(parsed) || parsed < 1) {
-                return res.status(400).json({
-                    message: "start_number muss eine positive Ganzzahl oder null sein.",
-                });
-            }
-            newStartNumber = parsed;
+        if (start_number === null || start_number === undefined || start_number === "") {
+            return res.status(400).json({
+                message: "start_number ist verpflichtend und muss eine positive Ganzzahl sein.",
+            });
         }
+
+        const parsed = Number(start_number);
+        if (!Number.isInteger(parsed) || parsed < 1) {
+            return res.status(400).json({
+                message: "start_number ist verpflichtend und muss eine positive Ganzzahl sein.",
+            });
+        }
+
+        newStartNumber = parsed;
 
         const participant = await EventRegistrationParticipant.findByPk(participantId, {
             include: [
@@ -403,7 +465,7 @@ exports.updateParticipantStartNumber = async (req, res) => {
 
         const eventId = participant.registration?.event_id;
 
-        if (newStartNumber !== null && eventId) {
+        if (eventId) {
             const existing = await EventRegistrationParticipant.findOne({
                 where: { start_number: newStartNumber },
                 include: [
@@ -416,18 +478,35 @@ exports.updateParticipantStartNumber = async (req, res) => {
                 ],
             });
 
-            if (existing && existing.id !== participant.id) {
+            const isSameSquadronUpdate =
+                !!participant.squadron_id &&
+                !!existing?.squadron_id &&
+                existing.squadron_id === participant.squadron_id;
+
+            if (existing && existing.id !== participant.id && !isSameSquadronUpdate) {
                 return res.status(409).json({
                     message: `Startnummer ${newStartNumber} ist für dieses Event bereits vergeben.`,
                 });
             }
         }
 
-        await participant.update({ start_number: newStartNumber });
+        if (participant.participation_type === "staffel" && participant.squadron_id) {
+            await EventRegistrationParticipant.update(
+                { start_number: newStartNumber },
+                { where: { squadron_id: participant.squadron_id } }
+            );
+
+            await Squadron.update(
+                { start_number: String(newStartNumber) },
+                { where: { id: participant.squadron_id } }
+            );
+        } else {
+            await participant.update({ start_number: newStartNumber });
+        }
 
         res.json({
             message: "Startnummer erfolgreich aktualisiert.",
-            participant,
+            participant: await EventRegistrationParticipant.findByPk(participantId),
         });
     } catch (err) {
         console.error("❌ Fehler beim Aktualisieren der Startnummer:", err);

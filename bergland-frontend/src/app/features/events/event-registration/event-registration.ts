@@ -28,7 +28,7 @@ type EventParticipantUI = Person & {
 
   // ✅ pro Teilnehmer
   catering_type?: CateringType | null;
-  start_number?: number | null;
+  start_number?: number;
 };
 
 @Component({
@@ -176,16 +176,17 @@ export class EventRegistration implements OnInit {
         const squadronMap: Record<string, string> = {};
         for (const s of this.squadrons) squadronMap[s.id] = s.name;
 
-        this.addedPersons = this.existingRegistration.participants.map((p: any) => ({
-          ...(p.person || {}),
-          inSquadron: !!p.squadron_id,
-          squadronName: p.squadron_id
-            ? squadronMap[p.squadron_id] || 'Unbekannte Staffel'
-            : null,
-
-          catering_type: (p.catering_type ?? null) as CateringType,
-          start_number: p.start_number ?? null,
-        }));
+        this.addedPersons = this.existingRegistration.participants
+          .filter((p: any) => !!p.person)
+          .map((p: any) => ({
+            ...(p.person as Person),
+            inSquadron: !!p.squadron_id,
+            squadronName: p.squadron_id
+              ? squadronMap[p.squadron_id] || 'Unbekannte Staffel'
+              : null,
+            catering_type: (p.catering_type ?? null) as CateringType,
+            start_number: Number(p.start_number),
+          } as EventParticipantUI));
 
         console.log('🧪 addedPersons after load:', this.addedPersons);
 
@@ -462,28 +463,32 @@ export class EventRegistration implements OnInit {
       return;
     }
 
+    const resolvedPerson = person;
+
     // ======================================================
     // 🔹 Doppelt hinzufügen verhindern
     // ======================================================
-    if (this.addedPersons.some((p) => p.id === person!.id)) {
-      alert(`${person.first_name} ${person.last_name} wurde bereits hinzugefügt.`);
+    if (this.addedPersons.some((p) => p.id === resolvedPerson.id)) {
+      alert(`${resolvedPerson.first_name} ${resolvedPerson.last_name} wurde bereits hinzugefügt.`);
       return;
     }
 
     // ======================================================
     // 🔹 Lokal hinzufügen
     // ======================================================
-    this.addedPersons.push({
-      ...person,
+    const participantToAdd = {
+      ...resolvedPerson,
       inSquadron: !!squadronId,
       squadronName,
       catering_type: v.catering_type ?? null,
-      start_number: null,
-    });
+      start_number: 0,
+    } as EventParticipantUI;
 
-    this.existingPersons = this.existingPersons.filter((ep) => ep.id !== person!.id);
+    this.addedPersons.push(participantToAdd);
 
-    if (person.id === this.loggedPersonId) {
+    this.existingPersons = this.existingPersons.filter((ep) => ep.id !== resolvedPerson.id);
+
+    if (resolvedPerson.id === this.loggedPersonId) {
       this.selfPending = false;
     }
 
@@ -527,22 +532,22 @@ export class EventRegistration implements OnInit {
     const removed = this.addedPersons.find((p) => p.id === personId) || null;
 
     // ✅ passende Registrierung in existingRegs suchen (Backend)
-    const reg = (this.existingRegs || []).find(
-      (r: any) =>
-        r.event_id === eventId &&
-        r.participants?.some((pp: any) => pp.person_id === personId)
-    );
+    const reg = (this.existingRegs || []).find((r: any) => {
+      const participants = (r.participants || []) as any[];
+      return r.event_id === eventId && participants.some((pp: any) => pp.person_id === personId);
+    });
 
     // ✅ Nur lokal
     if (!reg) {
       this.addedPersons = this.addedPersons.filter((p) => p.id !== personId);
-      if (removed && !this.existingPersons.some((ep) => ep.id === removed.id)) {
-        this.existingPersons.push(removed);
+      const removedPerson = removed as Person | null;
+      if (removedPerson?.id && !this.existingPersons.some((ep: Person) => ep.id === removedPerson.id)) {
+        this.existingPersons.push(removedPerson);
       }
       return;
     }
 
-    if (!confirm('Willst du diese Person wirklich aus der Registrierung entfernen?')) return;
+    if (!window.confirm('Willst du diese Person wirklich aus der Registrierung entfernen?')) return;
 
     try {
       const participant = reg.participants?.find((pp: any) => pp.person_id === personId);
@@ -561,8 +566,9 @@ export class EventRegistration implements OnInit {
         participants: r.participants?.filter((pp: any) => pp.person_id !== personId),
       }));
 
-      if (removed && !this.existingPersons.some((ep) => ep.id === removed.id)) {
-        this.existingPersons.push(removed);
+      const removedPerson = removed as Person | null;
+      if (removedPerson?.id && !this.existingPersons.some((ep: Person) => ep.id === removedPerson.id)) {
+        this.existingPersons.push(removedPerson);
       }
 
       // ✅ Nach dem Entfernen neu laden (um Startnummern etc. konsistent zu halten)

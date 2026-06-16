@@ -26,7 +26,7 @@ export class MyRegistrations implements OnInit {
     wishes?: string | null;
     catering_type?: string | null;
     license_plate?: string | null;
-    start_number?: string | null;
+    start_number?: number | null;
     phone_number?: string | null;
   }[] = [];
 
@@ -67,19 +67,20 @@ export class MyRegistrations implements OnInit {
   
         this.registrations = regs.map((r) => {
           const evt = events.find((e) => e?.id === r.event_id);
+          const participants = r.participants || [];
   
           return {
             eventId: r.event_id,
             eventName: evt?.name || 'Unbekanntes Event',
             eventStart: evt?.start_date || '',
             eventEnd: evt?.end_date || '',
-            participantCount: r.participants?.length || 0,
-            squadronCount: r.participants?.filter((p) => p.squadron_id)?.length || 0,
+            participantCount: participants.length || 0,
+            squadronCount: participants.filter((p) => !!p.squadron_id).length || 0,
             status: r.status || 'In Bearbeitung',
             wishes: r.wishes || null,
             catering_type: r.catering_type || null,
             license_plate: r.license_plate || null,
-            start_number: r.start_number || null,
+            start_number: participants[0]?.start_number ?? null,
             phone_number: r.phone_number || null,
           };
         });

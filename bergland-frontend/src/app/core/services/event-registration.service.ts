@@ -11,6 +11,7 @@ export interface EventRegistrationParticipant {
   person_id: string;
   squadron_id?: string | null;
   participation_type: 'einzeln' | 'staffel';
+  start_number: number;
   liability_accept: boolean;
   staffel_aufnahme?: string | null;
 
@@ -35,7 +36,7 @@ export interface EventRegistrationInterface {
 
   phone_number?: string | null;
   license_plate?: string | null;
-  start_number?: string | null;
+  start_number?: number | null;
   catering_type?: string | null;
   wishes?: string | null;
   gender?: 'm' | 'w' | 'd' | null;
@@ -59,7 +60,7 @@ export interface EventRegistrationParticipantPayload {
   liability_accept?: boolean;
   staffel_aufnahme?: string | null;
   registration_id?: string;
-  start_number?: string | null;
+  start_number?: number;
   catering_type?: string | null;
   gender?: 'm' | 'w' | 'd' | null;
 }
@@ -226,7 +227,7 @@ getByUser(userId: string): Observable<EventRegistrationInterface[]> {
 /** ✏️ Startnummer eines Teilnehmers ändern (Admin) */
 updateParticipantStartNumber(
   participantId: string,
-  startNumber: string | null
+  startNumber: string
 ): Observable<any> {
   return this.api.putCustom(
     `${this.endpoint}/participant/${participantId}/start-number`,

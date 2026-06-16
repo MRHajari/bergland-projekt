@@ -46,8 +46,8 @@ const EventRegistrationParticipant = sequelize.define(
         // 🏷️ Startnummer (neu, automatisch)
         start_number: {
             type: DataTypes.INTEGER,
-            allowNull: true,
-            comment: 'Automatisch vergebene Startnummer pro Event',
+            allowNull: false,
+            comment: 'Pflicht-Startnummer pro Event; bei Staffel für das gesamte Team identisch',
         },
     },
     {

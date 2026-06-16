@@ -47,13 +47,13 @@ export class EventRegistrationsAdmin implements OnInit {
   private async loadData(): Promise<void> {
     this.loading = true;
     try {
-      const [event, registrations] = await Promise.all([
-        firstValueFrom(this.eventService.getById(this.eventId)),
-        firstValueFrom(this.registrationService.getGroupByEvent(this.eventId)),
-      ]);
+      const event = await firstValueFrom(this.eventService.getById(this.eventId));
+      const registrations = (await firstValueFrom(
+        this.registrationService.getGroupByEvent(this.eventId)
+      )) as any[];
 
       this.event = event;
-      this.registrations = registrations || [];
+      this.registrations = registrations;
       console.log('📦 Registrierungen geladen:', this.registrations);
     } catch (err) {
       console.error('❌ Fehler beim Laden der Daten:', err);
@@ -112,7 +112,7 @@ export class EventRegistrationsAdmin implements OnInit {
 
   startEditStartNumber(p: any) {
     this.editingParticipantId = p.id;
-    this.editingStartNumber = p.start_number ?? '';
+    this.editingStartNumber = String(p.start_number ?? '');
   }
   
   cancelEditStartNumber() {
@@ -122,15 +122,35 @@ export class EventRegistrationsAdmin implements OnInit {
   
   async saveStartNumber(p: any) {
     try {
+      const nextValue = this.editingStartNumber?.trim() || '';
+
       await firstValueFrom(
         this.registrationService.updateParticipantStartNumber(
           p.id,
-          this.editingStartNumber?.trim() || null
+          nextValue
         )
       );
-  
-      // 🔁 Lokal updaten (ohne Reload)
-      p.start_number = this.editingStartNumber?.trim() || null;
+
+      const updatedStartNumber = Number(nextValue);
+
+      this.registrations = this.registrations.map((reg) => ({
+        ...reg,
+        participants: (reg.participants || []).map((participant: any) => {
+          if (participant.id === p.id) {
+            return { ...participant, start_number: updatedStartNumber };
+          }
+
+          if (
+            participant.participation_type === 'staffel' &&
+            participant.squadron_id &&
+            participant.squadron_id === p.squadron_id
+          ) {
+            return { ...participant, start_number: updatedStartNumber };
+          }
+
+          return participant;
+        }),
+      }));
   
       this.cancelEditStartNumber();
       console.log('✅ Startnummer aktualisiert');
