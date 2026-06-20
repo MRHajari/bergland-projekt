@@ -80,17 +80,20 @@
                     </th>
                     }
 
-                    <th class="total-head">Gesamt</th>
+                    <th class="total-head">Gesamt (alle Routen)</th>
                 </tr>
             </thead>
 
             <tbody>
-                @for (p of participants(); track p.participantId) {
+                @for (p of participants(); track p.rowId) {
                 <tr>
                     <td class="sticky-col name-cell">
                         <div class="name-card">
                             <span class="participant-name">{{ p.name }}</span>
                             <small class="participant-number">Startnr.: {{ p.startNumber ?? '—' }}</small>
+                            @if (p.isTeam) {
+                            <small class="participant-type">Staffel ({{ p.members.length }} Personen)</small>
+                            }
                         </div>
                     </td>
 
@@ -100,22 +103,22 @@
                             <div class="time-row">
                                 <span class="time-row-label">Start</span>
 
-                                @if (isEditingField(p.participantId, routeId, 'start_time')) {
+                                @if (isEditingField(p, routeId, 'start_time')) {
                                 <input class="inline-time-input" type="text" placeholder="HH:MM:SS"
                                     [value]="inlineEditValue()" (input)="onInlineEditInput($any($event.target).value)"
-                                    (keydown.enter)="onInlineEditEnter($event, p.participantId, p.registrationId, routeId, 'start_time')" />
+                                    (keydown.enter)="onInlineEditEnter($event, p, routeId, 'start_time')" />
                                 <button class="icon-btn" type="button" title="Speichern"
-                                    (click)="saveInlineEdit(p.participantId, p.registrationId, routeId, 'start_time')">
+                                    (click)="saveInlineEdit(p, routeId, 'start_time')">
                                     <i class="fa-solid fa-check"></i>
                                 </button>
                                 <button class="icon-btn" type="button" title="Abbrechen" (click)="cancelInlineEdit()">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
                                 } @else {
-                                <span class="time-value">{{ getDisplayStartTime(p.participantId, routeId) || '—'
+                                <span class="time-value">{{ getDisplayStartTime(p, routeId) || '—'
                                     }}</span>
                                 <button class="icon-btn" type="button" title="Startzeit bearbeiten"
-                                    (click)="startInlineEdit(p.participantId, routeId, 'start_time')">
+                                    (click)="startInlineEdit(p, routeId, 'start_time')">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 }
@@ -124,30 +127,30 @@
                             <div class="time-row">
                                 <span class="time-row-label">Zwischenpunkt</span>
 
-                                @if (isEditingField(p.participantId, routeId, 'split_time')) {
+                                @if (isEditingField(p, routeId, 'split_time')) {
                                 <input class="inline-time-input" type="text" placeholder="HH:MM:SS"
                                     [value]="inlineEditValue()" (input)="onInlineEditInput($any($event.target).value)"
-                                    (keydown.enter)="onInlineEditEnter($event, p.participantId, p.registrationId, routeId, 'split_time')" />
+                                    (keydown.enter)="onInlineEditEnter($event, p, routeId, 'split_time')" />
                                 <button class="icon-btn" type="button" title="Speichern"
-                                    (click)="saveInlineEdit(p.participantId, p.registrationId, routeId, 'split_time')">
+                                    (click)="saveInlineEdit(p, routeId, 'split_time')">
                                     <i class="fa-solid fa-check"></i>
                                 </button>
                                 <button class="icon-btn" type="button" title="Abbrechen" (click)="cancelInlineEdit()">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
-                                } @else if (hasCapturedField(p.participantId, routeId, 'split_time')) {
-                                <span class="time-value">{{ getCapturedFieldValue(p.participantId, routeId,
+                                } @else if (hasCapturedField(p, routeId, 'split_time')) {
+                                <span class="time-value">{{ getCapturedFieldValue(p, routeId,
                                     'split_time')
                                     }}</span>
                                 <button class="icon-btn" type="button" title="Zwischenzeit bearbeiten"
-                                    (click)="startInlineEdit(p.participantId, routeId, 'split_time')">
+                                    (click)="startInlineEdit(p, routeId, 'split_time')">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 } @else {
                                 <span class="time-value">—</span>
                                 <button class="icon-btn" type="button" title="Zwischenzeit bearbeiten"
-                                    [disabled]="!hasStartReference(p.participantId, routeId)"
-                                    (click)="startInlineEdit(p.participantId, routeId, 'split_time')">
+                                    [disabled]="!hasStartReference(p, routeId)"
+                                    (click)="startInlineEdit(p, routeId, 'split_time')">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 }
@@ -156,38 +159,38 @@
                             <div class="time-row">
                                 <span class="time-row-label">Ziel</span>
 
-                                @if (isEditingField(p.participantId, routeId, 'finish_time')) {
+                                @if (isEditingField(p, routeId, 'finish_time')) {
                                 <input class="inline-time-input" type="text" placeholder="HH:MM:SS"
                                     [value]="inlineEditValue()" (input)="onInlineEditInput($any($event.target).value)"
-                                    (keydown.enter)="onInlineEditEnter($event, p.participantId, p.registrationId, routeId, 'finish_time')" />
+                                    (keydown.enter)="onInlineEditEnter($event, p, routeId, 'finish_time')" />
                                 <button class="icon-btn" type="button" title="Speichern"
-                                    (click)="saveInlineEdit(p.participantId, p.registrationId, routeId, 'finish_time')">
+                                    (click)="saveInlineEdit(p, routeId, 'finish_time')">
                                     <i class="fa-solid fa-check"></i>
                                 </button>
                                 <button class="icon-btn" type="button" title="Abbrechen" (click)="cancelInlineEdit()">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
-                                } @else if (hasCapturedField(p.participantId, routeId, 'finish_time')) {
-                                <span class="time-value">{{ getCapturedFieldValue(p.participantId, routeId,
+                                } @else if (hasCapturedField(p, routeId, 'finish_time')) {
+                                <span class="time-value">{{ getCapturedFieldValue(p, routeId,
                                     'finish_time')
                                     }}</span>
                                 <button class="icon-btn" type="button" title="Zielzeit bearbeiten"
-                                    (click)="startInlineEdit(p.participantId, routeId, 'finish_time')">
+                                    (click)="startInlineEdit(p, routeId, 'finish_time')">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 } @else {
                                 <span class="time-value">—</span>
                                 <button class="icon-btn" type="button" title="Zielzeit bearbeiten"
-                                    [disabled]="!hasStartReference(p.participantId, routeId)"
-                                    (click)="startInlineEdit(p.participantId, routeId, 'finish_time')">
+                                    [disabled]="!hasStartReference(p, routeId)"
+                                    (click)="startInlineEdit(p, routeId, 'finish_time')">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 }
                             </div>
 
                             <div class="duration-info">
-                                @if (hasFinishedRuntime(p.participantId, routeId)) {
-                                <span>Dauer (Route): {{ getTimeValue(p.participantId, routeId) }}</span>
+                                @if (hasFinishedRuntime(p, routeId)) {
+                                <span>Dauer (Route): {{ getTimeValue(p, routeId) }}</span>
                                 }
                                 @else {
                                 <span>Noch kein Eintrag</span>
@@ -199,8 +202,8 @@
 
                     <td class="total-col">
                         <div class="total-card">
-                            <div>{{ getSelectedRouteDuration(p.participantId) }}</div>
-                            <small class="total-all">Gesamt: {{ totalTime(p.participantId) }}</small>
+                            <div class="total-main">{{ totalTime(p) }}</div>
+                            <small class="total-route">Route: {{ getSelectedRouteDuration(p) }}</small>
                         </div>
                     </td>
                 </tr>
@@ -229,12 +232,19 @@
 
                 @if (captureMatchedParticipants().length > 0) {
                 <div class="capture-preview">
-                    @if (captureMatchedParticipants().length === 1) {
-                    <strong class="capture-name">{{ getCapturePrimaryParticipant()?.name }}</strong>
+                    @if (captureMatchedParticipants().length === 1 && getCapturePrimaryParticipant(); as primary) {
+                    <strong class="capture-name">{{ primary.name }}</strong>
+                    @if (primary.isTeam) {
+                    <ul class="capture-team-list">
+                        @for (member of primary.members; track member.participantId) {
+                        <li>{{ member.name }}</li>
+                        }
+                    </ul>
+                    }
                     } @else {
                     <strong class="capture-name">Team Startnummer {{ captureStartNumber() }}</strong>
                     <ul class="capture-team-list">
-                        @for (p of captureMatchedParticipants(); track p.participantId) {
+                        @for (p of captureMatchedParticipants(); track p.rowId) {
                         <li>{{ p.name }}</li>
                         }
                     </ul>
