@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { forkJoin, Observable } from 'rxjs';
 
 import { EventService, EventInterface } from '../../core/services/event.service';
@@ -39,7 +40,7 @@ type CaptureField = 'finish_time' | 'split_time';
 @Component({
   selector: 'app-race-results',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './race-results.html',
   styleUrls: ['./race-results.css']
 })

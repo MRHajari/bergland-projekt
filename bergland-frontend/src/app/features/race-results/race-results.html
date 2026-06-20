@@ -54,12 +54,19 @@
     }
 
     <div class="capture-global-actions">
-        <button class="action-btn global-action secondary" type="button" (click)="openCaptureModal('split_time')">
-            Zwischenpunkt erreicht
-        </button>
-        <button class="action-btn global-action primary" type="button" (click)="openCaptureModal('finish_time')">
-            Ziel erreicht
-        </button>
+        <div class="capture-buttons">
+            <button class="action-btn global-action secondary" type="button" (click)="openCaptureModal('split_time')">
+                Zwischenpunkt erreicht
+            </button>
+            <button class="action-btn global-action primary" type="button" (click)="openCaptureModal('finish_time')">
+                Ziel erreicht
+            </button>
+        </div>
+
+        <a class="results-link-btn secondary" [routerLink]="['/results/overview']"
+            [queryParams]="selectedEventId() ? { eventId: selectedEventId() } : {}">
+            Ergebnisse ansehen
+        </a>
     </div>
 
     <div class="table-wrap">
@@ -79,8 +86,6 @@
                         </div>
                     </th>
                     }
-
-                    <th class="total-head">Gesamt (alle Routen)</th>
                 </tr>
             </thead>
 
@@ -199,13 +204,6 @@
                         </div>
                     </td>
                     }
-
-                    <td class="total-col">
-                        <div class="total-card">
-                            <div class="total-main">{{ totalTime(p) }}</div>
-                            <small class="total-route">Route: {{ getSelectedRouteDuration(p) }}</small>
-                        </div>
-                    </td>
                 </tr>
                 }
             </tbody>

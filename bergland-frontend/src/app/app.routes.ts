@@ -25,6 +25,7 @@ import { MyBookings } from './features/my-bookings/my-bookings';
 import { MyOrders } from './features/my-orders/my-orders';
 import { InvoicesAdmin } from './features/admin/invoices-admin/invoices-admin';
 import { RaceResults } from './features/race-results/race-results';
+import { ResultsOverview } from './features/race-results/results-overview/results-overview';
 
 
 // 🔹 Layouts
@@ -77,6 +78,11 @@ export const routes: Routes = [
       { 
         path: 'results', 
         component: RaceResults, 
+        canActivate: [roleGuard(['admin', 'timekeeper'])]
+      },
+      {
+        path: 'results/overview',
+        component: ResultsOverview,
         canActivate: [roleGuard(['admin', 'timekeeper'])]
       },
       

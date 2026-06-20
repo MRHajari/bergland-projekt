@@ -1,0 +1,96 @@
+<div class="overview-container">
+    <div class="header">
+        <h1>
+            <i class="fa-solid fa-chart-line me-2"></i>
+            Ergebnisse
+        </h1>
+
+        <div class="toolbar">
+            <a class="back-link" [routerLink]="['/results']"
+                [queryParams]="selectedEventId() ? { eventId: selectedEventId() } : {}">
+                <i class="fa-solid fa-arrow-left"></i>
+                Zur Erfassung
+            </a>
+
+            <div class="toolbar-actions toolbar-actions-right">
+                <div class="toolbar-select-wrap">
+                    <select class="select" [value]="selectedEventId() ?? ''"
+                        (change)="onSelectEvent($any($event.target).value)">
+                        <option value="">Event wählen</option>
+                        @for (ev of events(); track ev.id) {
+                        <option [value]="ev.id">{{ ev.name }}</option>
+                        }
+                    </select>
+                </div>
+
+                @if (isAdmin()) {
+                <button class="pdf-btn" type="button" (click)="downloadResultsPdf()">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    Ergebnisse als PDF
+                </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (loading()) {
+    <p class="info">Lade Ergebnisse...</p>
+    }
+    @else if (error()) {
+    <p class="error">{{ error() }}</p>
+    }
+    @else if (!selectedEventId()) {
+    <p class="info">Bitte ein Event auswählen.</p>
+    }
+    @else if (routes().length === 0) {
+    <p class="info">Keine Strecken für dieses Event.</p>
+    }
+    @else if (rows().length === 0) {
+    <p class="info">Keine Teilnehmer für dieses Event.</p>
+    }
+    @else {
+    <div class="table-wrap">
+        <table class="overview-table">
+            <thead>
+                <tr>
+                    <th>Rang</th>
+                    <th>Teilnehmer</th>
+                    <th>Startnr.</th>
+                    @for (route of routes(); track route.id) {
+                    <th>
+                        <div class="route-head">
+                            <span>{{ route.name }}</span>
+                            <small>{{ getRouteDate(route.id) }}</small>
+                        </div>
+                    </th>
+                    }
+                    <th>Gesamt</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @for (row of getSortedRows(); track row.rowId; let index = $index) {
+                <tr>
+                    <td class="rank-cell">{{ index + 1 }}</td>
+                    <td>
+                        <div class="name-cell">
+                            <strong>{{ row.name }}</strong>
+                            @if (row.isTeam) {
+                            <small>Staffel ({{ row.members.length }} Personen)</small>
+                            }
+                        </div>
+                    </td>
+                    <td>{{ row.startNumber ?? '—' }}</td>
+
+                    @for (route of routes(); track route.id) {
+                    <td>{{ getRouteDuration(row, route.id) }}</td>
+                    }
+
+                    <td class="total-cell">{{ getTotalDuration(row) }}</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+</div>

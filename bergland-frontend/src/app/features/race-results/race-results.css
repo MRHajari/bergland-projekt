@@ -31,10 +31,37 @@ h1{
   min-width:260px;
 }
 
+.results-link-btn{
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #d6d9dd;
+  color:#123e67;
+  background:#fff;
+  border-radius:10px;
+  padding:.7rem 1rem;
+  font-weight:700;
+  min-height:42px;
+  margin-left:auto;
+}
+
+.results-link-btn:hover{
+  background:#f1f5f9;
+}
+
 .capture-global-actions{
   display:flex;
+  align-items:center;
+  justify-content:space-between;
   gap:.65rem;
   margin:1rem 0;
+  flex-wrap:wrap;
+}
+
+.capture-buttons{
+  display:flex;
+  gap:.65rem;
   flex-wrap:wrap;
 }
 
@@ -248,41 +275,6 @@ h1{
   background:#f8fbff;
 }
 
-.total-head,
-.total-col{
-  white-space:nowrap;
-}
-
-.total-col{
-  font-weight:800;
-  padding-top:.65rem;
-}
-
-.total-card{
-  min-height:108px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:.2rem;
-  padding:.6rem .65rem;
-  border:1px solid #e8edf2;
-  border-radius:10px;
-  background:#fbfdff;
-}
-
-.total-main{
-  font-size:1rem;
-  font-weight:800;
-  color:#0f172a;
-}
-
-.total-route{
-  display:block;
-  font-weight:500;
-  color:#64748b;
-  font-size:.75rem;
-}
-
 .modal-backdrop{
   position:fixed;
   inset:0;
@@ -435,8 +427,16 @@ h1{
     padding:.5rem 0;
   }
 
+  .capture-buttons{
+    width:100%;
+  }
+
   .global-action{
     flex:1 1 100%;
+    width:100%;
+  }
+
+  .results-link-btn{
     width:100%;
   }
 
@@ -444,8 +444,7 @@ h1{
     min-width:720px;
   }
 
-  .name-card,
-  .total-card{
+  .name-card{
     min-height:96px;
   }
 }
