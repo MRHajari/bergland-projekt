@@ -49,6 +49,7 @@ export class RaceResults implements OnInit {
   // STATE
   events = signal<EventInterface[]>([]);
   selectedEventId = signal<string | null>(null);
+  selectedRouteId = signal<string | null>(null);
 
   routes = signal<Route[]>([]);
   eventRoutes = signal<EventRoute[]>([]);
@@ -95,6 +96,7 @@ export class RaceResults implements OnInit {
   onSelectEvent(eventId: string) {
     if (!eventId) {
       this.selectedEventId.set(null);
+      this.selectedRouteId.set(null);
       this.routes.set([]);
       this.eventRoutes.set([]);
       this.participants.set([]);
@@ -107,6 +109,19 @@ export class RaceResults implements OnInit {
 
     this.selectedEventId.set(eventId);
     this.loadEventData(eventId);
+  }
+
+  onSelectRoute(routeId: string) {
+    if (!routeId) {
+      this.selectedRouteId.set(null);
+      this.closeCaptureModal();
+      return;
+    }
+
+    this.selectedRouteId.set(routeId);
+    this.closeCaptureModal();
+    this.timeInputError.set(null);
+    this.timeCaptureSuccess.set(null);
   }
 
   private loadEventData(eventId: string) {
@@ -138,6 +153,14 @@ export class RaceResults implements OnInit {
 
         this.participants.set(flat);
         this.runtimes.set(runtimes ?? []);
+
+        const availableRoutes = routes ?? [];
+        if (availableRoutes.length === 1) {
+          this.selectedRouteId.set(availableRoutes[0].id);
+        } else {
+          this.selectedRouteId.set(null);
+        }
+
         this.loading.set(false);
       },
       error: (err) => {
@@ -163,6 +186,12 @@ export class RaceResults implements OnInit {
 
   getRouteStartTime(routeId: string): string {
     return this.normalizeTimeForInput(this.getEventRoute(routeId)?.start_time ?? null);
+  }
+
+  getSelectedRoute(): Route | null {
+    const routeId = this.selectedRouteId();
+    if (!routeId) return null;
+    return this.routes().find(route => route.id === routeId) || null;
   }
 
   getRouteDate(routeId: string): string {
@@ -256,7 +285,7 @@ export class RaceResults implements OnInit {
   }
 
   getCaptureRouteName(): string {
-    const routeId = this.captureRouteId();
+    const routeId = this.selectedRouteId();
     if (!routeId) return 'Strecke';
     return this.routes().find(r => r.id === routeId)?.name || 'Strecke';
   }
@@ -273,7 +302,13 @@ export class RaceResults implements OnInit {
     return this.captureMatchedParticipants()[0] || null;
   }
 
-  openCaptureModal(routeId: string, field: CaptureField) {
+  openCaptureModal(field: CaptureField) {
+    const routeId = this.selectedRouteId();
+    if (!routeId) {
+      this.timeInputError.set('Bitte zuerst eine Strecke auswählen.');
+      return;
+    }
+
     this.captureModalOpen.set(true);
     this.captureRouteId.set(routeId);
     this.captureField.set(field);
@@ -323,7 +358,7 @@ export class RaceResults implements OnInit {
   }
 
   captureRuntimeTime() {
-    const routeId = this.captureRouteId();
+    const routeId = this.selectedRouteId();
     const matchedParticipants = this.captureMatchedParticipants();
     const captureField = this.captureField();
     const capturedTime = this.getCurrentTimeString();
@@ -438,8 +473,13 @@ export class RaceResults implements OnInit {
   
   getTimeValue(participantId: string, routeId: string): string {
     const rt = this.findRuntime(participantId, routeId);
-    if (!rt) return '';
+    if (!rt || !rt.start_time || !rt.finish_time) return '';
     return this.secondsToHms(rt.duration_seconds);
+  }
+
+  hasFinishedRuntime(participantId: string, routeId: string): boolean {
+    const rt = this.findRuntime(participantId, routeId);
+    return !!(rt && rt.start_time && rt.finish_time);
   }
 
   getRuntimeFieldValue(participantId: string, routeId: string, field: RuntimeField): string {
@@ -535,23 +575,30 @@ export class RaceResults implements OnInit {
     if (!routes.length) return '—';
 
     let total = 0;
-    let hasAnyRuntime = false;
+    let hasAnyFinishedRuntime = false;
 
     for (const r of routes) {
       const rt = this.findRuntime(participantId, r.id);
-      if (!rt) continue;
+      if (!rt?.start_time || !rt?.finish_time) continue;
 
-      hasAnyRuntime = true;
+      hasAnyFinishedRuntime = true;
       total += rt.duration_seconds;
     }
 
-    if (!hasAnyRuntime) return '—';
+    if (!hasAnyFinishedRuntime) return '—';
 
     return this.secondsToHms(total);
   }
 
   hasRuntime(participantId: string, routeId: string): boolean {
     return !!this.findRuntime(participantId, routeId);
+  }
+
+  getSelectedRouteDuration(participantId: string): string {
+    const routeId = this.selectedRouteId();
+    if (!routeId) return '—';
+    if (!this.hasFinishedRuntime(participantId, routeId)) return '—';
+    return this.getTimeValue(participantId, routeId);
   }
 
   // TIME UTILS

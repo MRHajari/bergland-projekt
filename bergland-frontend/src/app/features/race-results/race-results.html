@@ -13,6 +13,15 @@
                 <option [value]="ev.id">{{ ev.name }}</option>
                 }
             </select>
+
+            @if (selectedEventId()) {
+            <select class="select" (change)="onSelectRoute($any($event.target).value)">
+                <option value="">Strecke wählen</option>
+                @for (r of routes(); track r.id) {
+                <option [value]="r.id">{{ r.name }} - {{ getRouteDate(r.id) }}</option>
+                }
+            </select>
+            }
         </div>
     </div>
 
@@ -31,6 +40,9 @@
     @else if (participants().length === 0) {
     <p class="info">Keine Teilnehmer für dieses Event.</p>
     }
+    @else if (!selectedRouteId()) {
+    <p class="info">Bitte eine Strecke auswählen.</p>
+    }
     @else {
 
     @if (timeInputError()) {
@@ -41,6 +53,15 @@
     <p class="success">{{ timeCaptureSuccess() }}</p>
     }
 
+    <div class="capture-global-actions">
+        <button class="action-btn global-action secondary" type="button" (click)="openCaptureModal('split_time')">
+            Zwischenpunkt erreicht
+        </button>
+        <button class="action-btn global-action primary" type="button" (click)="openCaptureModal('finish_time')">
+            Ziel erreicht
+        </button>
+    </div>
+
     <div class="table-wrap">
         <table class="results-table">
 
@@ -48,12 +69,13 @@
                 <tr>
                     <th class="sticky-col">Teilnehmer</th>
 
-                    @for (r of routes(); track r.id) {
+                    @if (getSelectedRoute(); as selectedRoute) {
                     <th class="route-head">
                         <div class="route-head-content">
-                            <span class="route-title">{{ r.name }}</span>
-                            <small class="route-meta">Datum: {{ getRouteDate(r.id) }}</small>
-                            <small class="route-meta">Start (Standard): {{ getRouteStartTime(r.id) || '–' }}</small>
+                            <span class="route-title">{{ selectedRoute.name }}</span>
+                            <small class="route-meta">Datum: {{ getRouteDate(selectedRoute.id) }}</small>
+                            <small class="route-meta">Start (Standard): {{ getRouteStartTime(selectedRoute.id) || '–'
+                                }}</small>
                         </div>
                     </th>
                     }
@@ -66,31 +88,34 @@
                 @for (p of participants(); track p.participantId) {
                 <tr>
                     <td class="sticky-col name-cell">
-                        <span class="participant-name">{{ p.name }}</span>
-                        <small class="participant-number">Startnr.: {{ p.startNumber ?? '—' }}</small>
+                        <div class="name-card">
+                            <span class="participant-name">{{ p.name }}</span>
+                            <small class="participant-number">Startnr.: {{ p.startNumber ?? '—' }}</small>
+                        </div>
                     </td>
 
-                    @for (r of routes(); track r.id) {
+                    @if (selectedRouteId(); as routeId) {
                     <td class="time-cell">
                         <div class="compact-time-group">
                             <div class="time-row">
                                 <span class="time-row-label">Start</span>
 
-                                @if (isEditingField(p.participantId, r.id, 'start_time')) {
+                                @if (isEditingField(p.participantId, routeId, 'start_time')) {
                                 <input class="inline-time-input" type="text" placeholder="HH:MM:SS"
                                     [value]="inlineEditValue()" (input)="onInlineEditInput($any($event.target).value)"
-                                    (keydown.enter)="onInlineEditEnter($event, p.participantId, p.registrationId, r.id, 'start_time')" />
+                                    (keydown.enter)="onInlineEditEnter($event, p.participantId, p.registrationId, routeId, 'start_time')" />
                                 <button class="icon-btn" type="button" title="Speichern"
-                                    (click)="saveInlineEdit(p.participantId, p.registrationId, r.id, 'start_time')">
+                                    (click)="saveInlineEdit(p.participantId, p.registrationId, routeId, 'start_time')">
                                     <i class="fa-solid fa-check"></i>
                                 </button>
                                 <button class="icon-btn" type="button" title="Abbrechen" (click)="cancelInlineEdit()">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
                                 } @else {
-                                <span class="time-value">{{ getDisplayStartTime(p.participantId, r.id) || '—' }}</span>
+                                <span class="time-value">{{ getDisplayStartTime(p.participantId, routeId) || '—'
+                                    }}</span>
                                 <button class="icon-btn" type="button" title="Startzeit bearbeiten"
-                                    (click)="startInlineEdit(p.participantId, r.id, 'start_time')">
+                                    (click)="startInlineEdit(p.participantId, routeId, 'start_time')">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 }
@@ -99,29 +124,31 @@
                             <div class="time-row">
                                 <span class="time-row-label">Zwischenpunkt</span>
 
-                                @if (isEditingField(p.participantId, r.id, 'split_time')) {
+                                @if (isEditingField(p.participantId, routeId, 'split_time')) {
                                 <input class="inline-time-input" type="text" placeholder="HH:MM:SS"
                                     [value]="inlineEditValue()" (input)="onInlineEditInput($any($event.target).value)"
-                                    (keydown.enter)="onInlineEditEnter($event, p.participantId, p.registrationId, r.id, 'split_time')" />
+                                    (keydown.enter)="onInlineEditEnter($event, p.participantId, p.registrationId, routeId, 'split_time')" />
                                 <button class="icon-btn" type="button" title="Speichern"
-                                    (click)="saveInlineEdit(p.participantId, p.registrationId, r.id, 'split_time')">
+                                    (click)="saveInlineEdit(p.participantId, p.registrationId, routeId, 'split_time')">
                                     <i class="fa-solid fa-check"></i>
                                 </button>
                                 <button class="icon-btn" type="button" title="Abbrechen" (click)="cancelInlineEdit()">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
-                                } @else if (hasCapturedField(p.participantId, r.id, 'split_time')) {
-                                <span class="time-value">{{ getCapturedFieldValue(p.participantId, r.id, 'split_time')
+                                } @else if (hasCapturedField(p.participantId, routeId, 'split_time')) {
+                                <span class="time-value">{{ getCapturedFieldValue(p.participantId, routeId,
+                                    'split_time')
                                     }}</span>
                                 <button class="icon-btn" type="button" title="Zwischenzeit bearbeiten"
-                                    (click)="startInlineEdit(p.participantId, r.id, 'split_time')">
+                                    (click)="startInlineEdit(p.participantId, routeId, 'split_time')">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 } @else {
-                                <button class="action-btn action-btn-secondary" type="button"
-                                    [disabled]="!hasStartReference(p.participantId, r.id)"
-                                    (click)="captureFieldNow(p.participantId, p.registrationId, r.id, 'split_time')">
-                                    Zwischenpunkt erreicht
+                                <span class="time-value">—</span>
+                                <button class="icon-btn" type="button" title="Zwischenzeit bearbeiten"
+                                    [disabled]="!hasStartReference(p.participantId, routeId)"
+                                    (click)="startInlineEdit(p.participantId, routeId, 'split_time')">
+                                    <i class="fa-solid fa-pen"></i>
                                 </button>
                                 }
                             </div>
@@ -129,36 +156,38 @@
                             <div class="time-row">
                                 <span class="time-row-label">Ziel</span>
 
-                                @if (isEditingField(p.participantId, r.id, 'finish_time')) {
+                                @if (isEditingField(p.participantId, routeId, 'finish_time')) {
                                 <input class="inline-time-input" type="text" placeholder="HH:MM:SS"
                                     [value]="inlineEditValue()" (input)="onInlineEditInput($any($event.target).value)"
-                                    (keydown.enter)="onInlineEditEnter($event, p.participantId, p.registrationId, r.id, 'finish_time')" />
+                                    (keydown.enter)="onInlineEditEnter($event, p.participantId, p.registrationId, routeId, 'finish_time')" />
                                 <button class="icon-btn" type="button" title="Speichern"
-                                    (click)="saveInlineEdit(p.participantId, p.registrationId, r.id, 'finish_time')">
+                                    (click)="saveInlineEdit(p.participantId, p.registrationId, routeId, 'finish_time')">
                                     <i class="fa-solid fa-check"></i>
                                 </button>
                                 <button class="icon-btn" type="button" title="Abbrechen" (click)="cancelInlineEdit()">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
-                                } @else if (hasCapturedField(p.participantId, r.id, 'finish_time')) {
-                                <span class="time-value">{{ getCapturedFieldValue(p.participantId, r.id, 'finish_time')
+                                } @else if (hasCapturedField(p.participantId, routeId, 'finish_time')) {
+                                <span class="time-value">{{ getCapturedFieldValue(p.participantId, routeId,
+                                    'finish_time')
                                     }}</span>
                                 <button class="icon-btn" type="button" title="Zielzeit bearbeiten"
-                                    (click)="startInlineEdit(p.participantId, r.id, 'finish_time')">
+                                    (click)="startInlineEdit(p.participantId, routeId, 'finish_time')">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 } @else {
-                                <button class="action-btn" type="button"
-                                    [disabled]="!hasStartReference(p.participantId, r.id)"
-                                    (click)="captureFieldNow(p.participantId, p.registrationId, r.id, 'finish_time')">
-                                    Ziel erreicht
+                                <span class="time-value">—</span>
+                                <button class="icon-btn" type="button" title="Zielzeit bearbeiten"
+                                    [disabled]="!hasStartReference(p.participantId, routeId)"
+                                    (click)="startInlineEdit(p.participantId, routeId, 'finish_time')">
+                                    <i class="fa-solid fa-pen"></i>
                                 </button>
                                 }
                             </div>
 
                             <div class="duration-info">
-                                @if (hasRuntime(p.participantId, r.id)) {
-                                <span>Dauer: {{ getTimeValue(p.participantId, r.id) }}</span>
+                                @if (hasFinishedRuntime(p.participantId, routeId)) {
+                                <span>Dauer (Route): {{ getTimeValue(p.participantId, routeId) }}</span>
                                 }
                                 @else {
                                 <span>Noch kein Eintrag</span>
@@ -168,12 +197,64 @@
                     </td>
                     }
 
-                    <td class="total-col">{{ totalTime(p.participantId) }}</td>
+                    <td class="total-col">
+                        <div class="total-card">
+                            <div>{{ getSelectedRouteDuration(p.participantId) }}</div>
+                            <small class="total-all">Gesamt: {{ totalTime(p.participantId) }}</small>
+                        </div>
+                    </td>
                 </tr>
                 }
             </tbody>
 
         </table>
     </div>
+
+    @if (captureModalOpen()) {
+    <div class="modal-backdrop" tabindex="0" (click)="closeCaptureModal()" (keydown)="onCaptureBackdropKeydown($event)">
+        <div class="capture-modal" tabindex="-1" (click)="$event.stopPropagation()"
+            (keydown)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>{{ getCaptureActionLabel() }} - {{ getCaptureRouteName() }}</h2>
+                <button type="button" class="modal-close" (click)="closeCaptureModal()">x</button>
+            </div>
+
+            <div class="modal-body">
+                <label class="modal-label">
+                    <span>Startnummer</span>
+                    <input class="modal-input" type="text" [value]="captureStartNumber()"
+                        (input)="onCaptureStartNumberInput($any($event.target).value)"
+                        (keydown.enter)="onCaptureEnter($event)" placeholder="z. B. 101" autofocus />
+                </label>
+
+                @if (captureMatchedParticipants().length > 0) {
+                <div class="capture-preview">
+                    @if (captureMatchedParticipants().length === 1) {
+                    <strong class="capture-name">{{ getCapturePrimaryParticipant()?.name }}</strong>
+                    } @else {
+                    <strong class="capture-name">Team Startnummer {{ captureStartNumber() }}</strong>
+                    <ul class="capture-team-list">
+                        @for (p of captureMatchedParticipants(); track p.participantId) {
+                        <li>{{ p.name }}</li>
+                        }
+                    </ul>
+                    }
+                    <span>Startnummer: {{ captureStartNumber() }}</span>
+                </div>
+                }
+
+                @if (captureMessage()) {
+                <p class="error modal-message">{{ captureMessage() }}</p>
+                }
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" (click)="closeCaptureModal()">Abbrechen</button>
+                <button type="button" class="btn-primary" (click)="captureRuntimeTime()">{{ getCaptureActionLabel()
+                    }}</button>
+            </div>
+        </div>
+    </div>
+    }
     }
 </div>
