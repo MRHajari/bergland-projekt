@@ -66,6 +66,8 @@ export class RaceResults implements OnInit {
   captureStartNumber = signal('');
   captureMatchedParticipants = signal<ParticipantRow[]>([]);
   captureMessage = signal<string | null>(null);
+  inlineEditKey = signal<string | null>(null);
+  inlineEditValue = signal('');
 
   // INIT
   ngOnInit() {
@@ -151,7 +153,7 @@ export class RaceResults implements OnInit {
   private findRuntime(participantId: string, routeId: string): Runtime | undefined {
     return this.runtimes().find(r =>
       r.participant_id === participantId &&
-      r.eventRoute?.route_id === routeId
+      (r.eventRoute?.route_id === routeId || r.route_id === routeId)
     );
   }
 
@@ -161,6 +163,96 @@ export class RaceResults implements OnInit {
 
   getRouteStartTime(routeId: string): string {
     return this.normalizeTimeForInput(this.getEventRoute(routeId)?.start_time ?? null);
+  }
+
+  getRouteDate(routeId: string): string {
+    const raw = this.getEventRoute(routeId)?.day_date;
+    if (!raw) return 'Kein Datum';
+
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return 'Kein Datum';
+
+    return new Intl.DateTimeFormat('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  }
+
+  getDisplayStartTime(participantId: string, routeId: string): string {
+    const runtimeStart = this.getRuntimeFieldValue(participantId, routeId, 'start_time');
+    if (runtimeStart) return runtimeStart;
+    return this.getRouteStartTime(routeId);
+  }
+
+  hasStartReference(participantId: string, routeId: string): boolean {
+    return !!this.getDisplayStartTime(participantId, routeId);
+  }
+
+  hasCapturedField(participantId: string, routeId: string, field: CaptureField): boolean {
+    return !!this.getRuntimeFieldValue(participantId, routeId, field);
+  }
+
+  getCapturedFieldValue(participantId: string, routeId: string, field: CaptureField): string {
+    return this.getRuntimeFieldValue(participantId, routeId, field);
+  }
+
+  private buildInlineEditKey(participantId: string, routeId: string, field: RuntimeField): string {
+    return `${participantId}::${routeId}::${field}`;
+  }
+
+  isEditingField(participantId: string, routeId: string, field: RuntimeField): boolean {
+    return this.inlineEditKey() === this.buildInlineEditKey(participantId, routeId, field);
+  }
+
+  startInlineEdit(participantId: string, routeId: string, field: RuntimeField) {
+    const initialValue = field === 'start_time'
+      ? this.getDisplayStartTime(participantId, routeId)
+      : this.getRuntimeFieldValue(participantId, routeId, field);
+
+    this.inlineEditKey.set(this.buildInlineEditKey(participantId, routeId, field));
+    this.inlineEditValue.set(initialValue);
+    this.timeInputError.set(null);
+    this.timeCaptureSuccess.set(null);
+  }
+
+  cancelInlineEdit() {
+    this.inlineEditKey.set(null);
+    this.inlineEditValue.set('');
+  }
+
+  onInlineEditInput(raw: string) {
+    this.inlineEditValue.set(raw ?? '');
+  }
+
+  saveInlineEdit(
+    participantId: string,
+    registrationId: string,
+    routeId: string,
+    field: RuntimeField
+  ) {
+    this.onTimeBlur(participantId, registrationId, routeId, field, this.inlineEditValue());
+    this.cancelInlineEdit();
+  }
+
+  onInlineEditEnter(
+    event: Event,
+    participantId: string,
+    registrationId: string,
+    routeId: string,
+    field: RuntimeField
+  ) {
+    event.preventDefault();
+    this.saveInlineEdit(participantId, registrationId, routeId, field);
+  }
+
+  captureFieldNow(
+    participantId: string,
+    registrationId: string,
+    routeId: string,
+    field: CaptureField
+  ) {
+    this.onTimeBlur(participantId, registrationId, routeId, field, this.getCurrentTimeString());
   }
 
   getCaptureRouteName(): string {
@@ -378,13 +470,9 @@ export class RaceResults implements OnInit {
     }
 
     const existing = this.findRuntime(participantId, routeId);
+    const routeStartTime = this.normalizeTimeForApi(this.getEventRoute(routeId)?.start_time ?? null);
 
     if (!existing && field !== 'start_time' && !value) {
-      return;
-    }
-
-    if (!existing && field !== 'start_time') {
-      this.timeInputError.set('Bitte zuerst eine Startzeit erfassen.');
       return;
     }
 
@@ -394,13 +482,24 @@ export class RaceResults implements OnInit {
       this.runtimeService.update(existing.id, payload).subscribe({
         next: updated => {
           this.timeInputError.set(null);
+          this.timeCaptureSuccess.set('Zeit gespeichert.');
           this.replaceRuntime(updated);
         },
-        error: err => console.error('Update Runtime fehlgeschlagen', err)
+        error: err => {
+          console.error('Update Runtime fehlgeschlagen', err);
+          this.timeInputError.set(err?.error?.error || 'Zeit konnte nicht gespeichert werden.');
+        }
       });
     } else {
-      if (!value) {
-        this.timeInputError.set('Für einen neuen Eintrag ist eine Startzeit erforderlich.');
+      let startTimeForCreate: string | null = null;
+      if (field === 'start_time') {
+        startTimeForCreate = value;
+      } else {
+        startTimeForCreate = routeStartTime;
+      }
+
+      if (!startTimeForCreate) {
+        this.timeInputError.set('Für diese Strecke fehlt eine Startzeit. Bitte zuerst Startzeit setzen.');
         return;
       }
 
@@ -408,7 +507,7 @@ export class RaceResults implements OnInit {
         participant_id: participantId,
         registration_id: registrationId,
         route_id: routeId,
-        start_time: field === 'start_time' ? value : '00:00:00',
+        start_time: startTimeForCreate,
         finish_time: field === 'finish_time' ? value : null,
         split_time: field === 'split_time' ? value : null
       };
@@ -416,9 +515,13 @@ export class RaceResults implements OnInit {
       this.runtimeService.create(payload).subscribe({
         next: created => {
           this.timeInputError.set(null);
+          this.timeCaptureSuccess.set('Zeit gespeichert.');
           this.runtimes.update(list => [...list, created]);
         },
-        error: err => console.error('Create Runtime fehlgeschlagen', err)
+        error: err => {
+          console.error('Create Runtime fehlgeschlagen', err);
+          this.timeInputError.set(err?.error?.error || 'Zeit konnte nicht gespeichert werden.');
+        }
       });
     }
   }
