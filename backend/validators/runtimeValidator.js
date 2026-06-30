@@ -1,6 +1,7 @@
 const Joi = require("joi");
 
 const timePattern = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
+const runtimeStatusValues = ["did_not_start", "did_not_finish"];
 
 const createRuntimeSchema = Joi.object({
     participant_id: Joi.string()
@@ -19,9 +20,15 @@ const createRuntimeSchema = Joi.object({
         .guid({ version: "uuidv4" })
         .optional(),
 
+    status: Joi.string()
+        .valid(...runtimeStatusValues)
+        .allow(null)
+        .optional(),
+
     start_time: Joi.string()
         .pattern(timePattern)
-        .required(),
+        .allow(null, "")
+        .optional(),
 
     finish_time: Joi.string()
         .pattern(timePattern)
@@ -35,6 +42,11 @@ const createRuntimeSchema = Joi.object({
 }).or("event_route_id", "route_id");
 
 const updateRuntimeSchema = Joi.object({
+    status: Joi.string()
+        .valid(...runtimeStatusValues)
+        .allow(null)
+        .optional(),
+
     start_time: Joi.string()
         .pattern(timePattern)
         .allow(null, "")

@@ -12,7 +12,8 @@ import {
   RuntimeService,
   Runtime,
   RuntimeCreatePayload,
-  RuntimeUpdatePayload
+  RuntimeUpdatePayload,
+  RuntimeStatus
 } from '../../core/services/runtime.service';
 
 interface ParticipantRow {
@@ -36,6 +37,9 @@ interface CaptureTarget {
 
 type RuntimeField = 'start_time' | 'finish_time' | 'split_time';
 type CaptureField = 'finish_time' | 'split_time';
+type CaptureAction = CaptureField | RuntimeStatus;
+type CaptureSortOption = 'startNumberAsc' | 'startNumberDesc' | 'nameAsc' | 'nameDesc' | 'routeDurationAsc' | 'routeDurationDesc';
+type CaptureSortMetric = 'startNumber' | 'name' | 'routeDuration';
 
 @Component({
   selector: 'app-race-results',
@@ -69,12 +73,14 @@ export class RaceResults implements OnInit {
 
   captureModalOpen = signal(false);
   captureRouteId = signal<string | null>(null);
-  captureField = signal<CaptureField>('finish_time');
+  captureAction = signal<CaptureAction>('finish_time');
   captureStartNumber = signal('');
   captureMatchedParticipants = signal<ParticipantRow[]>([]);
   captureMessage = signal<string | null>(null);
   inlineEditKey = signal<string | null>(null);
   inlineEditValue = signal('');
+  filterQuery = signal('');
+  sortOption = signal<CaptureSortOption>('startNumberAsc');
 
   // INIT
   ngOnInit() {
@@ -109,6 +115,8 @@ export class RaceResults implements OnInit {
       this.runtimes.set([]);
       this.timeInputError.set(null);
       this.timeCaptureSuccess.set(null);
+      this.filterQuery.set('');
+      this.sortOption.set('startNumberAsc');
       this.closeCaptureModal();
       return;
     }
@@ -172,10 +180,12 @@ export class RaceResults implements OnInit {
     const rowsByKey = new Map<string, ParticipantRow>();
 
     for (const reg of regs) {
-      for (const participant of reg.participants ?? []) {
+      for (const participant of (reg.participants ?? []) as any[]) {
         const participantName = participant.person
           ? `${participant.person.first_name} ${participant.person.last_name}`
           : 'Unbekannt';
+
+        const squadron = participant['squadron'];
 
         const isTeamMember =
           participant.participation_type === 'staffel' &&
@@ -186,8 +196,8 @@ export class RaceResults implements OnInit {
           : `single:${participant.id}`;
 
         if (!rowsByKey.has(key)) {
-          const teamName = participant.squadron?.name
-            ? `Team ${participant.squadron.name}`
+          const teamName = squadron?.name
+            ? `Team ${squadron.name}`
             : `Team ${participant.start_number ?? ''}`.trim();
 
           rowsByKey.set(key, {
@@ -220,6 +230,128 @@ export class RaceResults implements OnInit {
     });
   }
 
+  getTeamMemberNames(row: ParticipantRow): string {
+    if (!row.isTeam || !row.members.length) return '';
+    return row.members.map(member => member.name).join(', ');
+  }
+
+  getRowStatusBadgeClass(status: RuntimeStatus): string {
+    return status === 'did_not_start' ? 'participant-status-dns' : 'participant-status-dnf';
+  }
+
+  onFilterInput(raw: string) {
+    this.filterQuery.set((raw ?? '').trim().toLowerCase());
+  }
+
+  onSortChange(value: string) {
+    const allowed: CaptureSortOption[] = [
+      'startNumberAsc',
+      'startNumberDesc',
+      'nameAsc',
+      'nameDesc',
+      'routeDurationAsc',
+      'routeDurationDesc'
+    ];
+
+    if (allowed.includes(value as CaptureSortOption)) {
+      this.sortOption.set(value as CaptureSortOption);
+    }
+  }
+
+  setCaptureSort(metric: CaptureSortMetric) {
+    const current = this.sortOption();
+
+    if (metric === 'startNumber') {
+      this.sortOption.set(current === 'startNumberAsc' ? 'startNumberDesc' : 'startNumberAsc');
+      return;
+    }
+
+    if (metric === 'name') {
+      this.sortOption.set(current === 'nameAsc' ? 'nameDesc' : 'nameAsc');
+      return;
+    }
+
+    this.sortOption.set(current === 'routeDurationAsc' ? 'routeDurationDesc' : 'routeDurationAsc');
+  }
+
+  isCaptureSortActive(metric: CaptureSortMetric): boolean {
+    const current = this.sortOption();
+    if (metric === 'startNumber') return current === 'startNumberAsc' || current === 'startNumberDesc';
+    if (metric === 'name') return current === 'nameAsc' || current === 'nameDesc';
+    return current === 'routeDurationAsc' || current === 'routeDurationDesc';
+  }
+
+  getCaptureSortLabel(metric: CaptureSortMetric): string {
+    const current = this.sortOption();
+
+    if (metric === 'startNumber') {
+      return current === 'startNumberDesc' ? 'Startnr. ▼' : 'Startnr. ▲';
+    }
+
+    if (metric === 'name') {
+      return current === 'nameDesc' ? 'Name ▼' : 'Name ▲';
+    }
+
+    return current === 'routeDurationDesc' ? 'Zeit ▼' : 'Zeit ▲';
+  }
+
+  getFilteredParticipants(): ParticipantRow[] {
+    const query = this.filterQuery();
+    let rows = this.participants();
+
+    if (query) {
+      rows = rows.filter(row => {
+        const inName = row.name.toLowerCase().includes(query);
+        const inMembers = row.members.some(member => member.name.toLowerCase().includes(query));
+        const inStart = (row.startNumber?.toString() ?? '').includes(query);
+        return inName || inMembers || inStart;
+      });
+    }
+
+    const sorted = [...rows];
+    const sort = this.sortOption();
+    const selectedRouteId = this.selectedRouteId();
+
+    sorted.sort((a, b) => {
+      switch (sort) {
+        case 'startNumberDesc': {
+          const aNum = a.startNumber ?? -1;
+          const bNum = b.startNumber ?? -1;
+          return bNum - aNum;
+        }
+        case 'nameAsc':
+          return a.name.localeCompare(b.name, 'de');
+        case 'nameDesc':
+          return b.name.localeCompare(a.name, 'de');
+        case 'routeDurationAsc': {
+          const aSec = selectedRouteId ? this.getRowDurationSeconds(a, selectedRouteId) : null;
+          const bSec = selectedRouteId ? this.getRowDurationSeconds(b, selectedRouteId) : null;
+          const aVal = aSec ?? Number.MAX_SAFE_INTEGER;
+          const bVal = bSec ?? Number.MAX_SAFE_INTEGER;
+          if (aVal !== bVal) return aVal - bVal;
+          return a.name.localeCompare(b.name, 'de');
+        }
+        case 'routeDurationDesc': {
+          const aSec = selectedRouteId ? this.getRowDurationSeconds(a, selectedRouteId) : null;
+          const bSec = selectedRouteId ? this.getRowDurationSeconds(b, selectedRouteId) : null;
+          const aVal = aSec ?? -1;
+          const bVal = bSec ?? -1;
+          if (aVal !== bVal) return bVal - aVal;
+          return a.name.localeCompare(b.name, 'de');
+        }
+        case 'startNumberAsc':
+        default: {
+          const aNum = a.startNumber ?? Number.MAX_SAFE_INTEGER;
+          const bNum = b.startNumber ?? Number.MAX_SAFE_INTEGER;
+          if (aNum !== bNum) return aNum - bNum;
+          return a.name.localeCompare(b.name, 'de');
+        }
+      }
+    });
+
+    return sorted;
+  }
+
   private findRuntime(participantId: string, routeId: string): Runtime | undefined {
     return this.runtimes().find(r =>
       r.participant_id === participantId &&
@@ -231,6 +363,28 @@ export class RaceResults implements OnInit {
     return row.members
       .map(member => this.findRuntime(member.participantId, routeId))
       .filter((runtime): runtime is Runtime => !!runtime);
+  }
+
+  getStatusLabel(status: RuntimeStatus): string {
+    return status === 'did_not_start' ? 'Did not start' : 'Did not finish';
+  }
+
+  getRowStatus(row: ParticipantRow, routeId: string): RuntimeStatus | null {
+    const runtimes = this.getRowRuntimes(row, routeId);
+    if (!runtimes.length) return null;
+
+    const hasFinish = runtimes.some(runtime => !!runtime.finish_time);
+    const hasStarted = runtimes.some(runtime => !!runtime.start_time || !!runtime.split_time);
+
+    if (!hasFinish && runtimes.some(runtime => runtime.status === 'did_not_finish')) {
+      return 'did_not_finish';
+    }
+
+    if (!hasStarted && runtimes.some(runtime => runtime.status === 'did_not_start')) {
+      return 'did_not_start';
+    }
+
+    return null;
   }
 
   private getRowStartTime(row: ParticipantRow, routeId: string): string | null {
@@ -261,6 +415,8 @@ export class RaceResults implements OnInit {
   }
 
   private getRowDurationSeconds(row: ParticipantRow, routeId: string): number | null {
+    if (this.getRowStatus(row, routeId)) return null;
+
     const start = this.getRowStartTime(row, routeId);
     const finish = this.getRowFinishTime(row, routeId);
     if (!start || !finish) return null;
@@ -307,25 +463,80 @@ export class RaceResults implements OnInit {
   }
 
   getDisplayStartTime(row: ParticipantRow, routeId: string): string {
+    const status = this.getRowStatus(row, routeId);
+    if (status === 'did_not_start') {
+      return this.getStatusLabel(status);
+    }
+
     const runtimeStart = this.normalizeTimeForInput(this.getRowStartTime(row, routeId));
     if (runtimeStart) return runtimeStart;
     return this.getRouteStartTime(routeId);
   }
 
   hasStartReference(row: ParticipantRow, routeId: string): boolean {
+    if (this.getRowStatus(row, routeId) === 'did_not_start') {
+      return false;
+    }
+
     return !!this.getDisplayStartTime(row, routeId);
   }
 
   hasCapturedField(row: ParticipantRow, routeId: string, field: CaptureField): boolean {
+    const status = this.getRowStatus(row, routeId);
+    if (status === 'did_not_start') return false;
+    if (status === 'did_not_finish' && field === 'finish_time') return false;
+
     return !!this.getCapturedFieldValue(row, routeId, field);
   }
 
   getCapturedFieldValue(row: ParticipantRow, routeId: string, field: CaptureField): string {
+    const status = this.getRowStatus(row, routeId);
+    if (status === 'did_not_start') return '';
+    if (status === 'did_not_finish' && field === 'finish_time') return '';
+
     const value = field === 'split_time'
       ? this.getRowSplitTime(row, routeId)
       : this.getRowFinishTime(row, routeId);
 
     return this.normalizeTimeForInput(value);
+  }
+
+  getDurationInfoText(row: ParticipantRow, routeId: string): string {
+    const status = this.getRowStatus(row, routeId);
+    if (status) {
+      return this.getStatusLabel(status);
+    }
+
+    if (this.hasFinishedRuntime(row, routeId)) {
+      return `Dauer (Route): ${this.getTimeValue(row, routeId)}`;
+    }
+
+    return 'Noch kein Eintrag';
+  }
+
+  private canMarkDidNotStart(row: ParticipantRow, routeId: string): boolean {
+    const status = this.getRowStatus(row, routeId);
+    if (status === 'did_not_finish') return false;
+
+    const runtimes = this.getRowRuntimes(row, routeId);
+    if (runtimes.length === 0) return true;
+    if (row.isTeam && runtimes.length > 1) return false;
+
+    return !runtimes.some(runtime => !!runtime.finish_time || !!runtime.split_time) || status === 'did_not_start';
+  }
+
+  private canMarkDidNotFinish(row: ParticipantRow, routeId: string): boolean {
+    const status = this.getRowStatus(row, routeId);
+    if (status === 'did_not_start') return false;
+
+    const routeStartTime = this.normalizeTimeForApi(this.getEventRoute(routeId)?.start_time ?? null);
+    return !!this.getRowStartTime(row, routeId) || !!routeStartTime || status === 'did_not_finish';
+  }
+
+  private canApplyStatus(row: ParticipantRow, routeId: string, status: RuntimeStatus): boolean {
+    return status === 'did_not_start'
+      ? this.canMarkDidNotStart(row, routeId)
+      : this.canMarkDidNotFinish(row, routeId);
   }
 
   private buildInlineEditKey(rowId: string, routeId: string, field: RuntimeField): string {
@@ -390,18 +601,28 @@ export class RaceResults implements OnInit {
   }
 
   getCaptureActionLabel(): string {
-    return this.captureField() === 'split_time' ? 'Zwischenzeit erfassen' : 'Zielzeit erfassen';
+    const action = this.captureAction();
+
+    if (action === 'split_time') return 'Zwischenzeit erfassen';
+    if (action === 'finish_time') return 'Zielzeit erfassen';
+    if (action === 'did_not_start') return 'Did not start setzen';
+    return 'Did not finish setzen';
   }
 
   getCaptureActionPastLabel(): string {
-    return this.captureField() === 'split_time' ? 'Zwischenzeit' : 'Zielzeit';
+    const action = this.captureAction();
+
+    if (action === 'split_time') return 'Zwischenzeit';
+    if (action === 'finish_time') return 'Zielzeit';
+    if (action === 'did_not_start') return 'Did not start';
+    return 'Did not finish';
   }
 
   getCapturePrimaryParticipant(): ParticipantRow | null {
     return this.captureMatchedParticipants()[0] || null;
   }
 
-  openCaptureModal(field: CaptureField) {
+  openCaptureModal(action: CaptureAction) {
     const routeId = this.selectedRouteId();
     if (!routeId) {
       this.timeInputError.set('Bitte zuerst eine Strecke auswählen.');
@@ -410,7 +631,7 @@ export class RaceResults implements OnInit {
 
     this.captureModalOpen.set(true);
     this.captureRouteId.set(routeId);
-    this.captureField.set(field);
+    this.captureAction.set(action);
     this.captureStartNumber.set('');
     this.captureMatchedParticipants.set([]);
     this.captureMessage.set(null);
@@ -421,7 +642,7 @@ export class RaceResults implements OnInit {
   closeCaptureModal() {
     this.captureModalOpen.set(false);
     this.captureRouteId.set(null);
-    this.captureField.set('finish_time');
+    this.captureAction.set('finish_time');
     this.captureStartNumber.set('');
     this.captureMatchedParticipants.set([]);
     this.captureMessage.set(null);
@@ -459,7 +680,7 @@ export class RaceResults implements OnInit {
   captureRuntimeTime() {
     const routeId = this.selectedRouteId();
     const matchedParticipants = this.captureMatchedParticipants();
-    const captureField = this.captureField();
+    const captureAction = this.captureAction();
     const capturedTime = this.getCurrentTimeString();
 
     if (!routeId) {
@@ -474,6 +695,22 @@ export class RaceResults implements OnInit {
 
     const eventRoute = this.getEventRoute(routeId);
     const eventRouteStartTime = this.normalizeTimeForApi(eventRoute?.start_time ?? null);
+
+    if (captureAction === 'did_not_start' || captureAction === 'did_not_finish') {
+      const invalidRow = matchedParticipants.find(row => !this.canApplyStatus(row, routeId, captureAction));
+      if (invalidRow) {
+        this.captureMessage.set(
+          captureAction === 'did_not_start'
+            ? 'Did not start kann für diese Startnummer nicht mehr gesetzt werden.'
+            : 'Did not finish kann für diese Startnummer nicht gesetzt werden. Es wird zuerst eine Startzeit benötigt.'
+        );
+        return;
+      }
+
+      this.saveStatusForRows(matchedParticipants, routeId, captureAction, eventRouteStartTime, true);
+      return;
+    }
+
     const hasMissingStartTime = matchedParticipants.some(row => {
       const hasExistingRuntime = this.getRowRuntimes(row, routeId).length > 0;
       return !hasExistingRuntime && !eventRouteStartTime;
@@ -487,7 +724,7 @@ export class RaceResults implements OnInit {
     this.saveFieldForRows(
       matchedParticipants,
       routeId,
-      captureField,
+      captureAction,
       capturedTime,
       eventRouteStartTime ?? null,
       true
@@ -560,6 +797,18 @@ export class RaceResults implements OnInit {
     return states[states.length - 1].member;
   }
 
+  private selectMemberForStatus(
+    row: ParticipantRow,
+    routeId: string,
+    status: RuntimeStatus
+  ): { participantId: string; registrationId: string; name: string } {
+    if (status === 'did_not_start') {
+      return this.selectMemberForField(row, routeId, 'start_time');
+    }
+
+    return this.selectMemberForField(row, routeId, 'finish_time');
+  }
+
   private getStartTimeForCreate(
     row: ParticipantRow,
     routeId: string,
@@ -614,6 +863,9 @@ export class RaceResults implements OnInit {
 
       const payload: RuntimeUpdatePayload = {
         [field]: value,
+        ...(this.getStatusForTimeUpdate(existing, field, value) !== undefined
+          ? { status: this.getStatusForTimeUpdate(existing, field, value) }
+          : {}),
         ...(existing.start_time ? {} : { start_time: startFallback ?? undefined })
       };
       return this.runtimeService.update(existing.id, payload);
@@ -644,6 +896,172 @@ export class RaceResults implements OnInit {
     return this.runtimeService.create(payload);
   }
 
+  private getStatusForTimeUpdate(
+    existing: Runtime,
+    field: RuntimeField,
+    value: string | null
+  ): RuntimeStatus | null | undefined {
+    if (!existing.status) return undefined;
+
+    if (existing.status === 'did_not_start') {
+      return value ? null : existing.status;
+    }
+
+    if (existing.status === 'did_not_finish') {
+      if (field === 'finish_time' && value) {
+        return null;
+      }
+
+      return existing.status;
+    }
+
+    return undefined;
+  }
+
+  private buildStatusRuntimeRequest(
+    row: ParticipantRow,
+    routeId: string,
+    status: RuntimeStatus,
+    eventRouteStartTime: string | null
+  ): Observable<Runtime> | null {
+    const member = this.selectMemberForStatus(row, routeId, status);
+    const existing = this.findRuntime(member.participantId, routeId);
+
+    if (existing?.id) {
+      if (status === 'did_not_start') {
+        return this.runtimeService.update(existing.id, {
+          status,
+          start_time: null,
+          split_time: null,
+          finish_time: null
+        });
+      }
+
+      const startTime = existing.start_time ?? this.getStartTimeForCreate(
+        row,
+        routeId,
+        member.participantId,
+        'finish_time',
+        null,
+        eventRouteStartTime
+      );
+
+      if (!startTime) {
+        return null;
+      }
+
+      return this.runtimeService.update(existing.id, {
+        status,
+        start_time: startTime,
+        finish_time: null
+      });
+    }
+
+    if (status === 'did_not_start') {
+      return this.runtimeService.create({
+        participant_id: member.participantId,
+        registration_id: member.registrationId,
+        route_id: routeId,
+        status
+      });
+    }
+
+    const startTimeForCreate = this.getStartTimeForCreate(
+      row,
+      routeId,
+      member.participantId,
+      'finish_time',
+      null,
+      eventRouteStartTime
+    );
+
+    if (!startTimeForCreate) {
+      return null;
+    }
+
+    return this.runtimeService.create({
+      participant_id: member.participantId,
+      registration_id: member.registrationId,
+      route_id: routeId,
+      status,
+      start_time: startTimeForCreate,
+      finish_time: null,
+      split_time: null
+    });
+  }
+
+  private saveStatusForRows(
+    rows: ParticipantRow[],
+    routeId: string,
+    status: RuntimeStatus,
+    eventRouteStartTime: string | null,
+    fromCapture = false
+  ) {
+    this.timeInputError.set(null);
+    this.timeCaptureSuccess.set(null);
+
+    const requests = rows
+      .map(row => this.buildStatusRuntimeRequest(row, routeId, status, eventRouteStartTime))
+      .filter((request): request is Observable<Runtime> => !!request);
+
+    if (requests.length === 0) {
+      const message = (
+        status === 'did_not_finish'
+          ? 'Für Did not finish wird eine Startzeit benötigt.'
+          : 'Status konnte nicht gespeichert werden.'
+      );
+
+      if (fromCapture) {
+        this.captureMessage.set(message);
+      } else {
+        this.timeInputError.set(message);
+      }
+
+      return;
+    }
+
+    forkJoin(requests as Observable<Runtime>[]).subscribe({
+      next: (saved: unknown) => {
+        const savedRuntimes = saved as Runtime[];
+
+        for (const runtime of savedRuntimes) {
+          const exists = this.runtimes().some(item => item.id === runtime.id);
+          if (exists) {
+            this.replaceRuntime(runtime);
+            continue;
+          }
+
+          this.runtimes.update(list => [...list, runtime]);
+        }
+
+        this.timeInputError.set(null);
+        this.captureMessage.set(null);
+
+        if (fromCapture) {
+          this.timeCaptureSuccess.set(
+            rows.length === 1
+              ? `${this.getStatusLabel(status)} für ${rows[0].name} gespeichert.`
+              : `${this.getStatusLabel(status)} für Startnummer ${this.captureStartNumber()} gespeichert.`
+          );
+          this.closeCaptureModal();
+          return;
+        }
+
+        this.timeCaptureSuccess.set(`${this.getStatusLabel(status)} gespeichert.`);
+      },
+      error: err => {
+        console.error('Runtime-Status speichern fehlgeschlagen', err);
+        const message = err?.error?.error || `${this.getStatusLabel(status)} konnte nicht gespeichert werden.`;
+        if (fromCapture) {
+          this.captureMessage.set(message);
+          return;
+        }
+
+        this.timeInputError.set(message);
+      }
+    });
+  }
+
   private saveFieldForRows(
     rows: ParticipantRow[],
     routeId: string,
@@ -663,16 +1081,18 @@ export class RaceResults implements OnInit {
       return;
     }
 
-    forkJoin(requests).subscribe({
-      next: saved => {
-        saved.forEach(runtime => {
+    forkJoin(requests as Observable<Runtime>[]).subscribe({
+      next: (saved: unknown) => {
+        const savedRuntimes = saved as Runtime[];
+
+        for (const runtime of savedRuntimes) {
           const exists = this.runtimes().some(item => item.id === runtime.id);
           if (exists) {
             this.replaceRuntime(runtime);
-            return;
+            continue;
           }
-          this.runtimes.update(list => [...list, runtime]);
-        });
+          this.runtimes.update((list: Runtime[]) => [...list, runtime]);
+        }
 
         this.timeInputError.set(null);
         if (fromCapture) {

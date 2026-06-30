@@ -3,7 +3,7 @@
     <div class="header">
         <h1>
             <i class="fa-solid fa-stopwatch me-2"></i>
-            Ergebnisse
+            Zeiterfassung
         </h1>
 
         <div class="toolbar">
@@ -21,6 +21,24 @@
                 <option [value]="r.id">{{ r.name }} - {{ getRouteDate(r.id) }}</option>
                 }
             </select>
+
+            <input class="filter-input" type="text" placeholder="Filter: Name oder Startnr." [value]="filterQuery()"
+                (input)="onFilterInput($any($event.target).value)" />
+
+            <div class="sort-chip-group">
+                <button type="button" class="sort-chip" [class.active]="isCaptureSortActive('startNumber')"
+                    (click)="setCaptureSort('startNumber')">
+                    {{ getCaptureSortLabel('startNumber') }}
+                </button>
+                <button type="button" class="sort-chip" [class.active]="isCaptureSortActive('name')"
+                    (click)="setCaptureSort('name')">
+                    {{ getCaptureSortLabel('name') }}
+                </button>
+                <button type="button" class="sort-chip" [class.active]="isCaptureSortActive('routeDuration')"
+                    (click)="setCaptureSort('routeDuration')">
+                    {{ getCaptureSortLabel('routeDuration') }}
+                </button>
+            </div>
             }
         </div>
     </div>
@@ -55,6 +73,12 @@
 
     <div class="capture-global-actions">
         <div class="capture-buttons">
+            <button class="action-btn global-action dns" type="button" (click)="openCaptureModal('did_not_start')">
+                Did not start
+            </button>
+            <button class="action-btn global-action dnf" type="button" (click)="openCaptureModal('did_not_finish')">
+                Did not finish
+            </button>
             <button class="action-btn global-action secondary" type="button" (click)="openCaptureModal('split_time')">
                 Zwischenpunkt erreicht
             </button>
@@ -90,14 +114,22 @@
             </thead>
 
             <tbody>
-                @for (p of participants(); track p.rowId) {
+                @for (p of getFilteredParticipants(); track p.rowId) {
                 <tr>
                     <td class="sticky-col name-cell">
                         <div class="name-card">
+                            @if (selectedRouteId(); as currentRouteId) {
+                            @if (getRowStatus(p, currentRouteId); as rowStatus) {
+                            <span class="participant-status-badge" [class]="'participant-status-badge ' + getRowStatusBadgeClass(rowStatus)">
+                                {{ getStatusLabel(rowStatus) }}
+                            </span>
+                            }
+                            }
                             <span class="participant-name">{{ p.name }}</span>
                             <small class="participant-number">Startnr.: {{ p.startNumber ?? '—' }}</small>
                             @if (p.isTeam) {
                             <small class="participant-type">Staffel ({{ p.members.length }} Personen)</small>
+                            <small class="participant-members">{{ getTeamMemberNames(p) }}</small>
                             }
                         </div>
                     </td>
@@ -120,8 +152,10 @@
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
                                 } @else {
-                                <span class="time-value">{{ getDisplayStartTime(p, routeId) || '—'
-                                    }}</span>
+                                <span class="time-value" [class.status-text]="getRowStatus(p, routeId) === 'did_not_start'"
+                                    [class.status-dns]="getRowStatus(p, routeId) === 'did_not_start'">
+                                    {{ getDisplayStartTime(p, routeId) || '—' }}
+                                </span>
                                 <button class="icon-btn" type="button" title="Startzeit bearbeiten"
                                     (click)="startInlineEdit(p, routeId, 'start_time')">
                                     <i class="fa-solid fa-pen"></i>
@@ -175,6 +209,12 @@
                                 <button class="icon-btn" type="button" title="Abbrechen" (click)="cancelInlineEdit()">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
+                                } @else if (getRowStatus(p, routeId) === 'did_not_finish') {
+                                <span class="time-value status-text status-dnf">{{ getStatusLabel('did_not_finish') }}</span>
+                                <button class="icon-btn" type="button" title="Zielzeit bearbeiten"
+                                    (click)="startInlineEdit(p, routeId, 'finish_time')">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
                                 } @else if (hasCapturedField(p, routeId, 'finish_time')) {
                                 <span class="time-value">{{ getCapturedFieldValue(p, routeId,
                                     'finish_time')
@@ -194,12 +234,7 @@
                             </div>
 
                             <div class="duration-info">
-                                @if (hasFinishedRuntime(p, routeId)) {
-                                <span>Dauer (Route): {{ getTimeValue(p, routeId) }}</span>
-                                }
-                                @else {
-                                <span>Noch kein Eintrag</span>
-                                }
+                                <span>{{ getDurationInfoText(p, routeId) }}</span>
                             </div>
                         </div>
                     </td>
@@ -210,6 +245,10 @@
 
         </table>
     </div>
+
+    @if (getFilteredParticipants().length === 0) {
+    <p class="info">Keine Treffer für den aktuellen Filter.</p>
+    }
 
     @if (captureModalOpen()) {
     <div class="modal-backdrop" tabindex="0" (click)="closeCaptureModal()" (keydown)="onCaptureBackdropKeydown($event)">

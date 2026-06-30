@@ -8,7 +8,7 @@ import { EventService, EventInterface } from '../../../core/services/event.servi
 import { RouteService, Route } from '../../../core/services/route.service';
 import { EventRouteService, EventRoute } from '../../../core/services/event-route.service';
 import { EventRegistrationService } from '../../../core/services/event-registration.service';
-import { RuntimeService, Runtime } from '../../../core/services/runtime.service';
+import { RuntimeService, Runtime, RuntimeStatus } from '../../../core/services/runtime.service';
 import { AuthService } from '../../../core/auth.service';
 
 interface OverviewRow {
@@ -21,6 +21,9 @@ interface OverviewRow {
     name: string;
   }[];
 }
+
+type OverviewSortOption = 'rankAsc' | 'rankDesc' | 'startNumberAsc' | 'startNumberDesc' | 'nameAsc' | 'nameDesc';
+type OverviewSortMetric = 'rank' | 'startNumber' | 'name';
 
 @Component({
   selector: 'app-results-overview',
@@ -41,6 +44,8 @@ export class ResultsOverview implements OnInit {
   events = signal<EventInterface[]>([]);
   selectedEventId = signal<string | null>(null);
   isAdmin = signal(false);
+  filterQuery = signal('');
+  sortOption = signal<OverviewSortOption>('rankAsc');
 
   routes = signal<Route[]>([]);
   eventRoutes = signal<EventRoute[]>([]);
@@ -81,6 +86,8 @@ export class ResultsOverview implements OnInit {
       this.rows.set([]);
       this.runtimes.set([]);
       this.error.set(null);
+      this.filterQuery.set('');
+      this.sortOption.set('rankAsc');
       return;
     }
 
@@ -116,17 +123,19 @@ export class ResultsOverview implements OnInit {
     const rowsByKey = new Map<string, OverviewRow>();
 
     for (const reg of regs) {
-      for (const participant of reg.participants ?? []) {
+      for (const participant of (reg.participants ?? []) as any[]) {
         const participantName = participant.person
           ? `${participant.person.first_name} ${participant.person.last_name}`
           : 'Unbekannt';
+
+        const squadron = participant['squadron'];
 
         const isTeamMember = participant.participation_type === 'staffel' && !!participant.squadron_id;
         const key = isTeamMember ? `team:${participant.squadron_id}` : `single:${participant.id}`;
 
         if (!rowsByKey.has(key)) {
-          const teamName = participant.squadron?.name
-            ? `Team ${participant.squadron.name}`
+          const teamName = squadron?.name
+            ? `Team ${squadron.name}`
             : `Team ${participant.start_number ?? ''}`.trim();
 
           rowsByKey.set(key, {
@@ -171,6 +180,28 @@ export class ResultsOverview implements OnInit {
       .filter((runtime): runtime is Runtime => !!runtime);
   }
 
+  getStatusLabel(status: RuntimeStatus): string {
+    return status === 'did_not_start' ? 'Did not start' : 'Did not finish';
+  }
+
+  private getRowStatus(row: OverviewRow, routeId: string): RuntimeStatus | null {
+    const runtimes = this.getRowRuntimes(row, routeId);
+    if (!runtimes.length) return null;
+
+    const hasFinish = runtimes.some(runtime => !!runtime.finish_time);
+    const hasStarted = runtimes.some(runtime => !!runtime.start_time || !!runtime.split_time);
+
+    if (!hasFinish && runtimes.some(runtime => runtime.status === 'did_not_finish')) {
+      return 'did_not_finish';
+    }
+
+    if (!hasStarted && runtimes.some(runtime => runtime.status === 'did_not_start')) {
+      return 'did_not_start';
+    }
+
+    return null;
+  }
+
   private getRowStartTime(row: OverviewRow, routeId: string): string | null {
     const starts = this.getRowRuntimes(row, routeId)
       .map(runtime => runtime.start_time)
@@ -197,6 +228,8 @@ export class ResultsOverview implements OnInit {
   }
 
   private getRowRouteSeconds(row: OverviewRow, routeId: string): number | null {
+    if (this.getRowStatus(row, routeId)) return null;
+
     const start = this.getRowStartTime(row, routeId);
     const finish = this.getRowFinishTime(row, routeId);
     if (!start || !finish) return null;
@@ -209,50 +242,231 @@ export class ResultsOverview implements OnInit {
   }
 
   getRouteDuration(row: OverviewRow, routeId: string): string {
+    const status = this.getRowStatus(row, routeId);
+    if (status) return this.getStatusLabel(status);
+
     const seconds = this.getRowRouteSeconds(row, routeId);
     if (seconds === null) return '—';
     return this.secondsToHms(seconds);
   }
 
-  getTotalDuration(row: OverviewRow): string {
-    let total = 0;
-    let hasAny = false;
+  getRowStatusBadge(row: OverviewRow): RuntimeStatus | null {
+    const outcome = this.getRowOutcome(row);
+    if (outcome.kind === 'did_not_start' || outcome.kind === 'did_not_finish') {
+      return outcome.kind;
+    }
 
-    for (const route of this.routes()) {
+    return null;
+  }
+
+  private getRowOutcome(row: OverviewRow): {
+    kind: 'finished' | 'did_not_start' | 'did_not_finish' | 'pending';
+    totalSeconds: number | null;
+  } {
+    const routes = this.routes();
+    if (!routes.length) {
+      return { kind: 'pending', totalSeconds: null };
+    }
+
+    let total = 0;
+    let finishedRoutes = 0;
+    let hasDidNotFinish = false;
+    let hasDidNotStart = false;
+
+    for (const route of routes) {
+      const status = this.getRowStatus(row, route.id);
+      if (status === 'did_not_finish') {
+        hasDidNotFinish = true;
+        continue;
+      }
+
+      if (status === 'did_not_start') {
+        hasDidNotStart = true;
+        continue;
+      }
+
       const seconds = this.getRowRouteSeconds(row, route.id);
-      if (seconds === null) continue;
-      hasAny = true;
+      if (seconds === null) {
+        continue;
+      }
+
+      finishedRoutes += 1;
       total += seconds;
     }
 
-    return hasAny ? this.secondsToHms(total) : '—';
+    if (finishedRoutes === routes.length) {
+      return { kind: 'finished', totalSeconds: total };
+    }
+
+    if (hasDidNotFinish) {
+      return { kind: 'did_not_finish', totalSeconds: null };
+    }
+
+    if (hasDidNotStart) {
+      return { kind: 'did_not_start', totalSeconds: null };
+    }
+
+    return { kind: 'pending', totalSeconds: null };
+  }
+
+  getTotalDuration(row: OverviewRow): string {
+    const outcome = this.getRowOutcome(row);
+    if (outcome.kind === 'finished' && outcome.totalSeconds !== null) {
+      return this.secondsToHms(outcome.totalSeconds);
+    }
+
+    if (outcome.kind === 'did_not_finish' || outcome.kind === 'did_not_start') {
+      return this.getStatusLabel(outcome.kind);
+    }
+
+    return '—';
   }
 
   getSortedRows(): OverviewRow[] {
     const withComputed = this.rows().map(row => {
-      let total = 0;
-      let hasAny = false;
+      const outcome = this.getRowOutcome(row);
 
-      for (const route of this.routes()) {
-        const seconds = this.getRowRouteSeconds(row, route.id);
-        if (seconds === null) continue;
-        hasAny = true;
-        total += seconds;
-      }
+      let sortGroup = 3;
+      if (outcome.kind === 'finished') sortGroup = 0;
+      if (outcome.kind === 'did_not_finish') sortGroup = 1;
+      if (outcome.kind === 'did_not_start') sortGroup = 2;
 
       return {
         row,
-        total: hasAny ? total : Number.MAX_SAFE_INTEGER,
-        hasAny
+        sortGroup,
+        total: outcome.totalSeconds ?? Number.MAX_SAFE_INTEGER
       };
     });
 
     return withComputed
       .sort((a, b) => {
+        if (a.sortGroup !== b.sortGroup) return a.sortGroup - b.sortGroup;
         if (a.total !== b.total) return a.total - b.total;
         return a.row.name.localeCompare(b.row.name, 'de');
       })
       .map(item => item.row);
+  }
+
+  onFilterInput(raw: string) {
+    this.filterQuery.set((raw ?? '').trim().toLowerCase());
+  }
+
+  onSortChange(value: string) {
+    const allowed: OverviewSortOption[] = [
+      'rankAsc',
+      'rankDesc',
+      'startNumberAsc',
+      'startNumberDesc',
+      'nameAsc',
+      'nameDesc'
+    ];
+
+    if (allowed.includes(value as OverviewSortOption)) {
+      this.sortOption.set(value as OverviewSortOption);
+    }
+  }
+
+  setOverviewSort(metric: OverviewSortMetric) {
+    const current = this.sortOption();
+
+    if (metric === 'rank') {
+      this.sortOption.set(current === 'rankAsc' ? 'rankDesc' : 'rankAsc');
+      return;
+    }
+
+    if (metric === 'startNumber') {
+      this.sortOption.set(current === 'startNumberAsc' ? 'startNumberDesc' : 'startNumberAsc');
+      return;
+    }
+
+    this.sortOption.set(current === 'nameAsc' ? 'nameDesc' : 'nameAsc');
+  }
+
+  isOverviewSortActive(metric: OverviewSortMetric): boolean {
+    const current = this.sortOption();
+    if (metric === 'rank') return current === 'rankAsc' || current === 'rankDesc';
+    if (metric === 'startNumber') return current === 'startNumberAsc' || current === 'startNumberDesc';
+    return current === 'nameAsc' || current === 'nameDesc';
+  }
+
+  getOverviewSortLabel(metric: OverviewSortMetric): string {
+    const current = this.sortOption();
+
+    if (metric === 'rank') {
+      return current === 'rankDesc' ? 'Rang ▼' : 'Rang ▲';
+    }
+
+    if (metric === 'startNumber') {
+      return current === 'startNumberDesc' ? 'Startnr. ▼' : 'Startnr. ▲';
+    }
+
+    return current === 'nameDesc' ? 'Name ▼' : 'Name ▲';
+  }
+
+  getOverallRank(row: OverviewRow): number | null {
+    if (this.getRowOutcome(row).kind !== 'finished') return null;
+
+    const ranked = this.getSortedRows().filter(item => this.getRowOutcome(item).kind === 'finished');
+    const idx = ranked.findIndex(item => item.rowId === row.rowId);
+    return idx >= 0 ? idx + 1 : null;
+  }
+
+  getDisplayRows(): OverviewRow[] {
+    const query = this.filterQuery();
+    let visible = this.getSortedRows();
+
+    if (query) {
+      visible = visible.filter(row => {
+        const inName = row.name.toLowerCase().includes(query);
+        const inMembers = row.members.some(member => member.name.toLowerCase().includes(query));
+        const inStart = (row.startNumber?.toString() ?? '').includes(query);
+        return inName || inMembers || inStart;
+      });
+    }
+
+    const sorted = [...visible];
+    const sort = this.sortOption();
+
+    sorted.sort((a, b) => {
+      switch (sort) {
+        case 'rankDesc': {
+          const aRank = this.getOverallRank(a);
+          const bRank = this.getOverallRank(b);
+          if (aRank === null && bRank === null) return a.name.localeCompare(b.name, 'de');
+          if (aRank === null) return 1;
+          if (bRank === null) return -1;
+          return bRank - aRank;
+        }
+        case 'startNumberAsc': {
+          const aNum = a.startNumber ?? Number.MAX_SAFE_INTEGER;
+          const bNum = b.startNumber ?? Number.MAX_SAFE_INTEGER;
+          if (aNum !== bNum) return aNum - bNum;
+          return a.name.localeCompare(b.name, 'de');
+        }
+        case 'startNumberDesc': {
+          const aNum = a.startNumber ?? -1;
+          const bNum = b.startNumber ?? -1;
+          if (aNum !== bNum) return bNum - aNum;
+          return a.name.localeCompare(b.name, 'de');
+        }
+        case 'nameAsc':
+          return a.name.localeCompare(b.name, 'de');
+        case 'nameDesc':
+          return b.name.localeCompare(a.name, 'de');
+        case 'rankAsc':
+        default:
+        {
+          const aRank = this.getOverallRank(a);
+          const bRank = this.getOverallRank(b);
+          if (aRank === null && bRank === null) return a.name.localeCompare(b.name, 'de');
+          if (aRank === null) return 1;
+          if (bRank === null) return -1;
+          return aRank - bRank;
+        }
+      }
+    });
+
+    return sorted;
   }
 
   getRouteDate(routeId: string): string {
@@ -278,25 +492,26 @@ export class ResultsOverview implements OnInit {
   async downloadResultsPdf() {
     if (!this.isAdmin()) return;
 
-    const rows = this.getSortedRows();
+    const rows = this.getDisplayRows();
     if (!rows.length) return;
 
-    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
-      import('jspdf'),
-      import('jspdf-autotable')
-    ]);
+    const jsPdfModule: any = await import('jspdf');
+    const autoTableModule: any = await import('jspdf-autotable');
+    const jsPDF: any = jsPdfModule.default;
+    const autoTable: any = autoTableModule.default;
 
     const routes = this.routes();
     const head = [['Rang', 'Teilnehmer', 'Startnr.', ...routes.map(route => route.name), 'Gesamt']];
-    const body = rows.map((row, index) => [
-      String(index + 1),
+    const body = rows.map((row) => [
+      this.getOverallRank(row)?.toString() ?? '—',
       row.isTeam ? `${row.name} (Staffel)` : row.name,
       row.startNumber?.toString() ?? '-',
       ...routes.map(route => this.getRouteDuration(row, route.id)),
       this.getTotalDuration(row)
     ]);
 
-    const doc = new jsPDF({ orientation: 'landscape' });
+    const JsPdfCtor: any = jsPDF;
+    const doc = new JsPdfCtor({ orientation: 'landscape' });
     const title = `Ergebnisse - ${this.getSelectedEventName()}`;
     const generatedAt = new Intl.DateTimeFormat('de-DE', {
       dateStyle: 'medium',

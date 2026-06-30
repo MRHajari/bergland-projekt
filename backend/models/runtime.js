@@ -30,6 +30,14 @@ const Runtime = sequelize.define(
             allowNull: true,
         },
 
+        status: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            validate: {
+                isIn: [["did_not_start", "did_not_finish"]],
+            },
+        },
+
         start_time: {
             type: DataTypes.TIME,
             allowNull: true,

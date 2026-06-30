@@ -2,12 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export type RuntimeStatus = 'did_not_start' | 'did_not_finish';
+
 export interface Runtime {
   id: string;
   participant_id: string;
   registration_id?: string | null;
   route_id?: string | null;
   event_route_id: string;
+  status?: RuntimeStatus | null;
   start_time?: string | null;
   finish_time?: string | null;
   split_time?: string | null;
@@ -39,12 +42,14 @@ export interface RuntimeCreatePayload {
   registration_id?: string;
   event_route_id?: string;
   route_id?: string;
-  start_time: string;
+  status?: RuntimeStatus | null;
+  start_time?: string | null;
   finish_time?: string | null;
   split_time?: string | null;
 }
 
 export interface RuntimeUpdatePayload {
+  status?: RuntimeStatus | null;
   start_time?: string | null;
   finish_time?: string | null;
   split_time?: string | null;

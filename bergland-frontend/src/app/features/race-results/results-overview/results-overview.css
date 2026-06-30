@@ -52,6 +52,37 @@ h1 {
   width: 100%;
 }
 
+.filter-input {
+  background: #fff;
+  border: 1px solid #d6d9dd;
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  min-width: 220px;
+}
+
+.sort-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.sort-chip {
+  border: 1px solid #d6d9dd;
+  background: #fff;
+  color: #123e67;
+  border-radius: 999px;
+  padding: 0.42rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sort-chip.active {
+  background: #123e67;
+  color: #fff;
+  border-color: #123e67;
+}
+
 .back-link {
   text-decoration: none;
   display: inline-flex;
@@ -157,6 +188,26 @@ h1 {
   gap: 0.15rem;
 }
 
+.participant-status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.participant-status-dns {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.participant-status-dnf {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .name-cell small {
   color: #64748b;
 }
@@ -188,6 +239,7 @@ h1 {
   }
 
   .select,
+  .filter-input,
   .back-link,
   .pdf-btn {
     width: 100%;

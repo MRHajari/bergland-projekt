@@ -36,6 +36,11 @@ const runtimeInclude = [
     { model: User, as: "timekeeper", attributes: ["id", "email"] },
 ];
 
+const RUNTIME_STATUS = {
+    DID_NOT_START: "did_not_start",
+    DID_NOT_FINISH: "did_not_finish",
+};
+
 function normalizeOptionalTime(value) {
     if (value === undefined) return undefined;
     if (value === null || value === "") return null;
@@ -48,6 +53,14 @@ function normalizeOptionalTime(value) {
     }
 
     return trimmed;
+}
+
+function normalizeOptionalStatus(value) {
+    if (value === undefined) return undefined;
+    if (value === null || value === "") return null;
+
+    const trimmed = String(value).trim();
+    return trimmed || null;
 }
 
 function timeToSeconds(value) {
@@ -65,6 +78,33 @@ function calculateDurationSeconds(startTime, finishTime) {
 
     if (startSeconds === null || finishSeconds === null) return 0;
     return finishSeconds - startSeconds;
+}
+
+function normalizeRuntimeState({ status, start_time, finish_time, split_time }) {
+    if (status === RUNTIME_STATUS.DID_NOT_START) {
+        return {
+            status,
+            start_time: null,
+            finish_time: null,
+            split_time: null,
+        };
+    }
+
+    if (status === RUNTIME_STATUS.DID_NOT_FINISH) {
+        return {
+            status,
+            start_time,
+            finish_time: null,
+            split_time,
+        };
+    }
+
+    return {
+        status: status ?? null,
+        start_time,
+        finish_time,
+        split_time,
+    };
 }
 
 function validateChronology({ start_time, finish_time, split_time }) {
@@ -93,6 +133,24 @@ function validateChronology({ start_time, finish_time, split_time }) {
     }
 
     return null;
+}
+
+function validateRuntimeState(values, { isCreate = false } = {}) {
+    if (values.status === RUNTIME_STATUS.DID_NOT_START) {
+        return null;
+    }
+
+    if (!values.start_time) {
+        if (values.status === RUNTIME_STATUS.DID_NOT_FINISH) {
+            return "Did not finish kann nur mit vorhandener Startzeit gespeichert werden.";
+        }
+
+        if (isCreate) {
+            return "Eine Startzeit ist erforderlich, außer der Status ist did not start.";
+        }
+    }
+
+    return validateChronology(values);
 }
 
 async function loadParticipant(participantId) {
@@ -173,14 +231,15 @@ exports.createRuntime = async (req, res, next) => {
                 .json({ error: "EventRoute nicht gefunden (Event+Route passt nicht)." });
         }
 
-        const start_time = normalizeOptionalTime(value.start_time);
-        const finish_time = normalizeOptionalTime(value.finish_time);
-        const split_time = normalizeOptionalTime(value.split_time);
+        const normalizedValues = normalizeRuntimeState({
+            status: normalizeOptionalStatus(value.status),
+            start_time: normalizeOptionalTime(value.start_time),
+            finish_time: normalizeOptionalTime(value.finish_time),
+            split_time: normalizeOptionalTime(value.split_time),
+        });
 
-        const chronologyError = validateChronology({
-            start_time,
-            finish_time,
-            split_time,
+        const chronologyError = validateRuntimeState(normalizedValues, {
+            isCreate: true,
         });
 
         if (chronologyError) {
@@ -211,10 +270,14 @@ exports.createRuntime = async (req, res, next) => {
             registration_id: value.registration_id || participant.registration.id,
             route_id: eventRoute.route_id,
             event_route_id: eventRoute.id,
-            start_time,
-            finish_time,
-            split_time,
-            duration_seconds: calculateDurationSeconds(start_time, finish_time),
+            status: normalizedValues.status,
+            start_time: normalizedValues.start_time,
+            finish_time: normalizedValues.finish_time,
+            split_time: normalizedValues.split_time,
+            duration_seconds: calculateDurationSeconds(
+                normalizedValues.start_time,
+                normalizedValues.finish_time
+            ),
             recorded_by: req.user.id,
         });
 
@@ -331,7 +394,11 @@ exports.updateRuntime = async (req, res, next) => {
         const { error, value } = updateRuntimeSchema.validate(req.body);
         if (error) return res.status(400).json({ error: error.details[0].message });
 
-        const nextValues = {
+        const nextValues = normalizeRuntimeState({
+            status:
+                value.status !== undefined
+                    ? normalizeOptionalStatus(value.status)
+                    : runtime.status,
             start_time:
                 value.start_time !== undefined
                     ? normalizeOptionalTime(value.start_time)
@@ -344,14 +411,15 @@ exports.updateRuntime = async (req, res, next) => {
                 value.split_time !== undefined
                     ? normalizeOptionalTime(value.split_time)
                     : runtime.split_time,
-        };
+        });
 
-        const chronologyError = validateChronology(nextValues);
+        const chronologyError = validateRuntimeState(nextValues);
         if (chronologyError) {
             return res.status(400).json({ error: chronologyError });
         }
 
         await runtime.update({
+            status: nextValues.status,
             start_time: nextValues.start_time,
             finish_time: nextValues.finish_time,
             split_time: nextValues.split_time,

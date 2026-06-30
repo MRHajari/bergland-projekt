@@ -23,6 +23,24 @@
                     </select>
                 </div>
 
+                <input class="filter-input" type="text" placeholder="Filter: Name oder Startnr." [value]="filterQuery()"
+                    (input)="onFilterInput($any($event.target).value)" />
+
+                <div class="sort-chip-group">
+                    <button type="button" class="sort-chip" [class.active]="isOverviewSortActive('rank')"
+                        (click)="setOverviewSort('rank')">
+                        {{ getOverviewSortLabel('rank') }}
+                    </button>
+                    <button type="button" class="sort-chip" [class.active]="isOverviewSortActive('startNumber')"
+                        (click)="setOverviewSort('startNumber')">
+                        {{ getOverviewSortLabel('startNumber') }}
+                    </button>
+                    <button type="button" class="sort-chip" [class.active]="isOverviewSortActive('name')"
+                        (click)="setOverviewSort('name')">
+                        {{ getOverviewSortLabel('name') }}
+                    </button>
+                </div>
+
                 @if (isAdmin()) {
                 <button class="pdf-btn" type="button" (click)="downloadResultsPdf()">
                     <i class="fa-solid fa-file-pdf"></i>
@@ -69,11 +87,17 @@
             </thead>
 
             <tbody>
-                @for (row of getSortedRows(); track row.rowId; let index = $index) {
+                @for (row of getDisplayRows(); track row.rowId) {
                 <tr>
-                    <td class="rank-cell">{{ index + 1 }}</td>
+                    <td class="rank-cell">{{ getOverallRank(row) ?? '—' }}</td>
                     <td>
                         <div class="name-cell">
+                            @if (getRowStatusBadge(row); as rowStatus) {
+                            <span class="participant-status-badge" [class.participant-status-dns]="rowStatus === 'did_not_start'"
+                                [class.participant-status-dnf]="rowStatus === 'did_not_finish'">
+                                {{ getStatusLabel(rowStatus) }}
+                            </span>
+                            }
                             <strong>{{ row.name }}</strong>
                             @if (row.isTeam) {
                             <small>Staffel ({{ row.members.length }} Personen)</small>
@@ -92,5 +116,9 @@
             </tbody>
         </table>
     </div>
+
+    @if (getDisplayRows().length === 0) {
+    <p class="info">Keine Treffer für den aktuellen Filter.</p>
+    }
     }
 </div>
