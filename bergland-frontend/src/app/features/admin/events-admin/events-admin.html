@@ -1,168 +1,198 @@
 <div class="admin-container">
-    <button class="back-btn" (click)="goBack()">
-        <i class="fa-solid fa-arrow-left me-2"></i>
-        Zurück
-    </button>
-
-
-    <h1><i class="fa-solid fa-ticket me-2"></i> Events verwalten</h1>
+    <div class="page-header">
+        <div class="page-title">
+            <button class="icon-button" (click)="goBack()" aria-label="Zurück" title="Zurück"><i
+                    class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+            <h1>Veranstaltungen</h1>
+        </div>
+        <button class="primary" (click)="showCreateForm = !showCreateForm" [disabled]="loading || !!errorMessage"
+            [attr.aria-expanded]="showCreateForm" aria-controls="create-event"><i class="fa-solid fa-plus"
+                aria-hidden="true"></i> Neue Veranstaltung</button>
+    </div>
 
     @if (loading) {
-    <p class="loading">
-        <i class="fa-solid fa-spinner fa-spin me-2"></i> Lade Events...
+    <p class="notice" role="status">
+        <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Veranstaltungen werden geladen...
     </p>
     } @else if (errorMessage) {
-    <p class="error">
+    <p class="notice error" role="alert">
         <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
     </p>
     } @else {
 
-    <!-- Neues Event -->
-    <section class="form-section">
-        <h2><i class="fa-solid fa-circle-plus me-2"></i> Neues Event hinzufügen</h2>
+    @if (showCreateForm) {
+    <section class="form-section" id="create-event" aria-labelledby="create-event-title">
+        <div class="section-heading">
+            <h2 id="create-event-title">Neue Veranstaltung</h2>
+        </div>
 
-        <form (ngSubmit)="addEvent()" class="event-form">
+        <form (ngSubmit)="addEvent()" class="form-grid">
             <div class="form-group">
-                <label><i class="fa-solid fa-heading me-2"></i> Name:</label>
-                <input type="text" [(ngModel)]="newEvent.name" name="name" placeholder="Eventname" required />
+                <label for="event-name">Name</label>
+                <input id="event-name" type="text" [(ngModel)]="newEvent.name" name="name" required />
             </div>
 
-            <div class="form-group">
-                <label><i class="fa-solid fa-align-left me-2"></i> Beschreibung:</label>
-                <textarea [(ngModel)]="newEvent.description" name="description" rows="2"
+            <div class="form-group form-group-full">
+                <label for="event-description">Beschreibung</label>
+                <textarea id="event-description" [(ngModel)]="newEvent.description" name="description" rows="2"
                     placeholder="Kurze Beschreibung..."></textarea>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label><i class="fa-solid fa-calendar-day me-2"></i> Startdatum:</label>
-                    <input type="date" [(ngModel)]="newEvent.start_date" name="start_date" />
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fa-solid fa-calendar-check me-2"></i> Enddatum:</label>
-                    <input type="date" [(ngModel)]="newEvent.end_date" name="end_date" />
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fa-solid fa-clock me-2"></i> Anmeldeschluss:</label>
-                    <input type="date" [(ngModel)]="newEvent.registration_deadline" name="registration_deadline" />
-                </div>
+            <div class="form-group">
+                <label for="event-start">Startdatum</label>
+                <input id="event-start" type="date" [(ngModel)]="newEvent.start_date" name="start_date" />
             </div>
 
-            <button type="submit" class="primary">
-                <i class="fa-solid fa-plus me-2"></i> Hinzufügen
-            </button>
+            <div class="form-group">
+                <label for="event-end">Enddatum</label>
+                <input id="event-end" type="date" [(ngModel)]="newEvent.end_date" name="end_date" />
+            </div>
+
+            <div class="form-group">
+                <label for="event-deadline">Anmeldeschluss</label>
+                <input id="event-deadline" type="date" [(ngModel)]="newEvent.registration_deadline"
+                    name="registration_deadline" />
+            </div>
+            <div class="form-actions form-group-full">
+                <button type="button" (click)="showCreateForm = false">Abbrechen</button>
+                <button type="submit" class="primary"><i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    Hinzufügen</button>
+            </div>
         </form>
     </section>
+    }
 
     <!-- Event-Liste -->
     <section class="list-section">
-        <h2><i class="fa-solid fa-calendar-days me-2"></i> Bestehende Events</h2>
-
-        <input type="text" [(ngModel)]="searchTerm" placeholder="🔍 Events suchen (Name oder Beschreibung)..."
-            class="search-input" />
+        <div class="toolbar">
+            <div class="search-field">
+                <label for="event-search" class="sr-only">Veranstaltungen suchen</label>
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="event-search" type="search" [ngModel]="searchTerm"
+                    (ngModelChange)="searchTerm = $event; page = 1" placeholder="Name oder Beschreibung suchen" />
+            </div>
+            <span class="record-count" role="status">{{ filteredEvents.length }} {{ filteredEvents.length === 1 ?
+                'Veranstaltung' : 'Veranstaltungen' }}</span>
+        </div>
 
         @if (filteredEvents.length === 0) {
-        <p>Keine passenden Events gefunden.</p>
+        <p class="empty-state" role="status"><i class="fa-solid fa-ticket" aria-hidden="true"></i> Keine passenden
+            Veranstaltungen gefunden.</p>
         } @else {
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>Name / Beschreibung</th>
-                    <th>Zeitraum</th>
-                    <th>Anmeldeschluss</th>
-                    <th>Anmeldungen</th>
-                    <th>Unterkünfte</th>
-                    <th>Aktionen</th>
-                </tr>
-            </thead>
+        <div class="table-scroll" role="region" aria-label="Veranstaltungsliste" tabindex="0">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name / Beschreibung</th>
+                        <th>Zeitraum</th>
+                        <th>Anmeldeschluss</th>
+                        <th class="numeric">Anmeldungen</th>
+                        <th>Unterkünfte</th>
+                        <th class="actions-column">Aktionen</th>
+                    </tr>
+                </thead>
 
-            <tbody>
-                @for (e of pagedEvents; track e.id) {
-                <tr>
-                    <td>
-                        @if (editingEvent?.id === e.id) {
-                        <div class="edit-grid">
-                            <label><i class="fa-solid fa-heading me-2"></i> Name:</label>
-                            <input [(ngModel)]="editingEvent.name" />
-                            <label><i class="fa-solid fa-align-left me-2"></i> Beschreibung:</label>
-                            <textarea [(ngModel)]="editingEvent.description" rows="1"></textarea>
-                        </div>
-                        } @else {
-                        <strong>{{ e.name }}</strong><br />
-                        <small class="desc">{{ e.description }}</small>
-                        }
-                    </td>
+                <tbody>
+                    @for (e of pagedEvents; track e.id) {
+                    <tr>
+                        <td>
+                            @if (editingEvent?.id === e.id) {
+                            <div class="form-group">
+                                <label for="edit-event-name">Name</label>
+                                <input id="edit-event-name" [(ngModel)]="editingEvent.name" />
+                                <label for="edit-event-description">Beschreibung</label>
+                                <textarea id="edit-event-description" [(ngModel)]="editingEvent.description"
+                                    rows="1"></textarea>
+                            </div>
+                            } @else {
+                            <strong>{{ e.name }}</strong><br />
+                            <small class="record-count">{{ e.description }}</small>
+                            }
+                        </td>
 
-                    <td>
-                        @if (editingEvent?.id === e.id) {
-                        <div class="edit-grid">
-                            <input type="date" [(ngModel)]="editingEvent.start_date" />
-                            <input type="date" [(ngModel)]="editingEvent.end_date" />
-                        </div>
-                        } @else {
-                        {{ e.start_date | date: 'dd.MM.yyyy' }} – {{ e.end_date | date: 'dd.MM.yyyy' }}
-                        }
-                    </td>
+                        <td>
+                            @if (editingEvent?.id === e.id) {
+                            <div class="form-group">
+                                <input aria-label="Startdatum" type="date" [(ngModel)]="editingEvent.start_date" />
+                                <input aria-label="Enddatum" type="date" [(ngModel)]="editingEvent.end_date" />
+                            </div>
+                            } @else {
+                            <span class="date-value">{{ (e.start_date | date: 'dd.MM.yyyy') || '–' }}</span> – <span
+                                class="date-value">{{ (e.end_date | date: 'dd.MM.yyyy') || '–' }}</span>
+                            }
+                        </td>
 
-                    <td>
-                        @if (editingEvent?.id === e.id) {
-                        <input type="date" [(ngModel)]="editingEvent.registration_deadline" />
-                        } @else {
-                        {{ e.registration_deadline | date: 'dd.MM.yyyy' }}
-                        }
-                    </td>
+                        <td>
+                            @if (editingEvent?.id === e.id) {
+                            <input aria-label="Anmeldeschluss" type="date"
+                                [(ngModel)]="editingEvent.registration_deadline" />
+                            } @else {
+                            <span class="date-value">{{ (e.registration_deadline | date: 'dd.MM.yyyy') || '–' }}</span>
+                            }
+                        </td>
 
-                    <td class="count">{{ countsMap[e.id] || 0 }}</td>
-                    <td>
-                        @if (e.accommodations?.length) {
-                        <small>{{ getAccommodationNames(e) }}</small>
-                        }
-                        @if (!e.accommodations?.length) {
-                        <small>–</small>
-                        }
-                    </td>
+                        <td class="numeric">{{ countsMap[e.id] || 0 }}</td>
+                        <td>
+                            @if (e.accommodations?.length) {
+                            <small>{{ getAccommodationNames(e) }}</small>
+                            }
+                            @if (!e.accommodations?.length) {
+                            <small>–</small>
+                            }
+                        </td>
 
-                    <td class="button-group">
-                        @if (editingEvent?.id === e.id) {
-                        <button class="primary" (click)="saveEvent()">
-                            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
-                        </button>
-                        <button (click)="cancelEdit()">
-                            <i class="fa-solid fa-xmark me-2"></i> Abbrechen
-                        </button>
-                        } @else {
-                        <button class="secondary" (click)="editEvent(e)">
-                            <i class="fa-solid fa-pen me-2"></i> Bearbeiten
-                        </button>
-                        <button class="danger" (click)="deleteEvent(e.id, e.name)">
-                            <i class="fa-solid fa-trash me-2"></i> Löschen
-                        </button>
-                        <button class="details" (click)="viewRegistrations(e.id)">
-                            <i class="fa-solid fa-list-check me-2"></i> Anmeldungen
-                        </button>
-                        <button class="secondary" (click)="openAccommodationModal(e)">
-                            <i class="fa-solid fa-hotel me-2"></i> Unterkünfte
-                        </button>
-                        <button class="details" (click)="openRouteModal(e)">
-                            <i class="fa-solid fa-route me-2"></i> Strecken
-                        </button>
+                        <td>
+                            <div class="row-actions">
+                                @if (editingEvent?.id === e.id) {
+                                <button class="primary icon-button" (click)="saveEvent()" title="Speichern"
+                                    aria-label="Veranstaltung speichern">
+                                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                                </button>
+                                <button class="icon-button" (click)="cancelEdit()" title="Abbrechen"
+                                    aria-label="Bearbeitung abbrechen">
+                                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                                </button>
+                                } @else {
+                                <button class="icon-button" (click)="editEvent(e)" title="Bearbeiten"
+                                    [attr.aria-label]="e.name + ' bearbeiten'">
+                                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                </button>
+                                <button class="danger icon-button" (click)="deleteEvent(e.id, e.name)" title="Löschen"
+                                    [attr.aria-label]="e.name + ' löschen'">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </button>
+                                <button class="icon-button" (click)="viewRegistrations(e.id)"
+                                    title="Anmeldungen anzeigen" [attr.aria-label]="'Anmeldungen für ' + e.name">
+                                    <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+                                </button>
+                                <button class="icon-button" (click)="openAccommodationModal(e)"
+                                    title="Unterkünfte zuordnen"
+                                    [attr.aria-label]="'Unterkünfte für ' + e.name + ' zuordnen'">
+                                    <i class="fa-solid fa-hotel" aria-hidden="true"></i>
+                                </button>
+                                <button class="icon-button" (click)="openRouteModal(e)" title="Strecken zuordnen"
+                                    [attr.aria-label]="'Strecken für ' + e.name + ' zuordnen'">
+                                    <i class="fa-solid fa-route" aria-hidden="true"></i>
+                                </button>
 
-                        }
-                    </td>
-                </tr>
-                }
-            </tbody>
-        </table>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
 
         <div class="pagination">
-            <button (click)="page = page - 1" [disabled]="page === 1">
-                <i class="fa-solid fa-chevron-left me-1"></i> Zurück
+            <button class="icon-button" (click)="page = page - 1" [disabled]="page <= 1" title="Vorherige Seite"
+                aria-label="Vorherige Seite">
+                <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
             </button>
             <span>Seite {{ page }} / {{ totalPages }}</span>
-            <button (click)="page = page + 1" [disabled]="page === totalPages">
-                Weiter <i class="fa-solid fa-chevron-right ms-1"></i>
+            <button class="icon-button" (click)="page = page + 1" [disabled]="page >= totalPages" title="Nächste Seite"
+                aria-label="Nächste Seite">
+                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
             </button>
         </div>
         }
@@ -173,19 +203,20 @@
     <!-- 🏨 Unterkunftszuordnung Modal -->
     <!-- ===================================================== -->
     @if (showAccommodationModal) {
-    <div class="modal-backdrop" tabindex="0" (click)="closeAccommodationModal()" (keydown)="onModalBackdropKeydown($event, 'accommodation')"></div>
+    <div class="modal-backdrop" aria-hidden="true" (click)="closeAccommodationModal()"></div>
 
-    <div class="modal">
-        <h2><i class="fa-solid fa-hotel me-2"></i> Unterkünfte zuordnen</h2>
-        <p>
-            <i class="fa-solid fa-circle-info me-2"></i>
-            Wähle die Unterkünfte aus, die diesem Event zugeordnet werden sollen.
-        </p>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="accommodation-dialog-title" cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true" (keydown.escape)="closeAccommodationModal()">
+        <div class="section-heading">
+            <h2 id="accommodation-dialog-title">Unterkünfte zuordnen</h2>
+            <button class="icon-button" (click)="closeAccommodationModal()" aria-label="Dialog schließen"
+                title="Schließen" cdkFocusInitial><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
 
         <div class="modal-list">
             @for (acc of accommodations; track acc.id) {
             <div class="modal-item">
-                <input type="checkbox" [checked]="eventOccupancies[acc.id]"
+                <input type="checkbox" [attr.aria-label]="acc.name + ' zuordnen'" [checked]="eventOccupancies[acc.id]"
                     (change)="onAccommodationToggle(acc.id, $event)" />
                 <div class="accommodation-info">
                     <strong><i class="fa-solid fa-bed me-1"></i> {{ acc.name }}</strong>
@@ -199,13 +230,10 @@
             }
         </div>
 
-        <div class="modal-actions">
-            <button class="primary" (click)="saveAccommodationAssignments()">
-                <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
-            </button>
-            <button class="secondary" (click)="closeAccommodationModal()">
-                <i class="fa-solid fa-xmark me-2"></i> Abbrechen
-            </button>
+        <div class="form-actions">
+            <button (click)="closeAccommodationModal()">Abbrechen</button>
+            <button class="primary" (click)="saveAccommodationAssignments()"><i class="fa-solid fa-floppy-disk"
+                    aria-hidden="true"></i> Speichern</button>
         </div>
     </div>
     }
@@ -214,25 +242,25 @@
     <!-- Routeszuordnung Modal -->
     <!-- ===================================================== -->
     @if (showRouteModal) {
-    <div class="modal-backdrop" tabindex="0" (click)="closeRouteModal()" (keydown)="onModalBackdropKeydown($event, 'route')"></div>
+    <div class="modal-backdrop" aria-hidden="true" (click)="closeRouteModal()"></div>
 
-    <div class="modal">
-        <h2><i class="fa-solid fa-route me-2"></i> Strecken zuordnen</h2>
-
-        <p>
-            <i class="fa-solid fa-circle-info me-2"></i>
-            Hier kannst du pro Strecke das Datum und die offizielle Startzeit für die Zeiterfassung pflegen.
-        </p>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="route-dialog-title" cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true" (keydown.escape)="closeRouteModal()">
+        <div class="section-heading">
+            <h2 id="route-dialog-title">Strecken zuordnen</h2>
+            <button class="icon-button" (click)="closeRouteModal()" aria-label="Dialog schließen" title="Schließen"
+                cdkFocusInitial><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
 
         @if (routeModalError) {
-        <p class="error">{{ routeModalError }}</p>
+        <p class="notice error" role="alert">{{ routeModalError }}</p>
         }
 
         <div class="modal-list">
             @for (r of routes; track r.id) {
             <div class="modal-item">
-                <input type="checkbox" [checked]="getRouteAssignment(r.id).assigned"
-                    (change)="onRouteToggle(r.id, $event)" />
+                <input type="checkbox" [attr.aria-label]="r.name + ' zuordnen'"
+                    [checked]="getRouteAssignment(r.id).assigned" (change)="onRouteToggle(r.id, $event)" />
 
                 <div class="accommodation-info">
                     <strong>{{ r.name }}</strong>
@@ -244,20 +272,14 @@
                     <div class="route-meta-grid">
                         <label>
                             <span>Datum</span>
-                            <input
-                                type="date"
-                                [value]="getRouteAssignment(r.id).day_date"
-                                (input)="updateRouteAssignment(r.id, 'day_date', $any($event.target).value)"
-                            />
+                            <input type="date" [value]="getRouteAssignment(r.id).day_date"
+                                (input)="updateRouteAssignment(r.id, 'day_date', $any($event.target).value)" />
                         </label>
 
                         <label>
                             <span>Startzeit</span>
-                            <input
-                                type="time"
-                                [value]="getRouteAssignment(r.id).start_time"
-                                (input)="updateRouteAssignment(r.id, 'start_time', $any($event.target).value)"
-                            />
+                            <input type="time" [value]="getRouteAssignment(r.id).start_time"
+                                (input)="updateRouteAssignment(r.id, 'start_time', $any($event.target).value)" />
                         </label>
                     </div>
                     }
@@ -266,9 +288,10 @@
             }
         </div>
 
-        <div class="modal-actions">
-            <button class="primary" (click)="saveRouteAssignments()">Speichern</button>
-            <button class="secondary" (click)="closeRouteModal()">Abbrechen</button>
+        <div class="form-actions">
+            <button (click)="closeRouteModal()">Abbrechen</button>
+            <button class="primary" (click)="saveRouteAssignments()"><i class="fa-solid fa-floppy-disk"
+                    aria-hidden="true"></i> Speichern</button>
         </div>
     </div>
     }

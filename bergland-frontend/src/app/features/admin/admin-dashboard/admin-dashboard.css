@@ -1,32 +1,91 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
 .admin-dashboard {
-    padding: 2rem;
-    text-align: center;
-  }
-  
-  .cards {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 2rem;
-  }
-  
-  .admin-card {
-    display: block;
-    background: #f3f4f6;
-    border-radius: 1rem;
-    padding: 1.5rem 2rem;
-    min-width: 220px;
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #111827;
-    text-decoration: none;
-    transition: all 0.2s ease-in-out;
-  }
-  
-  .admin-card:hover {
-    background: #2563eb;
-    color: white;
-    transform: translateY(-3px);
-  }
-  
+  max-width: 1200px;
+  margin: 0 auto;
+  color: var(--text-color);
+  letter-spacing: 0;
+}
+
+h1 {
+  margin: 0 0 32px;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.admin-navigation {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+h2 {
+  margin: 0;
+  padding: 12px;
+  background: var(--secondary-color);
+  color: var(--primary-color);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid #dce3ea;
+}
+
+li { border-bottom: 1px solid #dce3ea; }
+
+.admin-link {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  margin: 0;
+  padding: 12px 8px;
+  border-radius: 0;
+  color: var(--text-color);
+  background: transparent;
+  font-size: .9375rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  transition: background-color .15s, color .15s;
+}
+
+.admin-link span { overflow-wrap: anywhere; }
+.destination-icon { color: var(--primary-color); text-align: center; }
+.link-arrow { color: #596b7c; font-size: .75rem; text-align: center; }
+
+.admin-link:hover {
+  color: var(--primary-color);
+  background: #edf3f8;
+}
+
+.admin-link:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  background: #edf3f8;
+}
+
+@media (max-width: 1100px) {
+  .admin-navigation { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 600px) {
+  h1 { font-size: 1.25rem; margin-bottom: 24px; }
+  .admin-navigation { gap: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-link { transition: none; }
+}

@@ -20,11 +20,12 @@ app-header { flex-shrink: 0; }
   background-color: var(--background-color);
   padding: 2rem;
   overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 /* 🧭 Fixierte Navbar (Desktop links) */
 app-navbar {
-  width: 200px;
+  width: 238px;
   flex-shrink: 0;
   box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
   position: sticky;

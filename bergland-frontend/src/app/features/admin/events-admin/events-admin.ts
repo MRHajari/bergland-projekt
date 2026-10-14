@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { A11yModule } from '@angular/cdk/a11y';
 import { Router, RouterModule } from '@angular/router';
 import { EventService } from '../../../core/services/event.service';
 import { EventRegistrationService } from '../../../core/services/event-registration.service';
@@ -21,9 +22,9 @@ interface RouteAssignmentForm {
 @Component({
   selector: 'app-events-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, A11yModule],
   templateUrl: './events-admin.html',
-  styleUrls: ['./events-admin.css']
+  styleUrls: ['../admin-shared.css', './events-admin.css']
 })
 export class EventsAdmin implements OnInit {
   private eventService = inject(EventService);
@@ -49,6 +50,7 @@ export class EventsAdmin implements OnInit {
   loading = false;
   errorMessage: string | null = null;
   searchTerm = '';
+  showCreateForm = false;
 
   editingEvent: any = null;
   newEvent = {
@@ -72,6 +74,7 @@ export class EventsAdmin implements OnInit {
   // =====================================================
   loadEvents(): void {
     this.loading = true;
+    this.errorMessage = null;
     this.eventService.getAll().subscribe({
       next: (data) => {
         this.events = (data || []).map((e: any) => ({
@@ -80,6 +83,7 @@ export class EventsAdmin implements OnInit {
           end_date: this.formatDate(e.end_date),
           registration_deadline: this.formatDate(e.registration_deadline)
         }));
+        this.page = Math.min(this.page, this.totalPages);
         this.loadCounts();
         this.loading = false;
       },
@@ -125,6 +129,7 @@ export class EventsAdmin implements OnInit {
       next: () => {
         alert(`✅ Event "${this.newEvent.name}" wurde hinzugefügt.`);
         this.newEvent = { name: '', description: '', start_date: '', end_date: '', registration_deadline: '' };
+        this.showCreateForm = false;
         this.loadEvents();
       },
       error: (err) => {
@@ -445,7 +450,7 @@ getRouteAssignment(routeId: string): RouteAssignmentForm {
   }
 
   get totalPages() {
-    return Math.ceil(this.filteredEvents.length / this.pageSize);
+    return Math.max(1, Math.ceil(this.filteredEvents.length / this.pageSize));
   }
 
 

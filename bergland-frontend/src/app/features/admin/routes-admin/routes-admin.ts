@@ -12,12 +12,13 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './routes-admin.html',
-  styleUrls: ['./routes-admin.css']
+  styleUrls: ['../admin-shared.css']
 })
 export class RoutesAdmin implements OnInit {
 
   routes: Route[] = [];
   editingRoute: Route | null = null;
+  showCreateForm = false;
 
   newRoute: Partial<Route> = {
     name: '',
@@ -50,10 +51,12 @@ selectedRouteEventId: string | null = null;
 
   loadRoutes(): void {
     this.loading = true;
+    this.errorMessage = null;
     this.routeService.getAll().subscribe({
       next: data => {
         console.log('Strecken geladen:', data);
         this.routes = data;
+        this.page = Math.min(this.page, this.totalPages);
         this.loading = false;
       },
       error: () => {
@@ -72,6 +75,7 @@ selectedRouteEventId: string | null = null;
     this.routeService.create(this.newRoute as Route).subscribe({
       next: () => {
         this.resetForm();
+        this.showCreateForm = false;
         this.loadRoutes();
       },
       error: () => alert('Fehler beim Erstellen')
@@ -128,7 +132,7 @@ selectedRouteEventId: string | null = null;
   }
 
   get totalPages() {
-    return Math.ceil(this.filteredRoutes.length / this.pageSize);
+    return Math.max(1, Math.ceil(this.filteredRoutes.length / this.pageSize));
   }
   
 

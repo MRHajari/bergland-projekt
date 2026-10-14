@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './accommodations-admin.html',
-  styleUrls: ['./accommodations-admin.css'],
+  styleUrls: ['../admin-shared.css'],
 })
 export class AccommodationsAdmin implements OnInit {
 
@@ -27,6 +27,9 @@ export class AccommodationsAdmin implements OnInit {
   pageSize = 10;
   currentYear = new Date().getFullYear();
   searchTerm = '';
+  showCreateForm = false;
+  bookingsLoading = false;
+  bookingError: string | null = null;
 
 
   constructor(
@@ -81,9 +84,11 @@ export class AccommodationsAdmin implements OnInit {
 
   loadAccommodations(): void {
     this.loading = true;
+    this.errorMessage = null;
     this.accommodationService.getAll().subscribe({
       next: (data) => {
         this.accommodations = data || [];
+        this.page = Math.min(this.page, this.totalPages);
         this.loading = false;
       },
       error: () => {
@@ -109,6 +114,7 @@ export class AccommodationsAdmin implements OnInit {
       next: () => {
         alert(`✅ Unterkunft "${this.newAccommodation.name}" hinzugefügt.`);
         this.resetNewAccommodation();
+        this.showCreateForm = false;
         this.loadAccommodations();
       },
       error: () => alert('❌ Fehler beim Erstellen.'),
@@ -199,10 +205,17 @@ export class AccommodationsAdmin implements OnInit {
   }
 
   loadAllBookings(): void {
+    this.bookingsLoading = true;
+    this.bookingError = null;
     this.bookingService.getAll().subscribe({
       next: (data) => {
         this.allBookings = data || [];
         this.groupBookingsByAccommodation();
+        this.bookingsLoading = false;
+      },
+      error: () => {
+        this.bookingError = 'Buchungen konnten nicht geladen werden.';
+        this.bookingsLoading = false;
       },
     });
   }
@@ -223,7 +236,11 @@ export class AccommodationsAdmin implements OnInit {
 
   get pagedAccommodations(): AccommodationInterface[] {
     const start = (this.page - 1) * this.pageSize;
-    return this.accommodations.slice(start, start + this.pageSize);
+    return this.filteredAccommodations.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredAccommodations.length / this.pageSize));
   }
 
   // ✅ Gefilterte Unterkünfte (AOT-sicher)

@@ -1,13 +1,22 @@
 <div class="admin-dashboard">
-    <h1><i class="fa-solid fa-gauge-high me-2"></i> Administration</h1>
-    <p><i class="fa-solid fa-gear me-2"></i> Wähle einen Bereich zur Verwaltung:</p>
+    <h1>Administration</h1>
 
-    <div class="cards">
-        @for (section of sections; track section.title) {
-        <a [routerLink]="section.route" class="admin-card">
-            <i [ngClass]="section.icon + ' me-2'"></i>
-            {{ section.title }}
-        </a>
+    <nav class="admin-navigation" aria-label="Verwaltungsbereiche">
+        @for (group of groups; track group.id) {
+        <section class="navigation-group" [attr.aria-labelledby]="'admin-' + group.id">
+            <h2 [id]="'admin-' + group.id">{{ group.title }}</h2>
+            <ul>
+                @for (link of group.links; track link.route) {
+                <li>
+                    <a [routerLink]="link.route" class="admin-link">
+                        <i [ngClass]="link.icon" class="destination-icon" aria-hidden="true"></i>
+                        <span>{{ link.title }}</span>
+                        <i class="fa-solid fa-chevron-right link-arrow" aria-hidden="true"></i>
+                    </a>
+                </li>
+                }
+            </ul>
+        </section>
         }
-    </div>
+    </nav>
 </div>
