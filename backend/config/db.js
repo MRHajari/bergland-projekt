@@ -9,7 +9,7 @@ let sequelize;
 
 if (isSqlite) {
     const storageRel = process.env.DB_STORAGE || "./db/database.sqlite";
-    const storage = path.isAbsolute(storageRel)
+    const storage = storageRel === ":memory:" || path.isAbsolute(storageRel)
         ? storageRel
         : path.resolve(__dirname, "..", storageRel);
 

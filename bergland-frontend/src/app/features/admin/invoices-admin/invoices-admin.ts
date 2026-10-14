@@ -86,7 +86,17 @@ export class InvoicesAdmin implements OnInit {
   }
 
   printInvoice(invoice: Invoice) {
-    window.open(`/api/invoices/${invoice.id_rechnung}/pdf`, '_blank');
+    this.http.get(`/api/invoices/${invoice.id_rechnung}/pdf`, { responseType: 'blob' }).subscribe({
+      next: (pdf) => {
+        const url = URL.createObjectURL(pdf);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${invoice.rechnungs_nr}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.errorMessage.set('Rechnung konnte nicht heruntergeladen werden.'),
+    });
   }
 
   async switchTab(tab: 'offen' | 'bezahlt') {

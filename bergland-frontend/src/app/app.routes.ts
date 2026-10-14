@@ -59,7 +59,7 @@ export const routes: Routes = [
     children: [
       // 👤 Benutzerbereich
       { path: 'events', component: Events },
-      { path: 'event-registration/:id', component: EventRegistration },
+      { path: 'event-registration/:id', component: EventRegistration, canActivate: [authGuard] },
       { path: 'products-order', component: ProductsOrder },
       { path: 'booking-accommodation', component: BookingAccommodation, canActivate: [authGuard] },
       { path: 'profile', component: Profile, canActivate: [authGuard] },
@@ -70,7 +70,7 @@ export const routes: Routes = [
       // 🏨 Unterkünfte (Benutzer)
       { path: 'accommodations/:id', component: AccommodationDetail, canActivate: [authGuard] },
 
-      { path: 'my-bookings', component: MyBookings },
+      { path: 'my-bookings', component: MyBookings, canActivate: [authGuard] },
 
       // 💳 Meine Bestellungen (neu!)
       { path: 'my-orders', component: MyOrders, canActivate: [authGuard] },

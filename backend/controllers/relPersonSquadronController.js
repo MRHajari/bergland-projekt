@@ -20,8 +20,8 @@ exports.getAllRelations = async (req, res, next) => {
     try {
         const relations = await RelPersonSquadron.findAll({
             include: [
-                { model: Person, attributes: ["id", "first_name", "last_name", "email"] },
-                { model: Squadron, attributes: ["id", "name"] },
+                { model: Person, as: "person", attributes: ["id", "first_name", "last_name", "email"] },
+                { model: Squadron, as: "squadron", attributes: ["id", "name"] },
             ],
             order: [["createdAt", "DESC"]],
         });
@@ -38,7 +38,7 @@ exports.getPersonsBySquadron = async (req, res, next) => {
         const { squadronId } = req.params;
         const relations = await RelPersonSquadron.findAll({
             where: { squadron_id: squadronId },
-            include: [{ model: Person, attributes: ["id", "first_name", "last_name", "email"] }],
+            include: [{ model: Person, as: "person", attributes: ["id", "first_name", "last_name", "email"] }],
         });
         res.json(relations);
     } catch (err) {
@@ -53,7 +53,7 @@ exports.getSquadronsByPerson = async (req, res, next) => {
         const { personId } = req.params;
         const relations = await RelPersonSquadron.findAll({
             where: { person_id: personId },
-            include: [{ model: Squadron, attributes: ["id", "name", "start_number"] }],
+            include: [{ model: Squadron, as: "squadron", attributes: ["id", "name", "start_number"] }],
         });
         res.json(relations);
     } catch (err) {
@@ -68,6 +68,10 @@ exports.removeRelation = async (req, res, next) => {
         const { id } = req.params;
         const relation = await RelPersonSquadron.findByPk(id);
         if (!relation) return res.status(404).json({ error: "Relation not found" });
+        const person = await Person.findByPk(relation.person_id);
+        if (req.user.role !== "admin" && person?.owner_id !== req.user.id) {
+            return res.status(403).json({ message: "Keine Berechtigung." });
+        }
 
         await relation.destroy();
         res.json({ message: "Relation deleted successfully" });

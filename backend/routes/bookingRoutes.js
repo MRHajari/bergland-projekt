@@ -3,11 +3,12 @@ const express = require("express");
 const router = express.Router();
 const { authenticateToken } = require("../middlewares/authMiddleware");
 const bookingController = require("../controllers/bookingController");
+const { requireBookingAccess, requireRegistrationAccess } = require("../middlewares/ownershipMiddleware");
 
 // ============================================================
 // ➕ Neue Buchung erstellen
 // ============================================================
-router.post("/", authenticateToken, bookingController.createBooking);
+router.post("/", authenticateToken, requireRegistrationAccess((req) => req.body?.event_registration_id), bookingController.createBooking);
 
 // ============================================================
 // 📋 Alle Buchungen (Admin / Debug)
@@ -32,6 +33,7 @@ router.get(
 router.get(
     "/by-registration/:registrationId",
     authenticateToken,
+    requireRegistrationAccess((req) => req.params.registrationId),
     bookingController.getByEventRegistration
 );
 
@@ -42,22 +44,23 @@ router.get(
 router.get(
     "/by-registration/:registrationId/all",
     authenticateToken, // ✅ korrigiert!
+    requireRegistrationAccess((req) => req.params.registrationId),
     bookingController.getAllByRegistration
 );
 
 // ============================================================
 // 🔍 Einzelne Buchung per ID
 // ============================================================
-router.get("/:id", authenticateToken, bookingController.getBookingById);
+router.get("/:id", authenticateToken, requireBookingAccess((req) => req.params.id), bookingController.getBookingById);
 
 // ============================================================
 // ✏️ Buchung aktualisieren
 // ============================================================
-router.put("/:id", authenticateToken, bookingController.updateBooking);
+router.put("/:id", authenticateToken, requireBookingAccess((req) => req.params.id), bookingController.updateBooking);
 
 // ============================================================
 // ❌ Buchung löschen
 // ============================================================
-router.delete("/:id", authenticateToken, bookingController.deleteBooking);
+router.delete("/:id", authenticateToken, requireBookingAccess((req) => req.params.id), bookingController.deleteBooking);
 
 module.exports = router;

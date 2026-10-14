@@ -29,9 +29,10 @@ exports.getAllSquadrons = async (req, res, next) => {
     try {
         const squadrons = await Squadron.findAll({
             include: [
-                { model: Event, as: "event", attributes: ["id", "name", "date"] },
+                { model: Event, as: "event", attributes: ["id", "name", "start_date", "end_date"] },
                 {
                     model: Person,
+                    as: "persons",
                     attributes: ["id", "first_name", "last_name", "email"],
                     through: { attributes: ["note"] }, // aus rel_person_squadron
                 },
@@ -87,6 +88,7 @@ exports.getSquadronById = async (req, res, next) => {
                 { model: EventRegistration, as: "eventRegistrations" },
                 {
                     model: Person,
+                    as: "persons",
                     attributes: ["id", "first_name", "last_name", "email"],
                     through: { attributes: ["note"] },
                 },

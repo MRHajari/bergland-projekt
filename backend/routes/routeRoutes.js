@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { authenticateToken } = require("../middlewares/authMiddleware");
+const { authenticateToken, requireRole } = require("../middlewares/authMiddleware");
 const routeController = require("../controllers/routeController");
 
 // ==============================
@@ -17,12 +17,12 @@ router.get("/event/:eventId", authenticateToken, routeController.getRoutesByEven
 router.get("/:id", authenticateToken, routeController.getRouteById);
 
 // Neue Strecke
-router.post("/", authenticateToken, routeController.createRoute);
+router.post("/", authenticateToken, requireRole("admin"), routeController.createRoute);
 
 // Update
-router.put("/:id", authenticateToken, routeController.updateRoute);
+router.put("/:id", authenticateToken, requireRole("admin"), routeController.updateRoute);
 
 // Löschen
-router.delete("/:id", authenticateToken, routeController.deleteRoute);
+router.delete("/:id", authenticateToken, requireRole("admin"), routeController.deleteRoute);
 
 module.exports = router;

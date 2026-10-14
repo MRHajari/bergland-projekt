@@ -1,13 +1,13 @@
 // backend/routes/accommodationRoutes.js
 const express = require("express");
 const router = express.Router();
-const { authenticateToken } = require("../middlewares/authMiddleware");
+const { authenticateToken, requireRole } = require("../middlewares/authMiddleware");
 const accommodationController = require("../controllers/accommodationController");
 
 // ======================================================
 // ➕ Unterkunft erstellen (Admin)
 // ======================================================
-router.post("/", accommodationController.createAccommodation);
+router.post("/", authenticateToken, requireRole("admin"), accommodationController.createAccommodation);
 
 // ======================================================
 // 📋 Alle Unterkünfte abrufen
@@ -31,11 +31,11 @@ router.get("/:id", accommodationController.getAccommodationById);
 // ======================================================
 // ✏️ Unterkunft aktualisieren
 // ======================================================
-router.put("/:id", accommodationController.updateAccommodation);
+router.put("/:id", authenticateToken, requireRole("admin"), accommodationController.updateAccommodation);
 
 // ======================================================
 // ❌ Unterkunft löschen
 // ======================================================
-router.delete("/:id", accommodationController.deleteAccommodation);
+router.delete("/:id", authenticateToken, requireRole("admin"), accommodationController.deleteAccommodation);
 
 module.exports = router;

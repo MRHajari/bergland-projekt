@@ -11,7 +11,7 @@ const { User } = require("../models");
 // 📋 Alle Personen abrufen (eigene + optional Filter)
 exports.getAll = async (req, res) => {
     try {
-        const ownerId = req.query.owner_id || req.user?.id;
+        const ownerId = req.user.role === "admin" ? req.query.owner_id : req.user.id;
         console.log("📥 Lade Personen für owner_id:", ownerId);
 
         const whereClause = ownerId ? { owner_id: ownerId } : undefined;
@@ -30,6 +30,8 @@ exports.getPersonById = async (req, res) => {
         const person = await Person.findByPk(req.params.id);
         if (!person)
             return res.status(404).json({ message: "Person nicht gefunden" });
+        if (req.user.role !== "admin" && person.owner_id !== req.user.id)
+            return res.status(403).json({ message: "Keine Berechtigung." });
         res.json(person);
     } catch (error) {
         console.error("❌ Fehler beim Abrufen der Person:", error);
@@ -82,7 +84,6 @@ exports.create = async (req, res) => {
             if (existingEmail) {
                 return res.status(409).json({
                     message: `Die E-Mail "${email}" wird bereits verwendet.`,
-                    person: existingEmail,
                 });
             }
         }
@@ -106,6 +107,8 @@ exports.updatePerson = async (req, res) => {
         const person = await Person.findByPk(req.params.id);
         if (!person)
             return res.status(404).json({ message: "Person nicht gefunden" });
+        if (req.user.role !== "admin" && person.owner_id !== req.user.id)
+            return res.status(403).json({ message: "Keine Berechtigung." });
 
         const { error, value } = personSchema.validate(req.body);
         if (error)
@@ -113,6 +116,7 @@ exports.updatePerson = async (req, res) => {
                 .status(400)
                 .json({ message: error.details[0].message });
 
+        delete value.owner_id;
         await person.update(value);
         res.json(person);
     } catch (err) {
@@ -127,6 +131,10 @@ exports.deletePerson = async (req, res) => {
         const person = await Person.findByPk(req.params.id);
         if (!person)
             return res.status(404).json({ message: "Person nicht gefunden" });
+        if (req.user.role !== "admin" && person.owner_id !== req.user.id)
+            return res.status(403).json({ message: "Keine Berechtigung." });
+        if (await User.findOne({ where: { person_id: person.id } }))
+            return res.status(409).json({ message: "Diese Person ist mit einem Benutzerkonto verknuepft." });
 
         await person.destroy();
         res.json({ message: "Person erfolgreich gelöscht" });

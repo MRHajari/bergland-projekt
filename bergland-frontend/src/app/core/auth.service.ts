@@ -3,8 +3,9 @@
 // ============================================================
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, throwError } from 'rxjs';
+import { Observable, tap, catchError, throwError, finalize, shareReplay } from 'rxjs';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 export interface AuthUser {
   id: string;
@@ -19,8 +20,9 @@ export interface AuthUser {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:3000/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
   private sessionExpiryRedirectInProgress = false;
+  private refreshInFlight?: Observable<any>;
 
   constructor(
     private http: HttpClient,
@@ -66,6 +68,20 @@ export class AuthService {
   refreshToken(): Observable<any> {
     const token = localStorage.getItem('refreshToken');
     return this.http.post(`${this.apiUrl}/refresh-token`, { token });
+  }
+
+  refreshSession(): Observable<any> {
+    if (!this.refreshInFlight) {
+      this.refreshInFlight = this.refreshToken().pipe(
+        tap((session) => {
+          if (!session?.accessToken) throw new Error('Access token missing from refresh response');
+          this.storeSession(session);
+        }),
+        finalize(() => { this.refreshInFlight = undefined; }),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+    return this.refreshInFlight;
   }
 
 
@@ -119,7 +135,12 @@ export class AuthService {
 
   getCurrentUser(): AuthUser | null {
     const stored = localStorage.getItem('currentUser');
-    return stored ? JSON.parse(stored) : null;
+    try {
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      this.clearSessionLocal();
+      return null;
+    }
   }
 
   getUserId(): string | null {

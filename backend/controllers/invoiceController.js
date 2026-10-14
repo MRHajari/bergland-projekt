@@ -5,7 +5,16 @@ const Product = require("../models/product");
 const RelInvoiceProduct = require("../models/rel_invoice_product");
 const invoiceSchema = require("../validators/invoiceValidator");
 const Person = require("../models/person");
-const { producerAccessed } = require("@angular/core/primitives/signals");
+const { randomUUID } = require("node:crypto");
+const Joi = require("joi");
+
+const orderSchema = Joi.object({
+    id_person: Joi.string().uuid().required(),
+    items: Joi.array().items(Joi.object({
+        id_produkt: Joi.string().uuid().required(),
+        menge: Joi.number().integer().min(1).max(10000).default(1),
+    })).min(1).max(100).unique("id_produkt").required(),
+});
 
 // =========================================================
 // 🧾 RECHNUNGEN (INVOICES) CONTROLLER
@@ -100,9 +109,8 @@ exports.listInvoices = async (req, res) => {
 
         // Optional: Filter nach Monat / Jahr
         if (month && year) {
-            const startDate = new Date(year, month - 1, 1);
-            const endDate = new Date(year, month, 0);
-            whereClause.datum = { [Op.between]: [startDate, endDate] };
+            const { start, end } = monthRange(year, month);
+            whereClause.datum = { [Op.gte]: start, [Op.lt]: end };
         }
 
         const invoices = await Invoice.findAll({
@@ -181,45 +189,39 @@ exports.markAsPaid = async (req, res) => {
 // =========================================================
 exports.createInvoiceFromProducts = async (req, res) => {
     try {
-        const { id_person, items } = req.body; // items = [{ id_produkt, menge }]
-        if (!id_person || !Array.isArray(items) || items.length === 0) {
-            return res
-                .status(400)
-                .json({ message: "id_person und items[] sind erforderlich." });
-        }
+        const { error, value } = orderSchema.validate(req.body);
+        if (error) return res.status(400).json({ message: error.details[0].message });
+        const { id_person, items } = value;
 
         const productIds = items.map((i) => i.id_produkt);
         const products = await Product.findAll({
             where: { id_produkt: { [Op.in]: productIds } },
         });
 
-        if (products.length === 0) {
+        if (products.length !== productIds.length) {
             return res.status(400).json({ message: "Keine gültigen Produkte gefunden." });
         }
 
-        const total = items.reduce((sum, i) => {
-            const p = products.find((prod) => prod.id_produkt === i.id_produkt);
-            return p ? sum + Number(p.preis) * (i.menge || 1) : sum;
-        }, 0);
+        const total = items.reduce((sum, item) => {
+            const product = products.find((candidate) => candidate.id_produkt === item.id_produkt);
+            return sum + Math.round(Number(product.preis) * 100) * item.menge;
+        }, 0) / 100;
+        const rechnungsNummer = `R-${new Date().getFullYear()}-${randomUUID()}`;
 
-        const rechnungsNummer = `R-${new Date().getFullYear()}-${Math.floor(
-            Math.random() * 10000
-        )
-            .toString()
-            .padStart(4, "0")}`;
-
-        const invoice = await Invoice.create({
-            rechnungs_nr: rechnungsNummer,
-            id_person,
-            betrag_gesamt: total,
+        const invoice = await Invoice.sequelize.transaction(async (transaction) => {
+            const created = await Invoice.create({
+                rechnungs_nr: rechnungsNummer,
+                id_person,
+                betrag_gesamt: total,
+            }, { transaction });
+            const rels = items.map((item) => ({
+                id_rechnung: created.id_rechnung,
+                id_produkt: item.id_produkt,
+                menge: item.menge,
+            }));
+            await RelInvoiceProduct.bulkCreate(rels, { transaction, validate: true });
+            return created;
         });
-
-        const rels = items.map((i) => ({
-            id_rechnung: invoice.id_rechnung,
-            id_produkt: i.id_produkt,
-            menge: i.menge || 1,
-        }));
-        await RelInvoiceProduct.bulkCreate(rels);
 
         res.status(201).json({
             message: "🧾 Rechnung erfolgreich erstellt.",
@@ -287,6 +289,9 @@ exports.deleteInvoice = async (req, res) => {
         const { id } = req.params;
         const invoice = await Invoice.findByPk(id);
         if (!invoice) return res.status(404).json({ message: "Rechnung nicht gefunden." });
+        if (req.user.role !== "admin" && invoice.ist_bezahlt) {
+            return res.status(409).json({ message: "Bezahlte Rechnungen koennen nicht storniert werden." });
+        }
 
         await invoice.destroy();
         res.json({ message: "🗑️ Rechnung wurde erfolgreich gelöscht." });

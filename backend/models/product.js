@@ -1,5 +1,4 @@
 const { DataTypes } = require("sequelize");
-const { v4: uuidv4 } = require("uuid");
 const sequelize = require("../config/db");
 
 const Product = sequelize.define(
@@ -7,7 +6,7 @@ const Product = sequelize.define(
     {
         id_produkt: {
             type: DataTypes.UUID,
-            defaultValue: uuidv4,
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
 

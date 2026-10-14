@@ -20,42 +20,11 @@ const occupancySchema = Joi.object({
         }),
 
     // 🛏️ Gesamtkapazitäten
-    single_beds_total: Joi.number()
-        .integer()
-        .min(0)
-        .default(0)
-        .messages({ "number.base": "single_beds_total muss eine Zahl sein." }),
-
-    double_beds_total: Joi.number()
-        .integer()
-        .min(0)
-        .default(0)
-        .messages({ "number.base": "double_beds_total muss eine Zahl sein." }),
-
-    multi_beds_total: Joi.number()
-        .integer()
-        .min(0)
-        .default(0)
-        .messages({ "number.base": "multi_beds_total muss eine Zahl sein." }),
-
-    // 📦 aktuelle Belegung
-    single_beds_booked: Joi.number()
-        .integer()
-        .min(0)
-        .default(0)
-        .messages({ "number.base": "single_beds_booked muss eine Zahl sein." }),
-
-    double_beds_booked: Joi.number()
-        .integer()
-        .min(0)
-        .default(0)
-        .messages({ "number.base": "double_beds_booked muss eine Zahl sein." }),
-
-    multi_beds_booked: Joi.number()
-        .integer()
-        .min(0)
-        .default(0)
-        .messages({ "number.base": "multi_beds_booked muss eine Zahl sein." }),
+    single_rooms_total: Joi.number().integer().min(0),
+    double_rooms_total: Joi.number().integer().min(0),
+    quad_rooms_total: Joi.number().integer().min(0),
+    quint_rooms_total: Joi.number().integer().min(0),
+    sext_rooms_total: Joi.number().integer().min(0),
 });
 
 module.exports = occupancySchema;

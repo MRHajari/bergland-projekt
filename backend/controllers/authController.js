@@ -8,6 +8,7 @@ const nodemailer = require("nodemailer");
 const { User, Person, Token, sequelize } = require("../models");
 const { registerSchema, loginSchema } = require("../validators/authValidator");
 const dotenv = require("dotenv");
+const { randomUUID } = require("node:crypto");
 
 dotenv.config();
 
@@ -37,21 +38,8 @@ const transporter = nodemailer.createTransport({
         pass: process.env.MAIL_PASS,
     },
     secure: false, // bei Port 587 -> false
-    tls: {
-        rejectUnauthorized: false, // optional für lokale Tests
-    },
 });
 
-
-// ✅ Verbindung testen
-(async () => {
-    try {
-        await transporter.verify();
-        console.log("✅ Mailtrap SMTP verbunden!");
-    } catch (err) {
-        console.error("❌ Mailtrap Verbindung fehlgeschlagen:", err.message);
-    }
-})();
 
 // ============================================================
 // 🔹 Token-Generatoren
@@ -60,9 +48,10 @@ function generateAccessToken(payload) {
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
-async function generateRefreshToken(payload) {
+async function generateRefreshToken(payload, transaction) {
     const token = jwt.sign(payload, JWT_REFRESH_SECRET, {
         expiresIn: JWT_REFRESH_EXPIRES_IN,
+        jwtid: randomUUID(),
     });
 
     const decoded = jwt.decode(token);
@@ -72,7 +61,7 @@ async function generateRefreshToken(payload) {
         user_id: payload.user.id,
         token,
         expires_at: expiresAt,
-    });
+    }, { transaction });
 
     return token;
 }
@@ -300,6 +289,9 @@ exports.refreshToken = async (req, res) => {
         // ✅ echten User aus DB holen
         const dbUser = await User.findByPk(user.id, { include: [{ model: Person, as: "person" }] });
         if (!dbUser) return res.status(404).json({ error: "Benutzer nicht gefunden." });
+        if (!dbUser.is_verified || storedToken.user_id !== dbUser.id) {
+            return res.status(403).json({ error: "Benutzer nicht verifiziert." });
+        }
 
         // 🧩 Falls person_id im DB-Eintrag fehlt → nachziehen
         if (!dbUser.person_id) {
@@ -330,10 +322,13 @@ exports.refreshToken = async (req, res) => {
         };
 
         const newAccessToken = generateAccessToken(newPayload);
-        const newRefreshToken = await generateRefreshToken(newPayload);
-
-        storedToken.revoked = true;
-        await storedToken.save();
+        const newRefreshToken = await sequelize.transaction(async (transaction) => {
+            const [updated] = await Token.update({ revoked: true }, {
+                where: { id: storedToken.id, revoked: false }, transaction,
+            });
+            if (updated !== 1) throw new Error("Refresh-Token bereits verwendet.");
+            return generateRefreshToken(newPayload, transaction);
+        });
 
         res.json({
             accessToken: newAccessToken,

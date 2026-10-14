@@ -10,7 +10,7 @@ const { bookingSchema, bookingUpdateSchema } = require("../validators/bookingVal
 exports.createBooking = async (req, res, next) => {
     const t = await Booking.sequelize.transaction();
     try {
-        const { error } = bookingSchema.validate(req.body);
+        const { error, value } = bookingSchema.validate(req.body);
         if (error) {
             return res.status(400).json({ error: error.details[0].message });
         }
@@ -23,7 +23,7 @@ exports.createBooking = async (req, res, next) => {
             quad_beds = 0,
             quint_beds = 0,
             sext_beds = 0,
-        } = req.body;
+        } = value;
 
         const userId = req.user?.id;
         if (!userId) return res.status(401).json({ error: "Nicht autorisiert." });
@@ -83,8 +83,10 @@ exports.createBooking = async (req, res, next) => {
         await t.commit();
         res.status(201).json(booking);
     } catch (err) {
-        await t.rollback();
+        if (!t.finished) await t.rollback();
         next(err);
+    } finally {
+        if (!t.finished) await t.rollback();
     }
 };
 
@@ -97,6 +99,7 @@ exports.getAllBookings = async (req, res, next) => {
         const { Event, User, Person } = require("../models");
 
         const bookings = await Booking.findAll({
+            where: req.user.role === "admin" ? {} : { user_id: req.user.id },
             include: [
                 // 🔗 Verknüpfung zur Registrierung + Event
                 {
@@ -183,7 +186,7 @@ exports.getBookingById = async (req, res, next) => {
 exports.updateBooking = async (req, res, next) => {
     const t = await Booking.sequelize.transaction();
     try {
-        const { error } = bookingUpdateSchema.validate(req.body);
+        const { error, value } = bookingUpdateSchema.validate(req.body);
         if (error) return res.status(400).json({ error: error.details[0].message });
 
         const booking = await Booking.findByPk(req.params.id, { transaction: t });
@@ -198,11 +201,11 @@ exports.updateBooking = async (req, res, next) => {
         if (!occupancy) return res.status(404).json({ error: "Occupancy nicht gefunden." });
 
         const diff = {
-            single: (req.body.single_beds ?? booking.single_beds) - booking.single_beds,
-            double: (req.body.double_beds ?? booking.double_beds) - booking.double_beds,
-            quad: (req.body.quad_beds ?? booking.quad_beds) - booking.quad_beds,
-            quint: (req.body.quint_beds ?? booking.quint_beds) - booking.quint_beds,
-            sext: (req.body.sext_beds ?? booking.sext_beds) - booking.sext_beds,
+            single: (value.single_beds ?? booking.single_beds) - booking.single_beds,
+            double: (value.double_beds ?? booking.double_beds) - booking.double_beds,
+            quad: (value.quad_beds ?? booking.quad_beds) - booking.quad_beds,
+            quint: (value.quint_beds ?? booking.quint_beds) - booking.quint_beds,
+            sext: (value.sext_beds ?? booking.sext_beds) - booking.sext_beds,
         };
 
         if (
@@ -215,7 +218,7 @@ exports.updateBooking = async (req, res, next) => {
             return res.status(400).json({ error: "Nicht genügend freie Zimmer verfügbar." });
         }
 
-        await booking.update(req.body, { transaction: t });
+        await booking.update(value, { transaction: t });
 
         await occupancy.update(
             {
@@ -231,8 +234,10 @@ exports.updateBooking = async (req, res, next) => {
         await t.commit();
         res.json(booking);
     } catch (err) {
-        await t.rollback();
+        if (!t.finished) await t.rollback();
         next(err);
+    } finally {
+        if (!t.finished) await t.rollback();
     }
 };
 
@@ -270,8 +275,10 @@ exports.deleteBooking = async (req, res, next) => {
 
         res.json({ message: "Buchung gelöscht." });
     } catch (err) {
-        await t.rollback();
+        if (!t.finished) await t.rollback();
         next(err);
+    } finally {
+        if (!t.finished) await t.rollback();
     }
 };
 
@@ -348,6 +355,9 @@ exports.getAllByRegistration = async (req, res, next) => {
 exports.getBookingsByUser = async (req, res, next) => {
     try {
         const { userId } = req.params;
+        if (req.user.role !== "admin" && userId !== req.user.id) {
+            return res.status(403).json({ message: "Keine Berechtigung." });
+        }
         if (!userId) {
             return res.status(400).json({ error: "userId ist erforderlich." });
         }

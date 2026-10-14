@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface EventRoute {
   id: string;
@@ -16,7 +17,7 @@ export interface EventRoute {
 })
 export class EventRouteService {
 
-  private apiUrl = 'http://localhost:3000/api/event-routes';
+  private apiUrl = `${environment.apiUrl}/event-routes`;
 
   constructor(private http: HttpClient) {}
 

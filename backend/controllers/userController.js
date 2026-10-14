@@ -24,7 +24,7 @@ exports.getUserById = async (req, res) => {
 
 exports.createUser = async (req, res) => {
     try {
-        const { error, value } = userSchema.validate(req.body);
+        const { error, value } = userSchema.fork("password", (schema) => schema.required()).validate(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
         const { email, password, role, person_id } = value;
@@ -38,6 +38,7 @@ exports.createUser = async (req, res) => {
             password_hash: hash,
             role,
             person_id: person_id || null,
+            is_verified: true,
         });
 
         res.status(201).json(newUser);

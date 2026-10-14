@@ -1,5 +1,5 @@
 // backend/controllers/occupancyController.js
-const { Occupancy, Event, Accommodation } = require("../models");
+const { Occupancy, Event, Accommodation, Booking } = require("../models");
 const occupancySchema = require("../validators/occupancyValidator");
 
 // ============================================================
@@ -88,7 +88,18 @@ exports.update = async (req, res, next) => {
             return res.status(404).json({ error: "Belegung nicht gefunden." });
         }
 
-        await occupancy.update(req.body);
+        const { error, value } = occupancySchema.validate({
+            ...req.body,
+            event_id: occupancy.event_id,
+            accommodation_id: occupancy.accommodation_id,
+        });
+        if (error) return res.status(400).json({ error: error.details[0].message });
+        for (const type of ["single", "double", "quad", "quint", "sext"]) {
+            if ((value[`${type}_rooms_total`] ?? occupancy[`${type}_rooms_total`]) < occupancy[`${type}_rooms_booked`]) {
+                return res.status(409).json({ error: "Kapazitaet darf bestehende Buchungen nicht unterschreiten." });
+            }
+        }
+        await occupancy.update(value);
         res.json(occupancy);
     } catch (err) {
         next(err);
@@ -105,6 +116,9 @@ exports.delete = async (req, res, next) => {
             return res.status(404).json({ error: "Belegung nicht gefunden." });
         }
 
+        if (await Booking.count({ where: { event_id: occupancy.event_id, accommodation_id: occupancy.accommodation_id } })) {
+            return res.status(409).json({ error: "Fuer diese Unterkunft bestehen Buchungen." });
+        }
         await occupancy.destroy();
         res.json({ message: "Occupancy gelöscht." });
     } catch (err) {
@@ -119,42 +133,46 @@ exports.delete = async (req, res, next) => {
 exports.updateAssignments = async (req, res, next) => {
     try {
         const { event_id, assignments } = req.body;
-        if (!event_id) {
-            return res.status(400).json({ error: "event_id ist erforderlich." });
+        if (!event_id || !Array.isArray(assignments) || assignments.some((entry) => !entry?.accommodation_id)) {
+            return res.status(400).json({ error: "event_id und assignments[] sind erforderlich." });
         }
 
-        await Occupancy.destroy({ where: { event_id } });
-
-        const created = [];
-
-        if (Array.isArray(assignments)) {
-            for (const a of assignments) {
-                const accommodation = await Accommodation.findByPk(a.accommodation_id);
-                if (!accommodation) continue;
-
-                const occ = await Occupancy.create({
+        const selectedIds = [...new Set(assignments.map((entry) => entry.accommodation_id))];
+        const accommodations = await Accommodation.findAll({ where: { id: selectedIds } });
+        if (accommodations.length !== selectedIds.length) {
+            return res.status(400).json({ error: "Unbekannte Unterkunft." });
+        }
+        const created = await Occupancy.sequelize.transaction(async (transaction) => {
+            const existing = await Occupancy.findAll({ where: { event_id }, transaction });
+            for (const occupancy of existing) {
+                if (selectedIds.includes(occupancy.accommodation_id)) continue;
+                const bookings = await Booking.count({ where: { event_id, accommodation_id: occupancy.accommodation_id }, transaction });
+                if (bookings) throw Object.assign(new Error("Fuer diese Unterkunft bestehen Buchungen."), { status: 409 });
+                await occupancy.destroy({ transaction });
+            }
+            const result = [];
+            for (const accommodation of accommodations) {
+                const occupancy = existing.find((entry) => entry.accommodation_id === accommodation.id);
+                if (occupancy) {
+                    result.push(occupancy);
+                    continue;
+                }
+                result.push(await Occupancy.create({
                     event_id,
                     accommodation_id: accommodation.id,
-
                     single_rooms_total: accommodation.single_rooms,
                     double_rooms_total: accommodation.double_rooms,
                     quad_rooms_total: accommodation.quad_rooms,
                     quint_rooms_total: accommodation.quint_rooms,
                     sext_rooms_total: accommodation.sext_rooms,
-
-                    single_rooms_booked: 0,
-                    double_rooms_booked: 0,
-                    quad_rooms_booked: 0,
-                    quint_rooms_booked: 0,
-                    sext_rooms_booked: 0,
-                });
-
-                created.push(occ);
+                }, { transaction }));
             }
-        }
+            return result;
+        });
 
         res.json({ message: "Zuordnungen gespeichert.", created });
     } catch (err) {
+        if (err.status === 409) return res.status(409).json({ error: err.message });
         next(err);
     }
 };

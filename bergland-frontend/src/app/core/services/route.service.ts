@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Route {
   id: string;
@@ -17,7 +18,7 @@ export interface Route {
   providedIn: 'root',
 })
 export class RouteService {
-  private apiUrl = 'http://localhost:3000/api/routes';
+  private apiUrl = `${environment.apiUrl}/routes`;
 
   constructor(private http: HttpClient) {}
 

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Invoice {
   id_rechnung: string;
@@ -29,8 +30,7 @@ export interface Product {
 export class InvoiceService {
   private http = inject(HttpClient);
 
-  /** 🌍 Volle Backend-Basis-URL (kein Proxy nötig) */
-  private readonly baseUrl = 'http://localhost:3000/api/invoices';
+  private readonly baseUrl = `${environment.apiUrl}/invoices`;
 
   /** 🧾 Alle Rechnungen abrufen */
   getAll(): Observable<Invoice[]> {

@@ -57,49 +57,22 @@ app.use("/api/products", require("./routes/productRoutes"));
 // ✅ 4. Admin-Setup-Funktion (legt Default-Admin an)
 // ============================================================
 async function ensureAdminUser() {
-    try {
-        const adminEmail = "admin@test.com";
-        const adminPassword = "Admin123!";
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminEmail || !adminPassword) return;
+    if (await User.findOne({ where: { email: adminEmail } })) return;
+    if (adminPassword.length < 12) {
+        throw new Error("ADMIN_PASSWORD muss mindestens 12 Zeichen enthalten.");
+    }
 
-        const existingUser = await User.findOne({ where: { email: adminEmail } });
-        const hashedPassword = await bcrypt.hash(adminPassword, 10);
-
-        if (existingUser) {
-            await existingUser.update({
-                password_hash: hashedPassword,
-                role: "admin",
-                is_verified: true,
-            });
-
-            // 🔄 Sicherstellen, dass zugehörige Person existiert
-            let person = await Person.findOne({ where: { email: adminEmail } });
-            if (!person) {
-                person = await Person.create({
-                    first_name: "System",
-                    last_name: "Administrator",
-                    email: adminEmail,
-                    birth_date: "2000-01-01",
-                    owner_id: existingUser.id,
-                });
-            }
-
-            // 🔗 Beziehung wiederherstellen
-            if (!existingUser.person_id) {
-                await existingUser.update({ person_id: person.id });
-            }
-
-            console.log(`🔑 Admin ${adminEmail} aktualisiert und verknüpft.`);
-            return;
-        }
-
-        // 🆕 Wenn kein User existiert → komplett neu anlegen
-        const hashed = await bcrypt.hash(adminPassword, 10);
+    const hashed = await bcrypt.hash(adminPassword, 10);
+    await sequelize.transaction(async (transaction) => {
         const person = await Person.create({
             first_name: "System",
             last_name: "Administrator",
             email: adminEmail,
             birth_date: "2000-01-01",
-        });
+        }, { transaction });
 
         const user = await User.create({
             email: adminEmail,
@@ -107,16 +80,10 @@ async function ensureAdminUser() {
             role: "admin",
             is_verified: true,
             person_id: person.id,
-        });
+        }, { transaction });
 
-        await person.update({ owner_id: user.id });
-
-        console.log("✅ Default Admin erstellt:");
-        console.log(`   Email: ${adminEmail}`);
-        console.log(`   Password: ${adminPassword}`);
-    } catch (err) {
-        console.error("❌ Fehler beim Anlegen des Admins:", err);
-    }
+        await person.update({ owner_id: user.id }, { transaction });
+    });
 }
 
 // ============================================================
@@ -126,16 +93,7 @@ async function startServer() {
     try {
         console.log("🔄 Verbinde mit Datenbank...");
 
-        if (process.env.NODE_ENV === "development") {
-            console.log("⚠️ DEV-Modus: Tabellen werden neu erstellt...");
-            await sequelize.sync({ force: true });
-
-            console.log("🌱 Starte Seeding...");
-            const runSeed = require("./seed");
-            await runSeed();
-        } else {
-            await sequelize.sync();
-        }
+        await sequelize.sync();
 
         console.log("✅ Database connected.");
 
@@ -145,21 +103,37 @@ async function startServer() {
         console.log("✅ ensureAdminUser() beendet.");
 
         // 🚀 Server starten
-        app.listen(PORT, "0.0.0.0", () => {
+        return app.listen(PORT, "0.0.0.0", () => {
             console.log(`🚀 Server läuft auf http://localhost:${PORT}`);
         });
     } catch (err) {
         console.error("❌ Database connection failed:", err);
+        throw err;
     }
 }
 
-startServer();
+app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err);
+    const statusCode = err.status === 400 ? 400 : 500;
+    if (statusCode === 500) console.error(err);
+    res.status(statusCode).json({
+        message: statusCode === 400 ? "Ungueltige Anfrage." : "Interner Serverfehler.",
+    });
+});
 
 // ============================================================
 // ✅ 6. Token-Cleanup (1x täglich ablaufen lassen)
 // ============================================================
-setInterval(async () => {
-    await Token.destroy({
-        where: { expires_at: { [Op.lt]: new Date() } },
-    });
-}, 24 * 60 * 60 * 1000);
+if (require.main === module) {
+    startServer().then(() => {
+        setInterval(async () => {
+            try {
+                await Token.destroy({ where: { expires_at: { [Op.lt]: new Date() } } });
+            } catch (err) {
+                console.error("Token-Cleanup fehlgeschlagen:", err);
+            }
+        }, 24 * 60 * 60 * 1000).unref();
+    }).catch(() => { process.exitCode = 1; });
+}
+
+module.exports = { app, startServer, ensureAdminUser };

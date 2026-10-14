@@ -5,22 +5,23 @@ import {
 } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import {
-  BehaviorSubject,
   catchError,
-  filter,
   switchMap,
-  take,
   throwError,
 } from 'rxjs';
 import { Router } from '@angular/router';
-
-// ✅ Globaler Refresh-Lock (wichtig bei parallelen Requests)
-let isRefreshing = false;
-const refreshTokenSubject = new BehaviorSubject<string | null>(null);
+import { environment } from '../../environments/environment';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
+  const apiUrl = new URL(environment.apiUrl, location.origin);
+  const requestUrl = new URL(req.url, location.origin);
+  const apiPath = apiUrl.pathname.replace(/\/$/, '');
+  if (requestUrl.origin !== apiUrl.origin ||
+      (requestUrl.pathname !== apiPath && !requestUrl.pathname.startsWith(`${apiPath}/`))) {
+    return next(req);
+  }
 
   // ✅ Diese Requests NIE abfangen (sonst Endlosschleifen / doppelte Logins)
   const isAuthEndpoint =
@@ -53,47 +54,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      // ✅ Wenn gerade kein Refresh läuft -> starte genau EINEN
-      if (!isRefreshing) {
-        isRefreshing = true;
-        refreshTokenSubject.next(null);
-
-        return authService.refreshToken().pipe(
-          switchMap((res: any) => {
-            const newAccess = res?.accessToken;
-
-            // Wenn Backend keinen Token liefert -> raus
-            if (!newAccess) {
-              isRefreshing = false;
-              hardLogout(authService, router);
-              return throwError(() => error);
-            }
-
-            // ✅ Token speichern + wartende Requests freigeben
-            authService.storeSession(res);
-
-            isRefreshing = false;
-            refreshTokenSubject.next(newAccess);
-
-            // ✅ originalen Request wiederholen
-            return next(
-              req.clone({ setHeaders: { Authorization: `Bearer ${newAccess}` } })
-            );
-          }),
-          catchError((refreshErr) => {
-            isRefreshing = false;
-            hardLogout(authService, router);
-            return throwError(() => refreshErr);
-          })
-        );
-      }
-
-      // ✅ Wenn bereits Refresh läuft -> warte bis neuer Token da ist
-      return refreshTokenSubject.pipe(
-        filter((t) => t != null),
-        take(1),
-        switchMap((t) =>
-          next(req.clone({ setHeaders: { Authorization: `Bearer ${t!}` } }))
+      return authService.refreshSession().pipe(
+        catchError((refreshError) => {
+          hardLogout(authService, router);
+          return throwError(() => refreshError);
+        }),
+        switchMap((session) =>
+          next(req.clone({ setHeaders: { Authorization: `Bearer ${session.accessToken}` } }))
         )
       );
     })

@@ -125,19 +125,19 @@ backend/
 ├── server.js                               # 🚀 Express App – lädt Config, Routes & DB
 └── README.md                               # 📘 Projektdokumentation
 
-# Dependencies installieren
+## Dependencies installieren
 
 npm install
 
-# Entwicklung (mit automatischem Seeding)
+## Entwicklung (ohne automatisches Loeschen oder Seeding)
 
 NODE_ENV=development node server.js
 
-# Produktion
+## Produktion
 
 NODE_ENV=production node server.js
 
-#### Development starten
+## Development starten
 
 npm run dev
 
@@ -150,21 +150,24 @@ git clone <repo-url>
 cd backend
 
 
-##### seed
-db/database.sqlite
-rm db/database.sqlite
-node seed.js
+```
 
+### Tests und sicherer Start
 
-# Abhängigkeiten installieren
-npm install
+```bash
+npm test
+npm start
+```
 
-# Dev-Server starten
-ng serve --open
+Tests verwenden SQLite im Arbeitsspeicher und veraendern die lokale Datenbank
+nicht. Der normale Serverstart loescht keine Tabellen und setzt keine
+Benutzerpasswoerter zurueck.
 
-# Build für Produktion
-ng build --configuration production
+Optional koennen `ADMIN_EMAIL` und `ADMIN_PASSWORD` einen neuen Administrator
+anlegen. Das Passwort muss mindestens 12 Zeichen enthalten; bestehende Konten
+werden nicht geaendert. Alte Demo-Passwoerter vor Produktivbetrieb ersetzen.
 
+Der Seeder enthaelt destruktives `sync({ force: true })` und Demo-Zugangsdaten.
+Nicht gegen eine Datenbank mit erhaltenswerten Daten ausfuehren.
 
-###### Mailtrap
-https://mailtrap.io/
+Aktueller Pruefumfang und offene Produktionspunkte: [Pruefbericht](../REVIEW.md).

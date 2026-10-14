@@ -7,10 +7,15 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 To start a local development server, run:
 
 ```bash
-ng serve
+npm start
 ```
 
-ng serve --host 0.0.0.0 --port 4200
+npm start -- --host 0.0.0.0 --port 4200
+
+`npm start` uses the local Angular CLI and the API proxy to port 3000.
+No global `ng` installation is required. Both environments use `/api`;
+production hosting must proxy that path to the backend.
+See [the review report](../REVIEW.md) for current verification and limitations.
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
@@ -33,7 +38,7 @@ ng generate --help
 To build the project run:
 
 ```bash
-ng build
+npm run build
 ```
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
@@ -43,7 +48,7 @@ This will compile your project and store the build artifacts in the `dist/` dire
 To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
 
 ```bash
-ng test
+npm test -- --watch=false --browsers=ChromeHeadless
 ```
 
 ## Running end-to-end tests
@@ -60,16 +65,16 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 
-# Bergland Frontend
+## Bergland Frontend
 
 Frontend für die **Bergland-App** (Reservierungen, Events, Rechnungen, Zahlungen, usw.),  
-entwickelt mit **Angular 17**.
+entwickelt mit **Angular 20**.
 
 ---
 
 ## 🚀 Features
 
-- **Angular 17** (Standalone Components, kein `AppModule`)
+- **Angular 20** (Standalone Components, kein `AppModule`)
 - **Routing**:
   - **AuthLayout** → Login & Register (ohne Navbar/Header)
   - **MainLayout** → Events, Buchungen, Profil (mit Navbar/Header)
@@ -236,7 +241,7 @@ relay-team.service.ts → /api/relay-teams
 route.service.ts → /api/routes
 product.service.ts → /api/products
 
-###### Example: GET /api/events/:id
+##### Example: GET /api/events/:id
 
 {
   "id": "a8c42e6e-3d9f-4e3d-97ff-2b9ac1452e62",

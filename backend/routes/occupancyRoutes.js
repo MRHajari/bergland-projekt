@@ -1,7 +1,7 @@
 // backend/routes/occupancyRoutes.js
 const express = require("express");
 const router = express.Router();
-const { authenticateToken } = require("../middlewares/authMiddleware");
+const { authenticateToken, requireRole } = require("../middlewares/authMiddleware");
 const occupancyController = require("../controllers/occupancyController");
 
 // ============================================================
@@ -30,17 +30,17 @@ router.get(
 // ============================================================
 // ➕ Neue Belegung anlegen
 // ============================================================
-router.post("/", authenticateToken, occupancyController.createOccupancy);
+router.post("/", authenticateToken, requireRole("admin"), occupancyController.createOccupancy);
 
 // ============================================================
 // ✏️ Belegung aktualisieren
 // ============================================================
-router.put("/:id", authenticateToken, occupancyController.update);
+router.put("/:id", authenticateToken, requireRole("admin"), occupancyController.update);
 
 // ============================================================
 // ❌ Belegung löschen
 // ============================================================
-router.delete("/:id", authenticateToken, occupancyController.delete);
+router.delete("/:id", authenticateToken, requireRole("admin"), occupancyController.delete);
 
 // ============================================================
 // 🔄 Zuordnungen (Event ↔ Unterkünfte) aktualisieren
@@ -48,6 +48,7 @@ router.delete("/:id", authenticateToken, occupancyController.delete);
 router.post(
     "/updateAssignments",
     authenticateToken,
+    requireRole("admin"),
     occupancyController.updateAssignments
 );
 

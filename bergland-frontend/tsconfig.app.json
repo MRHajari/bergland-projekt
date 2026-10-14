@@ -4,6 +4,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
+    "rootDir": "./src",
     "types": []
   },
   "include": [
@@ -12,6 +13,7 @@
     "src/app/features/events/event-detail"
   ],
   "exclude": [
+    "src/test.ts",
     "src/**/*.spec.ts"
   ]
 }

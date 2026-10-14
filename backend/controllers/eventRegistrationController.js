@@ -209,6 +209,16 @@ exports.createGroupRegistration = async (req, res) => {
             });
         }
 
+        for (const participant of participants) {
+            if (!participant?.person_id) {
+                return res.status(400).json({ message: "person_id ist erforderlich." });
+            }
+            const person = await Person.findByPk(participant.person_id, { transaction: t });
+            if (!person || (req.user.role !== "admin" && person.owner_id !== req.user.id)) {
+                return res.status(403).json({ message: "Keine Berechtigung fuer diesen Teilnehmer." });
+            }
+        }
+
         const registration = await EventRegistration.create(
             {
                 event_id,
@@ -217,7 +227,7 @@ exports.createGroupRegistration = async (req, res) => {
                 license_plate,
                 wishes,
                 club,
-                status,
+                status: req.user.role === "admin" ? status : "In Bearbeitung",
             },
             { transaction: t }
         );
@@ -248,11 +258,13 @@ exports.createGroupRegistration = async (req, res) => {
         await t.commit();
         res.status(201).json({ registration });
     } catch (err) {
-        await t.rollback();
+        if (!t.finished) await t.rollback();
         console.error("❌ Fehler beim Erstellen der Gruppen-Registrierung:", err);
         res.status(500).json({
             message: "Fehler beim Erstellen der Gruppen-Registrierung.",
         });
+    } finally {
+        if (!t.finished) await t.rollback();
     }
 };
 
@@ -296,7 +308,7 @@ exports.updateRegistration = async (req, res) => {
             license_plate,
             wishes,
             club,
-            status,
+            status: req.user.role === "admin" ? status : registration.status,
         });
 
         res.json(registration);
@@ -320,6 +332,7 @@ exports.getGroupByEvent = async (req, res) => {
                 {
                     model: Person,
                     as: "registered_by_person",
+                    ...(!["admin", "timekeeper"].includes(req.user.role) ? { where: { owner_id: req.user.id } } : {}),
                     attributes: ["id", "first_name", "last_name", "email"],
                 },
                 {
@@ -415,11 +428,13 @@ exports.addParticipant = async (req, res) => {
         await t.commit();
         res.status(201).json(participant);
     } catch (err) {
-        await t.rollback();
+        if (!t.finished) await t.rollback();
         console.error("❌ Fehler beim Hinzufügen eines Teilnehmers:", err);
         res.status(500).json({
             message: "Fehler beim Hinzufügen eines Teilnehmers.",
         });
+    } finally {
+        if (!t.finished) await t.rollback();
     }
 };
 
@@ -554,6 +569,23 @@ exports.getRegistrationsByPerson = async (req, res) => {
 // ============================================================
 // 🗑️ Registrierung löschen
 // ============================================================
+exports.deleteParticipant = async (req, res, next) => {
+    try {
+        const participant = await EventRegistrationParticipant.findByPk(req.params.participantId, {
+            include: [{ model: EventRegistration, as: "registration" }],
+        });
+        if (!participant) return res.status(404).json({ message: "Teilnehmer nicht gefunden." });
+        const person = await Person.findByPk(participant.registration.registered_by_person_id);
+        if (req.user.role !== "admin" && person?.owner_id !== req.user.id) {
+            return res.status(403).json({ message: "Keine Berechtigung." });
+        }
+        await participant.destroy();
+        res.json({ message: "Teilnehmer entfernt." });
+    } catch (err) {
+        next(err);
+    }
+};
+
 exports.deleteRegistration = async (req, res) => {
     try {
         const reg = await EventRegistration.findByPk(req.params.id);
@@ -561,6 +593,10 @@ exports.deleteRegistration = async (req, res) => {
             return res.status(404).json({ message: "Anmeldung nicht gefunden." });
         }
 
+        const { Booking } = require("../models");
+        if (await Booking.count({ where: { event_registration_id: reg.id } })) {
+            return res.status(409).json({ message: "Bitte zuerst die zugehoerigen Buchungen stornieren." });
+        }
         await reg.destroy();
         res.json({ message: "Anmeldung erfolgreich gelöscht." });
     } catch (err) {

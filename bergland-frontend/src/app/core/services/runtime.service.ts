@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export type RuntimeStatus = 'did_not_start' | 'did_not_finish';
 
@@ -59,7 +60,7 @@ export interface RuntimeUpdatePayload {
   providedIn: 'root',
 })
 export class RuntimeService {
-  private apiUrl = 'http://localhost:3000/api/runtimes';
+  private apiUrl = `${environment.apiUrl}/runtimes`;
 
   constructor(private http: HttpClient) {}
 
