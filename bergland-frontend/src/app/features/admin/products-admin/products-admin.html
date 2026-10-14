@@ -1,162 +1,189 @@
 <div class="admin-container">
-    <button class="back-btn" (click)="goBack()">
-        <i class="fa-solid fa-arrow-left me-2"></i>
-        Zurück
-    </button>
-    <h1><i class="fa-solid fa-boxes-stacked me-2"></i> Produkte verwalten</h1>
+    <div class="page-header">
+        <div class="page-title">
+            <button class="icon-button" (click)="goBack()" title="Zurück" aria-label="Zurück">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+            </button>
+            <h1>Produkte</h1>
+        </div>
+        <button class="primary" (click)="showCreateForm = !showCreateForm" [attr.aria-expanded]="showCreateForm"
+            aria-controls="create-product">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i> Neues Produkt
+        </button>
+    </div>
 
     @if (loading) {
-    <p class="loading">
+    <p class="notice" role="status">
         <i class="fa-solid fa-spinner fa-spin me-2"></i> Produkte werden geladen...
     </p>
     } @else if (errorMessage) {
-    <p class="error">
+    <p class="notice error" role="alert">
         <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
     </p>
     } @else {
 
     <!-- ➕ Neues Produkt -->
-    <section class="form-section">
-        <h2><i class="fa-solid fa-circle-plus me-2"></i> Neues Produkt hinzufügen</h2>
+    @if (showCreateForm) {
+    <section class="form-section" id="create-product" aria-labelledby="create-product-title">
+        <div class="section-heading">
+            <h2 id="create-product-title">Neues Produkt</h2>
+        </div>
 
         <form (ngSubmit)="addProduct()" class="product-form">
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Produktname</label>
-                    <input type="text" [(ngModel)]="newProduct.produkt_name" name="produkt_name" required />
+                    <label for="product-name">Produktname</label>
+                    <input id="product-name" type="text" [(ngModel)]="newProduct.produkt_name" name="produkt_name"
+                        required />
                 </div>
 
                 <div class="form-group form-group-full">
-                    <label>Beschreibung</label>
-                    <textarea [(ngModel)]="newProduct.beschreibung" name="beschreibung" rows="3"
-                        placeholder="Kurze Produktbeschreibung..."></textarea>
+                    <label for="product-description">Beschreibung</label>
+                    <textarea id="product-description" [(ngModel)]="newProduct.beschreibung" name="beschreibung"
+                        rows="3" placeholder="Kurze Produktbeschreibung..."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>Preis (€)</label>
-                    <input type="number" [(ngModel)]="newProduct.preis" name="preis" min="0" step="0.01" required />
+                    <label for="product-price">Preis (€)</label>
+                    <input id="product-price" type="number" [(ngModel)]="newProduct.preis" name="preis" min="0"
+                        step="0.01" required />
                 </div>
 
                 <div class="form-group">
-                    <label>Gültig von</label>
-                    <input type="date" [(ngModel)]="newProduct.gueltig_von" name="gueltig_von" />
+                    <label for="product-from">Gültig von</label>
+                    <input id="product-from" type="date" [(ngModel)]="newProduct.gueltig_von" name="gueltig_von" />
                 </div>
 
                 <div class="form-group">
-                    <label>Gültig bis</label>
-                    <input type="date" [(ngModel)]="newProduct.gueltig_bis" name="gueltig_bis" />
+                    <label for="product-until">Gültig bis</label>
+                    <input id="product-until" type="date" [(ngModel)]="newProduct.gueltig_bis" name="gueltig_bis" />
                 </div>
             </div>
 
             <div class="form-actions">
+                <button type="button" (click)="showCreateForm = false">Abbrechen</button>
                 <button type="submit" class="primary">
                     <i class="fa-solid fa-plus me-2"></i> Hinzufügen
                 </button>
             </div>
         </form>
     </section>
+    }
 
     <!-- 📋 Produktliste -->
     <section class="list-section">
-        <h2><i class="fa-solid fa-list me-2"></i> Bestehende Produkte</h2>
-
-        <div class="search-input-wrapper">
-            <i class="fa-solid fa-magnifying-glass me-2"></i>
-            <input type="text" [(ngModel)]="searchTerm" placeholder="Nach Produktname oder Preis suchen..."
-                class="search-input" />
+        <div class="toolbar">
+            <div class="search-field">
+                <label for="product-search" class="sr-only">Produkte suchen</label>
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input id="product-search" type="search" [ngModel]="searchTerm"
+                    (ngModelChange)="searchTerm = $event; page = 1" placeholder="Produktname oder Preis suchen" />
+            </div>
+            <span class="record-count" role="status">{{ filteredProducts.length }} Produkte</span>
         </div>
 
         @if (filteredProducts.length === 0) {
-        <p><i class="fa-solid fa-circle-info me-2"></i> Keine passenden Produkte gefunden.</p>
+        <p class="empty-state" role="status"><i class="fa-solid fa-box-open" aria-hidden="true"></i> Keine passenden
+            Produkte gefunden.</p>
         } @else {
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Beschreibung</th>
-                    <th>Preis (€)</th>
-                    <th>Gültig von</th>
-                    <th>Gültig bis</th>
-                    <th>Aktionen</th>
-                </tr>
-            </thead>
+        <div class="table-scroll" role="region" aria-label="Produktliste" tabindex="0">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Beschreibung</th>
+                        <th class="numeric">Preis (€)</th>
+                        <th>Gültig von</th>
+                        <th>Gültig bis</th>
+                        <th class="actions-column">Aktionen</th>
+                    </tr>
+                </thead>
 
-            <tbody>
-                @for (p of pagedProducts; track p.id_produkt) {
-                <tr>
-                    <td>
-                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
-                        <input [(ngModel)]="editingProduct.produkt_name" name="edit_name_{{ p.id_produkt }}" />
-                        } @else {
-                        {{ p.produkt_name }}
-                        }
-                    </td>
+                <tbody>
+                    @for (p of pagedProducts; track p.id_produkt) {
+                    <tr>
+                        <td>
+                            @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                            <input [(ngModel)]="editingProduct.produkt_name" name="edit_name_{{ p.id_produkt }}" />
+                            } @else {
+                            {{ p.produkt_name }}
+                            }
+                        </td>
 
-                    <td>
-                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
-                        <textarea [(ngModel)]="editingProduct.beschreibung" name="edit_beschreibung_{{ p.id_produkt }}"
-                            rows="2"></textarea>
-                        } @else {
-                        {{ p.beschreibung || '—' }}
-                        }
-                    </td>
+                        <td>
+                            @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                            <textarea [(ngModel)]="editingProduct.beschreibung"
+                                name="edit_beschreibung_{{ p.id_produkt }}" rows="2"></textarea>
+                            } @else {
+                            {{ p.beschreibung || '—' }}
+                            }
+                        </td>
 
-                    <td>
-                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
-                        <input type="number" [(ngModel)]="editingProduct.preis" name="edit_preis_{{ p.id_produkt }}"
-                            min="0" step="0.01" />
-                        } @else {
-                        {{ p.preis | number: '1.2-2' }}
-                        }
-                    </td>
+                        <td class="numeric">
+                            @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                            <input aria-label="Preis" type="number" [(ngModel)]="editingProduct.preis"
+                                name="edit_preis_{{ p.id_produkt }}" min="0" step="0.01" />
+                            } @else {
+                            {{ p.preis | number: '1.2-2' }}
+                            }
+                        </td>
 
-                    <td>
-                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
-                        <input type="date" [(ngModel)]="editingProduct.gueltig_von"
-                            name="edit_von_{{ p.id_produkt }}" />
-                        } @else {
-                        {{ p.gueltig_von | date: 'yyyy-MM-dd' }}
-                        }
-                    </td>
+                        <td>
+                            @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                            <input type="date" [(ngModel)]="editingProduct.gueltig_von"
+                                name="edit_von_{{ p.id_produkt }}" />
+                            } @else {
+                            {{ (p.gueltig_von | date: 'dd.MM.yyyy') || '–' }}
+                            }
+                        </td>
 
-                    <td>
-                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
-                        <input type="date" [(ngModel)]="editingProduct.gueltig_bis"
-                            name="edit_bis_{{ p.id_produkt }}" />
-                        } @else {
-                        {{ p.gueltig_bis | date: 'yyyy-MM-dd' }}
-                        }
-                    </td>
+                        <td>
+                            @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                            <input type="date" [(ngModel)]="editingProduct.gueltig_bis"
+                                name="edit_bis_{{ p.id_produkt }}" />
+                            } @else {
+                            {{ (p.gueltig_bis | date: 'dd.MM.yyyy') || '–' }}
+                            }
+                        </td>
 
-                    <td class="actions">
-                        @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
-                        <button class="primary" (click)="saveProduct()">
-                            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
-                        </button>
-                        <button (click)="cancelEdit()">
-                            <i class="fa-solid fa-xmark me-2"></i> Abbrechen
-                        </button>
-                        } @else {
-                        <button class="secondary" (click)="editProduct(p)">
-                            <i class="fa-solid fa-pen me-2"></i> Bearbeiten
-                        </button>
-                        <button class="danger" (click)="deleteProduct(p.id_produkt, p.produkt_name)">
-                            <i class="fa-solid fa-trash me-2"></i> Löschen
-                        </button>
-                        }
-                    </td>
-                </tr>
-                }
-            </tbody>
-        </table>
+                        <td class="actions">
+                            <div class="row-actions">
+                                @if (editingProduct && editingProduct.id_produkt === p.id_produkt) {
+                                <button class="primary icon-button" (click)="saveProduct()" title="Speichern"
+                                    aria-label="Produkt speichern">
+                                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                                </button>
+                                <button class="icon-button" (click)="cancelEdit()" title="Abbrechen"
+                                    aria-label="Bearbeitung abbrechen">
+                                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                                </button>
+                                } @else {
+                                <button class="icon-button" (click)="editProduct(p)" title="Bearbeiten"
+                                    [attr.aria-label]="p.produkt_name + ' bearbeiten'">
+                                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                </button>
+                                <button class="danger icon-button" (click)="deleteProduct(p.id_produkt, p.produkt_name)"
+                                    title="Löschen" [attr.aria-label]="p.produkt_name + ' löschen'">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
 
         <div class="pagination">
-            <button (click)="page = page - 1" [disabled]="page === 1">
-                <i class="fa-solid fa-chevron-left me-1"></i> Zurück
+            <button class="icon-button" (click)="page = page - 1" [disabled]="page === 1" title="Vorherige Seite"
+                aria-label="Vorherige Seite">
+                <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
             </button>
             <span>Seite {{ page }} / {{ totalPages }}</span>
-            <button (click)="page = page + 1" [disabled]="page === totalPages">
-                Weiter <i class="fa-solid fa-chevron-right ms-1"></i>
+            <button class="icon-button" (click)="page = page + 1" [disabled]="page >= totalPages" title="Nächste Seite"
+                aria-label="Nächste Seite">
+                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
             </button>
         </div>
         }

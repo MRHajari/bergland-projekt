@@ -23,7 +23,7 @@ interface Invoice {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './invoices-admin.html',
-  styleUrls: ['./invoices-admin.css'],
+  styleUrls: ['../admin-shared.css'],
 })
 export class InvoicesAdmin implements OnInit {
   private http = inject(HttpClient);
@@ -51,6 +51,7 @@ export class InvoicesAdmin implements OnInit {
   async loadInvoices() {
     try {
       this.loading.set(true);
+      this.errorMessage.set(null);
       let url = `/api/invoices?status=${this.currentTab}`;
       if (this.currentTab === 'bezahlt' && this.selectedMonth && this.selectedYear) {
         url += `&month=${this.selectedMonth}&year=${this.selectedYear}`;

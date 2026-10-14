@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './users-admin.html',
-  styleUrls: ['./users-admin.css']
+  styleUrls: ['../admin-shared.css']
 })
 export class UsersAdmin implements OnInit {
   users: any[] = [];
@@ -18,6 +18,8 @@ export class UsersAdmin implements OnInit {
   errorMessage: string | null = null;
 
   searchTerm = '';
+  roleFilter = '';
+  pendingRoles: Partial<Record<string, string>> = {};
   page = 1;
   pageSize = 20;
 
@@ -49,13 +51,13 @@ export class UsersAdmin implements OnInit {
     });
   }
 
-  // 🔹 Filter nach Rolle
-  get adminUsers() {
-    return this.users.filter(u => u.role === 'admin' && this.matchesSearch(u));
+  get filteredUsers() {
+    return this.users.filter(user => (!this.roleFilter || user.role === this.roleFilter) && this.matchesSearch(user));
   }
 
-  get normalUsers() {
-    return this.users.filter(u => u.role === 'user' && this.matchesSearch(u));
+  get pagedUsers() {
+    const currentPage = Math.min(this.page, this.totalPages);
+    return this.filteredUsers.slice((currentPage - 1) * this.pageSize, currentPage * this.pageSize);
   }
 
   // 🔍 Suchlogik
@@ -66,20 +68,18 @@ export class UsersAdmin implements OnInit {
     return `${name} ${u.email}`.toLowerCase().includes(term);
   }
 
-  // 🔹 Pagination
-  get pagedNormalUsers() {
-    const start = (this.page - 1) * this.pageSize;
-    return this.normalUsers.slice(start, start + this.pageSize);
-  }
-
   get totalPages() {
-    return Math.ceil(this.normalUsers.length / this.pageSize);
+    return Math.max(1, Math.ceil(this.filteredUsers.length / this.pageSize));
   }
 
   // 🔹 Rolle speichern
   saveUser(user: any): void {
-    this.userService.updateRole(user.id, user.role).subscribe({
+    const role = this.pendingRoles[user.id] ?? user.role;
+    this.userService.updateRole(user.id, role).subscribe({
       next: () => {
+        user.role = role;
+        delete this.pendingRoles[user.id];
+        this.page = Math.min(this.page, this.totalPages);
         alert(`✅ Rolle geändert für ${user.person?.first_name} (${user.email}) → ${user.role}`);
       },
       error: (err) => {
@@ -96,6 +96,7 @@ export class UsersAdmin implements OnInit {
     this.userService.delete(id).subscribe({
       next: () => {
         this.users = this.users.filter(u => u.id !== id);
+        this.page = Math.min(this.page, this.totalPages);
         alert(`🗑️ Benutzer "${email}" gelöscht.`);
       },
       error: (err) => {

@@ -10,11 +10,12 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './products-admin.html',
-  styleUrls: ['./products-admin.css']
+  styleUrls: ['../admin-shared.css']
 })
 export class ProductsAdmin implements OnInit {
   products: Product[] = [];
   editingProduct: Product | null = null;
+  showCreateForm = false;
 
   newProduct: Partial<Product> = {
     produkt_name: '',
@@ -83,6 +84,7 @@ export class ProductsAdmin implements OnInit {
           gueltig_von: '',
           gueltig_bis: ''
         };
+        this.showCreateForm = false;
         this.loadProducts();
       },
       error: (err) => {
@@ -161,7 +163,7 @@ export class ProductsAdmin implements OnInit {
   }
 
   get totalPages() {
-    return Math.ceil(this.filteredProducts.length / this.pageSize);
+    return Math.max(1, Math.ceil(this.filteredProducts.length / this.pageSize));
   }
 
   goBack(): void {

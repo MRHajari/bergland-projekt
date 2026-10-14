@@ -1,132 +1,96 @@
 <div class="admin-container">
-    <button class="back-btn" (click)="goBack()">
-        <i class="fa-solid fa-arrow-left me-2"></i>
-        Zurück
-    </button>
-    <h1><i class="fa-solid fa-users me-2"></i> Benutzerverwaltung</h1>
+    <div class="page-header">
+        <div class="page-title">
+            <button class="icon-button" (click)="goBack()" title="Zurück" aria-label="Zurück">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+            </button>
+            <h1>Benutzer</h1>
+        </div>
+    </div>
 
-    <div class="search-input-wrapper">
-        <i class="fa-solid fa-magnifying-glass me-2"></i>
-        <input type="text" [(ngModel)]="searchTerm" placeholder="Benutzer suchen (Name oder Email)..."
-            class="search-input" />
+    <div class="toolbar">
+        <div class="search-field">
+            <label for="user-search" class="sr-only">Benutzer suchen</label>
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input id="user-search" type="search" [ngModel]="searchTerm" (ngModelChange)="searchTerm = $event; page = 1"
+                placeholder="Name oder E-Mail suchen" />
+        </div>
+        <span class="record-count" role="status">{{ filteredUsers.length }} Benutzer</span>
+    </div>
+    <div class="filter-bar">
+        <div class="form-group">
+            <label for="user-role-filter">Rolle</label>
+            <select id="user-role-filter" [ngModel]="roleFilter" (ngModelChange)="roleFilter = $event; page = 1">
+                <option value="">Alle Rollen</option>
+                <option value="admin">Administrator</option>
+                <option value="user">Benutzer</option>
+                <option value="timekeeper">Zeitnehmer</option>
+            </select>
+        </div>
     </div>
 
     @if (loading) {
-    <p class="loading">
-        <i class="fa-solid fa-spinner fa-spin me-2"></i> Benutzer werden geladen...
-    </p>
+    <p class="notice" role="status"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Benutzer werden
+        geladen...</p>
     } @else if (errorMessage) {
-    <p class="error">
-        <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ errorMessage }}
-    </p>
-    } @else if (users.length === 0) {
-    <p><i class="fa-solid fa-circle-info me-2"></i> Keine Benutzer gefunden.</p>
+    <p class="notice error" role="alert"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{
+        errorMessage }}</p>
+    } @else if (filteredUsers.length === 0) {
+    <p class="empty-state" role="status"><i class="fa-solid fa-users" aria-hidden="true"></i> Keine passenden Benutzer
+        gefunden.</p>
     } @else {
-
-    <!-- 🔹 Admins -->
-    <section class="list-section">
-        <h2><i class="fa-solid fa-user-shield me-2"></i> Admin Benutzer</h2>
-
-        @if (adminUsers.length === 0) {
-        <p><i class="fa-solid fa-user-xmark me-2"></i> Keine Admin-Benutzer vorhanden.</p>
-        } @else {
-        <table class="user-table admin-table">
+    <div class="table-scroll" role="region" aria-label="Benutzerliste" tabindex="0">
+        <table class="data-table">
             <thead>
                 <tr>
                     <th>Vorname</th>
                     <th>Nachname</th>
-                    <th>Email</th>
+                    <th>E-Mail</th>
                     <th>Geburtsdatum</th>
                     <th>Rolle</th>
-                    <th>Aktionen</th>
+                    <th class="actions-column">Aktionen</th>
                 </tr>
             </thead>
             <tbody>
-                @for (u of adminUsers; track u.id) {
+                @for (user of pagedUsers; track user.id) {
                 <tr>
-                    <td>{{ u.person?.first_name || '–' }}</td>
-                    <td>{{ u.person?.last_name || '–' }}</td>
-                    <td>{{ u.email }}</td>
+                    <td>{{ user.person?.first_name || '–' }}</td>
+                    <td>{{ user.person?.last_name || '–' }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ (user.person?.birth_date | date:'dd.MM.yyyy') || '–' }}</td>
                     <td>
-                        {{ u.person?.birth_date ? (u.person.birth_date | date:'dd.MM.yyyy') : '–' }}
-                    </td>
-                    <td>
-                        <select [(ngModel)]="u.role">
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
+                        <select [ngModel]="pendingRoles[user.id] ?? user.role"
+                            (ngModelChange)="pendingRoles[user.id] = $event"
+                            [attr.aria-label]="'Rolle für ' + user.email">
+                            <option value="user">Benutzer</option>
+                            <option value="admin">Administrator</option>
+                            <option value="timekeeper">Zeitnehmer</option>
                         </select>
                     </td>
                     <td>
-                        <button class="primary" (click)="saveUser(u)">
-                            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
-                        </button>
-                        <button class="danger" (click)="deleteUser(u.id, u.email)">
-                            <i class="fa-solid fa-trash me-2"></i> Löschen
-                        </button>
+                        <div class="row-actions">
+                            <button class="primary icon-button" (click)="saveUser(user)"
+                                [disabled]="!pendingRoles[user.id] || pendingRoles[user.id] === user.role"
+                                title="Rolle speichern" [attr.aria-label]="'Rolle für ' + user.email + ' speichern'">
+                                <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                            </button>
+                            <button class="danger icon-button" (click)="deleteUser(user.id, user.email)" title="Löschen"
+                                [attr.aria-label]="user.email + ' löschen'">
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 }
             </tbody>
         </table>
-        }
-    </section>
-
-    <!-- 🔹 Normale Benutzer -->
-    <section class="list-section">
-        <h2><i class="fa-solid fa-user me-2"></i> Normale Benutzer</h2>
-
-        @if (normalUsers.length === 0) {
-        <p><i class="fa-solid fa-user-xmark me-2"></i> Keine normalen Benutzer vorhanden.</p>
-        } @else {
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>Vorname</th>
-                    <th>Nachname</th>
-                    <th>Email</th>
-                    <th>Geburtsdatum</th>
-                    <th>Rolle</th>
-                    <th>Aktionen</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (u of pagedNormalUsers; track u.id) {
-                <tr>
-                    <td>{{ u.person?.first_name || '–' }}</td>
-                    <td>{{ u.person?.last_name || '–' }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>
-                        {{ u.person?.birth_date ? (u.person.birth_date | date:'dd.MM.yyyy') : '–' }}
-                    </td>
-                    <td>
-                        <select [(ngModel)]="u.role">
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </td>
-                    <td>
-                        <button class="primary" (click)="saveUser(u)">
-                            <i class="fa-solid fa-floppy-disk me-2"></i> Speichern
-                        </button>
-                        <button class="danger" (click)="deleteUser(u.id, u.email)">
-                            <i class="fa-solid fa-trash me-2"></i> Löschen
-                        </button>
-                    </td>
-                </tr>
-                }
-            </tbody>
-        </table>
-
-        <div class="pagination">
-            <button (click)="page = page - 1" [disabled]="page === 1">
-                <i class="fa-solid fa-chevron-left me-1"></i> Zurück
-            </button>
-            <span>Seite {{ page }} / {{ totalPages }}</span>
-            <button (click)="page = page + 1" [disabled]="page === totalPages">
-                Weiter <i class="fa-solid fa-chevron-right ms-1"></i>
-            </button>
-        </div>
-        }
-    </section>
+    </div>
+    <nav class="pagination" aria-label="Seiten der Benutzerliste">
+        <button class="icon-button" (click)="page = page - 1" [disabled]="page <= 1" title="Vorherige Seite"
+            aria-label="Vorherige Seite"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+        <span>Seite {{ page }} / {{ totalPages }}</span>
+        <button class="icon-button" (click)="page = page + 1" [disabled]="page >= totalPages" title="Nächste Seite"
+            aria-label="Nächste Seite"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+    </nav>
     }
 </div>
